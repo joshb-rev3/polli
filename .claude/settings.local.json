@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c \"import docx2txt; print\\(docx2txt.process\\(r'C:\\\\Users\\\\bauer\\\\Downloads\\\\piffy explainer.docx'\\)\\)\")",
+      "Bash(pip install *)",
+      "Bash(python -c \"import gzip; data=gzip.open\\('webfetch-1776889200769-l8qh66.bin'\\).read\\(\\); print\\(data[:5000].decode\\('utf-8','ignore'\\)\\)\")",
+      "Bash(npm --version)",
+      "Read(//c/_code/Rev3Labs/**)",
+      "Bash(npx --yes create-expo-app@latest polli-app -t blank-typescript)",
+      "Bash(npx expo *)",
+      "Bash(npm install *)",
+      "Bash(npx tsc *)"
+    ]
+  }
+}
