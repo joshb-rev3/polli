@@ -19,11 +19,13 @@
       "usesAppleSignIn": true,
       "associatedDomains": ["applinks:polli.to"],
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSMicrophoneUsageDescription": "Polli uses the microphone so you can record a voice message for your nomination."
       }
     },
     "android": {
       "package": "com.rev3labs.polli",
+      "permissions": ["RECORD_AUDIO"],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#F3E9DC"
@@ -49,6 +51,12 @@
       "expo-web-browser",
       "expo-secure-store",
       "expo-apple-authentication",
+      [
+        "expo-av",
+        {
+          "microphonePermission": "Polli uses the microphone so you can record a voice message for your nomination."
+        }
+      ],
       [
         "@stripe/stripe-react-native",
         {

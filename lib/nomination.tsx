@@ -1,4 +1,7 @@
 import React, { createContext, useContext, useState } from "react";
+import { TranscriptWord, WordSignature } from "./voice";
+
+export type StoryMode = "type" | "speak";
 
 export interface NominationDraft {
   first: string;
@@ -7,6 +10,11 @@ export interface NominationDraft {
   contact: string;
   catId: string;
   story: string;
+  storyMode: StoryMode;
+  storyAudioUri: string | null;
+  storyAudioDurationMs: number | null;
+  storyWords: TranscriptWord[];
+  storySignatures: WordSignature[];
   timeline: "7" | "14" | "30";
 }
 
@@ -17,6 +25,11 @@ const empty: NominationDraft = {
   contact: "",
   catId: "",
   story: "",
+  storyMode: "type",
+  storyAudioUri: null,
+  storyAudioDurationMs: null,
+  storyWords: [],
+  storySignatures: [],
   timeline: "7",
 };
 

@@ -107,7 +107,83 @@ Subscribe to: `payment_intent.succeeded`, `payment_intent.payment_failed`, `acco
 
 ## Deployment (EAS Build)
 
-### Prerequisites
+### Netlify (web)
+
+Netlify hosts the **static web app only**. Supabase still runs auth, database, payments, and voice transcription. The browser calls your Supabase project directly — Netlify does not need `ASSEMBLYAI_API_KEY`.
+
+```
+Browser (your-app.netlify.app)
+  → static JS/CSS from Netlify
+  → POST https://YOUR_PROJECT.supabase.co/functions/v1/transcribe-story  (AssemblyAI key lives here)
+```
+
+#### 1. Deploy Supabase first (required for voice)
+
+```bash
+npx supabase link --project-ref YOUR_PROJECT_REF
+npx supabase db push
+npx supabase secrets set ASSEMBLYAI_API_KEY=your_key
+npx supabase functions deploy transcribe-story
+# …other functions as needed (create-payment-intent, etc.)
+```
+
+#### 2. Connect the repo to Netlify
+
+Netlify → **Add new site** → Import from Git → select this repo.
+
+Build settings (also in `netlify.toml`):
+
+| Setting | Value |
+|---------|--------|
+| Build command | `npm run build:web` |
+| Publish directory | `dist` |
+| Node version | 20 |
+
+#### 3. Set Netlify environment variables (build time)
+
+Site settings → **Environment variables** → add these for **Production** (and Preview if you want):
+
+| Variable | Example | Notes |
+|----------|---------|--------|
+| `EXPO_PUBLIC_SUPABASE_URL` | `https://abc123.supabase.co` | From Supabase dashboard |
+| `EXPO_PUBLIC_SUPABASE_ANON_KEY` | `eyJ…` or `sb_publishable_…` | Anon / publishable key only |
+| `EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY` | `pk_test_…` | Optional until checkout on web |
+
+Do **not** add `ASSEMBLYAI_API_KEY` to Netlify — it belongs in Supabase secrets only.
+
+Redeploy after changing env vars (Expo bakes `EXPO_PUBLIC_*` into the bundle at build time).
+
+#### 4. Auth redirects (if using login on web)
+
+Supabase Dashboard → Authentication → URL configuration:
+
+- **Site URL**: `https://your-site.netlify.app` (or custom domain)
+- **Redirect URLs**: add `https://your-site.netlify.app/**`
+
+#### 5. Deploy
+
+Push to your connected branch, or locally:
+
+```bash
+npm run build:web
+npx netlify deploy --prod --dir dist
+```
+
+#### 6. Verify voice transcription
+
+1. Open the live Netlify URL (HTTPS is required for mic access).
+2. Nominate → story step → **Speak** → record.
+3. You should see your actual words, not the demo line.
+4. If it fails, check the browser console — common causes:
+   - `404` on `transcribe-story` → function not deployed to Supabase
+   - `500` → `ASSEMBLYAI_API_KEY` missing in Supabase secrets
+   - Wrong transcript → `EXPO_PUBLIC_MOCK_TRANSCRIBE=1` is set in Netlify env (remove it)
+
+`public/_redirects` and `netlify.toml` handle Expo Router client-side navigation on refresh.
+
+---
+
+### Prerequisites (mobile)
 
 - **Apple Developer Program** ($99/yr) — required for TestFlight + App Store + Sign in with Apple
 - **Google Play Console** ($25 one-time)
@@ -182,7 +258,29 @@ supabase/
     stripe-webhook/
     connect-onboard/
     close-nominations/
+    transcribe-story/     # AssemblyAI word-level transcription for voice nominations
 ```
+
+### Voice story messages
+
+On the nominate **story** step, users can switch between **Type** and **Speak**. Speak mode records a short clip, auto-transcribes via AssemblyAI, analyzes per-word pitch/volume for karaoke styling, and stores the transcript as `story` plus audio metadata on the nomination.
+
+**Setup:**
+
+1. Run migration `supabase/migrations/0002_story_voice.sql`
+2. Deploy the edge function: `supabase functions deploy transcribe-story`
+3. Set the secret on your Supabase project (required for the hosted app):
+   ```bash
+   supabase secrets set ASSEMBLYAI_API_KEY=your_key
+   ```
+4. For **local** function testing, add the same key to `.env` (no `EXPO_PUBLIC_` prefix — server-only) and serve with:
+   ```bash
+   supabase functions serve transcribe-story --env-file .env
+   ```
+
+Do **not** put `ASSEMBLYAI_API_KEY` in an `EXPO_PUBLIC_*` variable — that would expose it in the mobile app bundle.
+
+In dev, if the function isn't deployed yet, transcription shows an error with deploy instructions. For UI-only testing without Supabase, set `EXPO_PUBLIC_MOCK_TRANSCRIBE=1` in `.env` (uses a fixed demo transcript).
 
 ## The product model (for anyone joining)
 
@@ -192,7 +290,7 @@ supabase/
 - **Eligibility loop.** Give $1 in the last 12 months → eligible to be nominated yourself. Surfaced only on success moments as "🌼 You're in the garden."
 - **Bee mascot "Bzz"** appears on splash, drifts across the feed, cheers on pay-complete, waves on launch-complete.
 - **Notes ("Notes from the garden")** — optional "say something nice" per donation, shown on the nominee's page. Can sign as "anonymous bee 🐝".
-- **5-step nominate**: who → category → story → timeline (1w / 2w / 1mo) → review. No goal step.
+- **5-step nominate**: who → category → story (type or speak with karaoke playback) → timeline (1w / 2w / 1mo) → review. No goal step.
 - **Payouts** via Stripe Connect Express — nominee links bank/debit through Stripe's hosted KYC flow; funds arrive within 5 business days of the window closing.
 
 ## Design source

@@ -6,6 +6,7 @@ import { IconArrow } from "../../components/Icon";
 import { NavBar } from "../../components/NavBar";
 import { FakeStatusBar } from "../../components/StatusBar";
 import { Stepper } from "../../components/Stepper";
+import { VoiceMessagePlayer } from "../../components/voice/VoiceMessageComposer";
 import { success } from "../../lib/haptics";
 import { CATEGORIES, TIMELINES } from "../../lib/mockData";
 import { useNomination } from "../../lib/nomination";
@@ -46,7 +47,21 @@ export default function Review() {
           </View>
 
           <View style={styles.storyBox}>
-            <Text style={styles.story}>"{draft.story}"</Text>
+            {draft.storyMode === "speak" && draft.storyAudioUri ? (
+              <>
+                <Text style={styles.voiceLabel}>Voice message</Text>
+                <VoiceMessagePlayer
+                  uri={draft.storyAudioUri}
+                  words={draft.storyWords}
+                  signatures={draft.storySignatures}
+                  durationMs={draft.storyAudioDurationMs ?? 0}
+                  compact
+                />
+                <Text style={styles.story}>"{draft.story}"</Text>
+              </>
+            ) : (
+              <Text style={styles.story}>"{draft.story}"</Text>
+            )}
           </View>
 
           <View style={styles.metaRow}>
@@ -139,6 +154,15 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 22,
     color: colors.ink,
+    marginTop: 10,
+  },
+  voiceLabel: {
+    fontFamily: fonts.bodySemi,
+    fontSize: 11,
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+    color: colors.green,
+    marginBottom: 4,
   },
   metaRow: {
     marginTop: 14,

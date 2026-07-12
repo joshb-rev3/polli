@@ -10,6 +10,7 @@ import { FEED, NOTES } from "../../lib/mockData";
 import { ordinal } from "../../lib/ordinal";
 import { useShare } from "../../lib/share";
 import { colors, fonts } from "../../theme";
+import { VoiceMessagePlayer } from "../../components/voice/VoiceMessageComposer";
 
 export default function Nominee() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -93,6 +94,16 @@ export default function Nominee() {
             </Text>
           </View>
           <Text style={styles.story}>"{n.story}"</Text>
+          {n.storyAudioUri && n.storyWords && n.storySignatures ? (
+            <View style={{ marginTop: 12 }}>
+              <VoiceMessagePlayer
+                uri={n.storyAudioUri}
+                words={n.storyWords}
+                signatures={n.storySignatures}
+                durationMs={n.storyAudioDurationMs ?? 0}
+              />
+            </View>
+          ) : null}
         </View>
 
         <View style={styles.section}>

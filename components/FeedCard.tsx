@@ -18,6 +18,7 @@ import { FeedItem } from "../lib/mockData";
 import { ordinal } from "../lib/ordinal";
 import { colors, fonts, shadows } from "../theme";
 import { IconHeart, IconShare } from "./Icon";
+import { VoiceMessagePlayer } from "./voice/VoiceMessageComposer";
 
 interface Props {
   n: FeedItem;
@@ -77,9 +78,19 @@ export function FeedCard({ n, onGive, onOpen, onShare }: Props) {
 
         <Pressable onPress={() => onOpen(n)}>
           <Text style={styles.storyLabel}>What makes {n.name.split(" ")[0]} special:</Text>
-          <Text style={styles.storyText} numberOfLines={5}>
-            {n.story}
-          </Text>
+          {n.storyAudioUri && n.storyWords && n.storySignatures ? (
+            <VoiceMessagePlayer
+              uri={n.storyAudioUri}
+              words={n.storyWords}
+              signatures={n.storySignatures}
+              durationMs={n.storyAudioDurationMs ?? 0}
+              compact
+            />
+          ) : (
+            <Text style={styles.storyText} numberOfLines={5}>
+              {n.story}
+            </Text>
+          )}
         </Pressable>
 
         <View style={styles.actions}>

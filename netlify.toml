@@ -1,0 +1,12 @@
+[build]
+  command = "npm run build:web"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# Expo Router (SPA) — client-side routes need index.html fallback.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

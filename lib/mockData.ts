@@ -1,3 +1,5 @@
+import { TranscriptWord, WordSignature } from "./voice";
+
 export interface Category {
   id: string;
   emoji: string;
@@ -13,6 +15,10 @@ export interface FeedItem {
   nominator: string;
   nominatorAv: string;
   story: string;
+  storyAudioUri?: string;
+  storyAudioDurationMs?: number;
+  storyWords?: TranscriptWord[];
+  storySignatures?: WordSignature[];
   photo: string[]; // gradient stops
   raised: number;
   backers: number;
