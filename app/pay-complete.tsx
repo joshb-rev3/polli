@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -56,61 +56,72 @@ export default function PayComplete() {
       />
       <Confetti count={24} />
       <BzzPath variant="pay" size={42} />
-      <View style={styles.body}>
-        <Animated.View style={[styles.checkCircle, checkStyle]}>
-          <IconCheck size={48} color="#fff" />
-          {shown && (
-            <View style={styles.cheerBee}>
-              <Bzz pose="cheer" size={56} />
-            </View>
-          )}
-        </Animated.View>
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
+        bounces
+      >
+        <View style={styles.body}>
+          <Animated.View style={[styles.checkCircle, checkStyle]}>
+            <IconCheck size={48} color="#fff" />
+            {shown && (
+              <View style={styles.cheerBee}>
+                <Bzz pose="cheer" size={56} />
+              </View>
+            )}
+          </Animated.View>
 
-        <Text style={styles.title}>
-          You just made{"\n"}
-          <Text style={styles.titleAccent}>someone's day.</Text>
-        </Text>
-        <Text style={styles.sub}>
-          Your $1 is on its way to <Text style={{ fontFamily: fonts.bodyBold }}>{n?.name || "them"}</Text>. Pass the link along so it spreads.
-        </Text>
-
-        {note ? (
-          <View style={styles.noteCard}>
-            <Text style={styles.noteLbl}>YOUR NOTE</Text>
-            <Text style={styles.noteText}>"{note}"</Text>
-            <Text style={styles.noteMeta}>— {anon === "1" ? "anonymous bee 🐝" : "you"}</Text>
-          </View>
-        ) : null}
-
-        <View style={styles.gardenCard}>
-          <Text style={styles.gardenText}>
-            🌼 <Text style={{ fontFamily: fonts.bodyBold }}>You're in the garden.</Text> For 12 months, someone can pollinate <Text style={{ fontFamily: fonts.serifItalic }}>your</Text> day too.
+          <Text style={styles.title}>
+            You just made{"\n"}
+            <Text style={styles.titleAccent}>someone's day.</Text>
           </Text>
-        </View>
-      </View>
+          <Text style={styles.sub}>
+            Your $1 is on its way to <Text style={{ fontFamily: fonts.bodyBold }}>{n?.name || "them"}</Text>. Pass the link along so it spreads.
+          </Text>
 
-      <View style={styles.actions}>
-        <Button
-          full
-          label="Pass it along"
-          variant="marigold"
-          icon={<IconShare size={16} color={colors.ink} />}
-          onPress={() => openShare({ name: n?.name })}
-        />
-        <Pressable style={styles.secondary} onPress={home}>
-          <Text style={styles.secondaryText}>Back to feed</Text>
-        </Pressable>
-      </View>
+          {note ? (
+            <View style={styles.noteCard}>
+              <Text style={styles.noteLbl}>YOUR NOTE</Text>
+              <Text style={styles.noteText}>"{note}"</Text>
+              <Text style={styles.noteMeta}>— {anon === "1" ? "anonymous bee 🐝" : "you"}</Text>
+            </View>
+          ) : null}
+
+          <View style={styles.gardenCard}>
+            <Text style={styles.gardenText}>
+              🌼 <Text style={{ fontFamily: fonts.bodyBold }}>You're in the garden.</Text> For 12 months, someone can pollinate <Text style={{ fontFamily: fonts.serifItalic }}>your</Text> day too.
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.actions}>
+          <Button
+            full
+            label="Pass it along"
+            variant="marigold"
+            icon={<IconShare size={16} color={colors.ink} />}
+            onPress={() => openShare({ name: n?.name })}
+          />
+          <Pressable style={styles.secondary} onPress={home}>
+            <Text style={styles.secondaryText}>Back to feed</Text>
+          </Pressable>
+        </View>
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  scroll: {
+    flexGrow: 1,
+    justifyContent: "space-between",
+  },
   body: {
-    flex: 1,
+    flexGrow: 1,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 32,
+    paddingVertical: 24,
   },
   checkCircle: {
     width: 116,

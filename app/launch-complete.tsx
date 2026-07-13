@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import React from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Bzz, BzzPath } from "../components/Bzz";
 import { Button } from "../components/Button";
 import { Confetti } from "../components/Confetti";
@@ -41,48 +41,59 @@ export default function LaunchComplete() {
       <Confetti count={20} />
       <BzzPath variant="launch" size={44} />
       <BzzPath variant="launch" size={36} delay={1.8} style={{ left: "55%" }} />
-      <View style={styles.body}>
-        <View style={styles.checkCircle}>
-          <IconHeart size={44} color="#fff" />
-          <View style={styles.waveBee}>
-            <Bzz pose="wave" size={52} />
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
+        bounces
+      >
+        <View style={styles.body}>
+          <View style={styles.checkCircle}>
+            <IconHeart size={44} color="#fff" />
+            <View style={styles.waveBee}>
+              <Bzz pose="wave" size={52} />
+            </View>
+          </View>
+
+          <Text style={styles.title}>
+            <Text style={styles.titleAccent}>{firstName}'s polli</Text>
+            {"\n"}
+            {copy.launch_title}
+          </Text>
+          <Text style={styles.sub}>{copy.launch_sub}</Text>
+
+          <View style={styles.urlChip}>
+            <IconLink size={14} color={colors.cream} />
+            <Text style={styles.urlText}>{url}</Text>
           </View>
         </View>
-
-        <Text style={styles.title}>
-          <Text style={styles.titleAccent}>{firstName}'s polli</Text>
-          {"\n"}
-          {copy.launch_title}
-        </Text>
-        <Text style={styles.sub}>{copy.launch_sub}</Text>
-
-        <View style={styles.urlChip}>
-          <IconLink size={14} color={colors.cream} />
-          <Text style={styles.urlText}>{url}</Text>
+        <View style={styles.actions}>
+          <Button
+            full
+            label="Pass it along"
+            variant="marigold"
+            icon={<IconShare size={16} color={colors.ink} />}
+            onPress={() => openShare({ name: `${draft.first} ${draft.last}`, slug })}
+          />
+          <Pressable style={styles.secondary} onPress={home}>
+            <Text style={styles.secondaryText}>Later</Text>
+          </Pressable>
         </View>
-      </View>
-      <View style={styles.actions}>
-        <Button
-          full
-          label="Pass it along"
-          variant="marigold"
-          icon={<IconShare size={16} color={colors.ink} />}
-          onPress={() => openShare({ name: `${draft.first} ${draft.last}`, slug })}
-        />
-        <Pressable style={styles.secondary} onPress={home}>
-          <Text style={styles.secondaryText}>Later</Text>
-        </Pressable>
-      </View>
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  scroll: {
+    flexGrow: 1,
+    justifyContent: "space-between",
+  },
   body: {
-    flex: 1,
+    flexGrow: 1,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 28,
+    paddingVertical: 24,
   },
   checkCircle: {
     width: 116,

@@ -4,7 +4,7 @@
 import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import React, { useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { Button } from "../components/Button";
 import { IconArrow } from "../components/Icon";
 import { NavBar } from "../components/NavBar";
@@ -40,7 +40,11 @@ export default function OnboardConnect() {
     <View style={{ flex: 1, backgroundColor: colors.paper }}>
       <FakeStatusBar />
       <NavBar back title="Back" variant="paper" onBack={() => router.back()} />
-      <View style={{ padding: 20 }}>
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
+        bounces
+      >
         <View style={styles.card}>
           <Text style={styles.title}>Set up your payout</Text>
           <Text style={styles.sub}>
@@ -61,12 +65,17 @@ export default function OnboardConnect() {
             iconRight={<IconArrow size={18} color={colors.green} />}
           />
         </View>
-      </View>
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  scroll: {
+    flexGrow: 1,
+    padding: 20,
+    paddingBottom: 32,
+  },
   card: {
     backgroundColor: "#fff",
     borderRadius: 32,

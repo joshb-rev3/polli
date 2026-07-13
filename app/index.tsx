@@ -1,6 +1,14 @@
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Image, Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import {
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+} from "react-native";
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -42,7 +50,7 @@ function randomFlowerCount() {
 
 export default function Splash() {
   const router = useRouter();
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const [introProgress, setIntroProgress] = useState(0);
   const [beesArrived, setBeesArrived] = useState(0);
   const [flowerCounts, setFlowerCounts] = useState<number[]>(
@@ -53,7 +61,10 @@ export default function Splash() {
   const beeArrivalA = useSharedValue(false);
   const beeArrivalB = useSharedValue(false);
   const beeArrivalC = useSharedValue(false);
-  const heroWidth = Math.max(340, Math.min(width - 12, 560));
+  const heroWidth = Math.max(Math.min(width - 24, 560), 280);
+  const compact = height < 720 || width < 380;
+  const headlineSize = width < 360 ? 34 : width < 400 ? 40 : 48;
+  const ledeSize = compact ? 15 : 17;
 
   useEffect(() => {
     const startedAt = Date.now();
@@ -226,6 +237,11 @@ export default function Splash() {
   return (
     <View style={styles.screen}>
       <FakeStatusBar />
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
+        bounces
+      >
       <View style={styles.logoWrap}>
         <Logo size={34} />
       </View>
@@ -360,15 +376,20 @@ export default function Splash() {
         </Animated.View>
       </View>
 
-      <View style={styles.content}>
+      <View style={[styles.content, compact && styles.contentCompact]}>
         <View>
-          <Text style={styles.headline}>
+          <Text
+            style={[
+              styles.headline,
+              { fontSize: headlineSize, lineHeight: headlineSize + 2 },
+            ]}
+          >
             One dollar.{"\n"}
             <Text style={styles.headlineItalic}>Endless good.</Text>
             {"\n"}
             Shared by everyone.
           </Text>
-          <Text style={styles.lede}>
+          <Text style={[styles.lede, { fontSize: ledeSize, lineHeight: ledeSize + 8 }]}>
             Nominate a friend, a teacher, a neighbor. Everyone chips in $1, together.
             Small contributions turn into one meaningful gift and message of support.
           </Text>
@@ -406,6 +427,7 @@ export default function Splash() {
           </View>
         </View>
       </View>
+      </ScrollView>
     </View>
   );
 }
@@ -415,13 +437,17 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.cream,
   },
+  scroll: {
+    flexGrow: 1,
+    paddingBottom: 24,
+  },
   logoWrap: {
     paddingHorizontal: 24,
     paddingVertical: 8,
   },
   hero: {
-    flex: 1,
-    minHeight: 280,
+    height: HERO_SCENE_HEIGHT,
+    width: "100%",
     alignItems: "center",
     justifyContent: "center",
     position: "relative",
@@ -567,10 +593,16 @@ const styles = StyleSheet.create({
     left: 0,
   },
   content: {
-    padding: 28,
+    paddingHorizontal: 28,
+    paddingTop: 8,
     paddingBottom: 44,
     gap: 28,
     backgroundColor: "transparent",
+  },
+  contentCompact: {
+    paddingHorizontal: 20,
+    gap: 20,
+    paddingBottom: 32,
   },
   headline: {
     fontFamily: fonts.serif,
