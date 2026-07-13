@@ -3,31 +3,25 @@ import React, { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
 import { NavBar } from "../components/NavBar";
-import { FakeStatusBar } from "../components/StatusBar";
 import { useSession } from "../lib/session";
-import { supabaseConfigured } from "../lib/supabase";
 import { colors, fonts, shadows } from "../theme";
 
 export default function Auth() {
   const router = useRouter();
-  const { signInWithApple, signInWithGoogle, signInWithFacebook, signInDemo } =
-    useSession();
+  const { signInDemo } = useSession();
   const [busy, setBusy] = useState<string | null>(null);
 
-  const wrap = (provider: string, fn: () => Promise<void> | void, fallbackName: string) => async () => {
+  // Simulated social login for now — skip real OAuth and continue.
+  const continueAs = (provider: string, name: string) => async () => {
     setBusy(provider);
-    try {
-      await fn();
-    } finally {
-      setBusy(null);
-    }
-    if (!supabaseConfigured) signInDemo(fallbackName);
+    await new Promise((r) => setTimeout(r, 400));
+    signInDemo(name);
+    setBusy(null);
     router.replace("/(tabs)/feed");
   };
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.paper }}>
-      <FakeStatusBar />
       <NavBar back title="Back" variant="paper" onBack={() => router.back()} />
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.card}>
@@ -36,7 +30,7 @@ export default function Auth() {
           <View style={styles.authBtns}>
             <Pressable
               style={[styles.authBtn, styles.authBtnDark]}
-              onPress={wrap("apple", signInWithApple, "Apple User")}
+              onPress={continueAs("apple", "Apple User")}
               disabled={busy !== null}
             >
               <AppleIcon />
@@ -46,7 +40,7 @@ export default function Auth() {
             </Pressable>
             <Pressable
               style={styles.authBtn}
-              onPress={wrap("google", signInWithGoogle, "Google User")}
+              onPress={continueAs("google", "Google User")}
               disabled={busy !== null}
             >
               <GoogleIcon />
@@ -56,7 +50,7 @@ export default function Auth() {
             </Pressable>
             <Pressable
               style={styles.authBtn}
-              onPress={wrap("facebook", signInWithFacebook, "FB User")}
+              onPress={continueAs("facebook", "FB User")}
               disabled={busy !== null}
             >
               <FacebookIcon />

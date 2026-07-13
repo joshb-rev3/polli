@@ -4,7 +4,6 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { BzzPath } from "../../components/Bzz";
 import { FeedCard } from "../../components/FeedCard";
 import { NavBar } from "../../components/NavBar";
-import { FakeStatusBar } from "../../components/StatusBar";
 import { FEED, FeedItem } from "../../lib/mockData";
 import { useShare } from "../../lib/share";
 import { useTone } from "../../lib/tone";
@@ -21,7 +20,6 @@ export default function Feed() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.green }}>
-      <FakeStatusBar dark />
       <NavBar variant="green" />
       <ScrollView contentContainerStyle={styles.list}>
         <BzzPath variant="feed" size={38} delay={4} />

@@ -15,14 +15,19 @@ interface Props {
   right?: React.ReactNode;
 }
 
+/**
+ * `green` = chrome for garden-green screens.
+ * Uses a cream masthead so the green wordmark stays legible, with a marigold
+ * pollen edge that echoes the logo’s i-dot and bridges into the green field below.
+ */
 export function NavBar({ variant = "cream", back, title, onBack, onMenu, right }: Props) {
-  const dark = variant === "green";
+  const garden = variant === "green";
   const bg =
-    variant === "green" ? colors.green : variant === "paper" ? colors.paper : colors.cream;
-  const fg = dark ? colors.cream : colors.ink;
+    variant === "paper" ? colors.paper : colors.cream;
+  const fg = colors.ink;
 
   return (
-    <View style={[styles.bar, { backgroundColor: bg }]}>
+    <View style={[styles.bar, { backgroundColor: bg }, garden && styles.gardenBar]}>
       {back ? (
         <Pressable
           onPress={onBack}
@@ -35,9 +40,11 @@ export function NavBar({ variant = "cream", back, title, onBack, onMenu, right }
           <Text style={[styles.backLabel, { color: fg }]}>{title || "Back"}</Text>
         </Pressable>
       ) : (
-        <Logo dark={dark} />
+        <Logo />
       )}
-      {right ? right : onMenu ? (
+      {right ? (
+        right
+      ) : onMenu ? (
         <Pressable onPress={onMenu} style={styles.hamburger} hitSlop={8}>
           <View style={[styles.hbar, { backgroundColor: fg }]} />
           <View style={[styles.hbar, { backgroundColor: fg }]} />
@@ -59,6 +66,10 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     borderBottomWidth: 1,
     borderBottomColor: "rgba(0,0,0,0.04)",
+  },
+  gardenBar: {
+    borderBottomWidth: 2,
+    borderBottomColor: colors.marigold,
   },
   back: {
     flexDirection: "row",

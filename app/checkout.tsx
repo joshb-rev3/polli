@@ -12,7 +12,6 @@ import {
 import { Button } from "../components/Button";
 import { IconCheck } from "../components/Icon";
 import { NavBar } from "../components/NavBar";
-import { FakeStatusBar } from "../components/StatusBar";
 import { success } from "../lib/haptics";
 import { FEED, QUICK_NOTES } from "../lib/mockData";
 import { payWithStripe } from "../lib/paymentSheet";
@@ -77,7 +76,6 @@ export default function Checkout() {
   if (!n) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.paper }}>
-        <FakeStatusBar />
         <NavBar back title="Back" variant="paper" onBack={() => router.back()} />
       </View>
     );
@@ -85,7 +83,6 @@ export default function Checkout() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.paper }}>
-      <FakeStatusBar />
       <NavBar back title="Cancel" variant="paper" onBack={() => router.back()} />
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.card}>

@@ -21,7 +21,6 @@ import { Bzz } from "../components/Bzz";
 import { Button } from "../components/Button";
 import { IconArrow } from "../components/Icon";
 import { Logo } from "../components/Logo";
-import { FakeStatusBar } from "../components/StatusBar";
 import { colors, fonts } from "../theme";
 
 const HERO_FLOWERS = [
@@ -236,7 +235,6 @@ export default function Splash() {
 
   return (
     <View style={styles.screen}>
-      <FakeStatusBar />
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}

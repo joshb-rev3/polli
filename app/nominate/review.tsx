@@ -4,7 +4,6 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { Button } from "../../components/Button";
 import { IconArrow } from "../../components/Icon";
 import { NavBar } from "../../components/NavBar";
-import { FakeStatusBar } from "../../components/StatusBar";
 import { Stepper } from "../../components/Stepper";
 import { VoiceMessagePlayer } from "../../components/voice/VoiceMessageComposer";
 import { success } from "../../lib/haptics";
@@ -26,7 +25,6 @@ export default function Review() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.paper }}>
-      <FakeStatusBar />
       <NavBar back title="Back" variant="paper" onBack={() => router.back()} />
       <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 32 }}>
         <Stepper step={4} total={5} />

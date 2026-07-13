@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { NavBar } from "../../components/NavBar";
-import { FakeStatusBar } from "../../components/StatusBar";
 import { IconShare } from "../../components/Icon";
 import { ME, MY_GIVES, MY_NOMINATIONS } from "../../lib/mockData";
 import { useShare } from "../../lib/share";
@@ -16,12 +15,11 @@ export default function Profile() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.green }}>
-      <FakeStatusBar dark />
       <NavBar
         variant="green"
         right={
           <Pressable onPress={() => openShare({ name: ME.name })} style={{ padding: 8, opacity: 0.7 }}>
-            <IconShare size={18} color={colors.cream} />
+            <IconShare size={18} color={colors.green} />
           </Pressable>
         }
       />

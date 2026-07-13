@@ -5,7 +5,6 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Button } from "../../components/Button";
 import { IconHeart, IconShare } from "../../components/Icon";
 import { NavBar } from "../../components/NavBar";
-import { FakeStatusBar } from "../../components/StatusBar";
 import { FEED, NOTES } from "../../lib/mockData";
 import { ordinal } from "../../lib/ordinal";
 import { useShare } from "../../lib/share";
@@ -21,7 +20,6 @@ export default function Nominee() {
   if (!n) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.paper }}>
-        <FakeStatusBar />
         <NavBar back title="Back" variant="paper" onBack={() => router.back()} />
         <View style={{ padding: 24 }}>
           <Text style={{ fontFamily: fonts.body, color: colors.ink2 }}>Nominee not found.</Text>
@@ -34,7 +32,6 @@ export default function Nominee() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.paper }}>
-      <FakeStatusBar />
       <NavBar
         back
         title="Back"

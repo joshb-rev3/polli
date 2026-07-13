@@ -13,7 +13,6 @@ import { Button } from "../components/Button";
 import { Confetti } from "../components/Confetti";
 import { IconCheck, IconClose, IconShare } from "../components/Icon";
 import { NavBar } from "../components/NavBar";
-import { FakeStatusBar } from "../components/StatusBar";
 import { FEED } from "../lib/mockData";
 import { useShare } from "../lib/share";
 import { colors, fonts } from "../theme";
@@ -45,12 +44,11 @@ export default function PayComplete() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.green }}>
-      <FakeStatusBar dark />
       <NavBar
         variant="green"
         right={
           <Pressable onPress={home} style={{ padding: 8, opacity: 0.7 }}>
-            <IconClose size={22} color={colors.cream} />
+            <IconClose size={22} color={colors.green} />
           </Pressable>
         }
       />

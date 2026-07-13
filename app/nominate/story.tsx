@@ -11,7 +11,6 @@ import {
 import { Button } from "../../components/Button";
 import { IconArrow } from "../../components/Icon";
 import { NavBar } from "../../components/NavBar";
-import { FakeStatusBar } from "../../components/StatusBar";
 import { Stepper } from "../../components/Stepper";
 import { VoiceMessageComposer } from "../../components/voice/VoiceMessageComposer";
 import { CATEGORIES, INSPO } from "../../lib/mockData";
@@ -56,7 +55,6 @@ export default function Story() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.paper }}>
-      <FakeStatusBar />
       <NavBar back title="Back" variant="paper" onBack={() => router.back()} />
       <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 32 }}>
         <Stepper step={2} total={5} />

@@ -8,7 +8,6 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { Button } from "../components/Button";
 import { IconArrow } from "../components/Icon";
 import { NavBar } from "../components/NavBar";
-import { FakeStatusBar } from "../components/StatusBar";
 import { getConnectOnboardingUrl } from "../lib/stripe";
 import { supabaseConfigured } from "../lib/supabase";
 import { colors, fonts, shadows } from "../theme";
@@ -38,7 +37,6 @@ export default function OnboardConnect() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.paper }}>
-      <FakeStatusBar />
       <NavBar back title="Back" variant="paper" onBack={() => router.back()} />
       <ScrollView
         contentContainerStyle={styles.scroll}
