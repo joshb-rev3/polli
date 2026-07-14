@@ -2,9 +2,9 @@ import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { colors, fonts, shadows } from "../theme";
 import { tap } from "../lib/haptics";
-import { IconHome, IconPlus, IconProfile, IconUsers } from "./Icon";
+import { IconHome, IconPlus, IconProfile } from "./Icon";
 
-export type Tab = "home" | "discover" | "give-start" | "profile";
+export type Tab = "home" | "give-start" | "profile";
 
 interface Props {
   active: Tab;
@@ -18,12 +18,11 @@ export function TabBar({ active, onGo }: Props) {
   };
   return (
     <View style={styles.bar}>
-      <Tab icon={<IconHome color={active === "home" ? colors.green : colors.ink2} />} label="Feed" active={active === "home"} onPress={() => go("home")} />
       <Tab
-        icon={<IconUsers color={active === "discover" ? colors.green : colors.ink2} />}
-        label="Discover"
-        active={active === "discover"}
-        onPress={() => go("discover")}
+        icon={<IconHome color={active === "home" ? colors.green : colors.ink2} />}
+        label="Feed"
+        active={active === "home"}
+        onPress={() => go("home")}
       />
       <Pressable style={styles.center} onPress={() => go("give-start")}>
         <View style={[styles.fab, shadows.fab]}>

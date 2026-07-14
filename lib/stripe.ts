@@ -28,3 +28,6 @@ export async function getConnectOnboardingUrl(): Promise<string> {
   if (error) throw error;
   return (data as { url: string }).url;
 }
+
+export { fetchWallet, requestCashout } from "./wallet";
+export type { CashoutResult, WalletSummary } from "./wallet";

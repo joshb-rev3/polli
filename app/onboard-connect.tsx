@@ -46,13 +46,13 @@ export default function OnboardConnect() {
         <View style={styles.card}>
           <Text style={styles.title}>Set up your payout</Text>
           <Text style={styles.sub}>
-            You've been nominated! To receive your funds, link a debit card or bank account. We partner with
-            Stripe so your details never touch our servers.
+            To cash out your polli balance, link a debit card or bank account. We partner with Stripe so your
+            details never touch our servers.
           </Text>
           <View style={styles.bullets}>
             <Text style={styles.bullet}>• Takes under 2 minutes</Text>
             <Text style={styles.bullet}>• Stripe handles ID + bank verification</Text>
-            <Text style={styles.bullet}>• Funds arrive within 5 business days of close</Text>
+            <Text style={styles.bullet}>• Cash out anytime once you're verified</Text>
           </View>
           {err && <Text style={styles.err}>{err}</Text>}
           <Button

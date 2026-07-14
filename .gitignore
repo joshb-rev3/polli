@@ -44,3 +44,6 @@ yarn-error.*
 
 # Local Netlify folder
 .netlify
+
+# Supabase CLI local cache
+supabase/.temp/
