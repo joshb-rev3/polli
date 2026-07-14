@@ -5,7 +5,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Button } from "../../components/Button";
 import { IconHeart, IconShare } from "../../components/Icon";
 import { NavBar } from "../../components/NavBar";
-import { FEED, NOTES } from "../../lib/mockData";
+import { FEED, NOTES, hasDonatedTo } from "../../lib/mockData";
 import { ordinal } from "../../lib/ordinal";
 import { useShare } from "../../lib/share";
 import { colors, fonts } from "../../theme";
@@ -29,6 +29,7 @@ export default function Nominee() {
   }
 
   const notes = NOTES[n.id] || [];
+  const viewerHasDonated = hasDonatedTo(n.id);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.paper }}>
@@ -64,11 +65,23 @@ export default function Nominee() {
 
         <View style={styles.giverCard}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.giverBig}>{n.backers}</Text>
-            <Text style={styles.giverSub}>
-              friends have piled on.{"\n"}Be the {n.backers + 1}
-              <Text style={{ fontSize: 11 }}>{ordinal(n.backers + 1)}</Text>.
-            </Text>
+            {viewerHasDonated ? (
+              <>
+                <Text style={styles.giverBig}>{n.backers}</Text>
+                <Text style={styles.giverSub}>
+                  friends have piled on.{"\n"}Be the {n.backers + 1}
+                  <Text style={{ fontSize: 11 }}>{ordinal(n.backers + 1)}</Text>.
+                </Text>
+              </>
+            ) : (
+              <>
+                <Text style={styles.giverInvite}>Join the circle</Text>
+                <Text style={styles.giverSub}>
+                  Friends are already showing up for {n.name.split(" ")[0]}.{"\n"}
+                  Chip in $1 — no scoreboard needed.
+                </Text>
+              </>
+            )}
           </View>
           <View style={styles.divider} />
           <View style={{ alignItems: "flex-end" }}>
@@ -131,39 +144,43 @@ export default function Nominee() {
               ))}
               {notes.length > 4 && (
                 <Pressable style={styles.seeAll}>
-                  <Text style={styles.seeAllText}>See all {notes.length} notes</Text>
+                  <Text style={styles.seeAllText}>
+                    {viewerHasDonated ? `See all ${notes.length} notes` : "See more notes"}
+                  </Text>
                 </Pressable>
               )}
             </View>
           )}
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.eyebrow}>RECENT GIVERS</Text>
-          <View style={{ flexDirection: "row", alignItems: "center", marginTop: 8 }}>
-            {["M", "R", "J", "K", "L", "A", "P", "S"]
-              .slice(0, Math.min(8, n.backers))
-              .map((c, i) => (
-                <View
-                  key={i}
-                  style={[
-                    styles.giverAv,
-                    {
-                      backgroundColor: `hsl(${(i * 47) % 360}, 55%, 55%)`,
-                      marginLeft: i === 0 ? 0 : -8,
-                    },
-                  ]}
-                >
-                  <Text style={styles.giverAvText}>{c}</Text>
+        {viewerHasDonated ? (
+          <View style={styles.section}>
+            <Text style={styles.eyebrow}>RECENT GIVERS</Text>
+            <View style={{ flexDirection: "row", alignItems: "center", marginTop: 8 }}>
+              {["M", "R", "J", "K", "L", "A", "P", "S"]
+                .slice(0, Math.min(8, n.backers))
+                .map((c, i) => (
+                  <View
+                    key={i}
+                    style={[
+                      styles.giverAv,
+                      {
+                        backgroundColor: `hsl(${(i * 47) % 360}, 55%, 55%)`,
+                        marginLeft: i === 0 ? 0 : -8,
+                      },
+                    ]}
+                  >
+                    <Text style={styles.giverAvText}>{c}</Text>
+                  </View>
+                ))}
+              {n.backers > 8 && (
+                <View style={[styles.giverAv, { backgroundColor: colors.green, marginLeft: -8 }]}>
+                  <Text style={[styles.giverAvText, { fontSize: 11 }]}>+{n.backers - 8}</Text>
                 </View>
-              ))}
-            {n.backers > 8 && (
-              <View style={[styles.giverAv, { backgroundColor: colors.green, marginLeft: -8 }]}>
-                <Text style={[styles.giverAvText, { fontSize: 11 }]}>+{n.backers - 8}</Text>
-              </View>
-            )}
+              )}
+            </View>
           </View>
-        </View>
+        ) : null}
 
         <View style={styles.sageBox}>
           <Text style={styles.sageText}>
@@ -264,6 +281,13 @@ const styles = StyleSheet.create({
     color: colors.green,
     letterSpacing: -0.84,
     lineHeight: 42,
+  },
+  giverInvite: {
+    fontFamily: fonts.serifHeavy,
+    fontSize: 22,
+    color: colors.green,
+    letterSpacing: -0.4,
+    lineHeight: 26,
   },
   giverSub: {
     fontFamily: fonts.body,

@@ -4,7 +4,7 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { BzzPath } from "../../components/Bzz";
 import { FeedCard } from "../../components/FeedCard";
 import { NavBar } from "../../components/NavBar";
-import { FEED, FeedItem } from "../../lib/mockData";
+import { FEED, FeedItem, hasDonatedTo } from "../../lib/mockData";
 import { useShare } from "../../lib/share";
 import { useTone } from "../../lib/tone";
 import { colors, fonts } from "../../theme";
@@ -24,7 +24,14 @@ export default function Feed() {
       <ScrollView contentContainerStyle={styles.list}>
         <BzzPath variant="feed" size={38} delay={4} />
         {FEED.map((n) => (
-          <FeedCard key={n.id} n={n} onGive={onGive} onOpen={onOpen} onShare={onShare} />
+          <FeedCard
+            key={n.id}
+            n={n}
+            viewerHasDonated={hasDonatedTo(n.id)}
+            onGive={onGive}
+            onOpen={onOpen}
+            onShare={onShare}
+          />
         ))}
         <Text style={styles.endCap}>— {copy.feed_empty} —</Text>
       </ScrollView>

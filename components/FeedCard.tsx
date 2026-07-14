@@ -22,12 +22,13 @@ import { VoiceMessagePlayer } from "./voice/VoiceMessageComposer";
 
 interface Props {
   n: FeedItem;
+  viewerHasDonated?: boolean;
   onGive: (n: FeedItem) => void;
   onOpen: (n: FeedItem) => void;
   onShare: (n: FeedItem) => void;
 }
 
-export function FeedCard({ n, onGive, onOpen, onShare }: Props) {
+export function FeedCard({ n, viewerHasDonated = false, onGive, onOpen, onShare }: Props) {
   const [bursts, setBursts] = useState<{ id: number; x: number }[]>([]);
 
   const spawnBurst = () => {
@@ -47,8 +48,14 @@ export function FeedCard({ n, onGive, onOpen, onShare }: Props) {
           </View>
           <View style={styles.phBottom}>
             <View style={styles.bigGivers}>
-              <Text style={styles.giversBig}>{n.backers}</Text>
-              <Text style={styles.giversLbl}>friends chipped in</Text>
+              {viewerHasDonated ? (
+                <>
+                  <Text style={styles.giversBig}>{n.backers}</Text>
+                  <Text style={styles.giversLbl}>friends chipped in</Text>
+                </>
+              ) : (
+                <Text style={styles.giversLbl}>Friends are chipping in</Text>
+              )}
             </View>
           </View>
         </LinearGradient>
@@ -106,10 +113,14 @@ export function FeedCard({ n, onGive, onOpen, onShare }: Props) {
             }}
           >
             <IconHeart size={16} color={colors.green} />
-            <Text style={styles.giveBtnText}>
-              Be the {n.backers + 1}
-              <Text style={{ fontSize: 10 }}>{ordinal(n.backers + 1)}</Text>
-            </Text>
+            {viewerHasDonated ? (
+              <Text style={styles.giveBtnText}>
+                Be the {n.backers + 1}
+                <Text style={{ fontSize: 10 }}>{ordinal(n.backers + 1)}</Text>
+              </Text>
+            ) : (
+              <Text style={styles.giveBtnText}>Give $1</Text>
+            )}
           </Pressable>
           <Pressable style={styles.shareBtn} onPress={() => onShare(n)}>
             <IconShare size={14} color={colors.ink2} />

@@ -131,12 +131,16 @@ export const ME = {
   eligible: true,
 };
 
+/** Gifts the signed-in user has already made. Counts stay hidden on feed/share until then. */
 export const MY_GIVES = [
-  { id: "g1", name: "Ms. Eileen Ortega", when: "today", amount: 1.5, cat: CATEGORIES[3] },
-  { id: "g2", name: "Priya Mehta", when: "2 days ago", amount: 1.0, cat: CATEGORIES[5] },
-  { id: "g3", name: "Marcus Reyes", when: "last week", amount: 1.5, cat: CATEGORIES[4] },
-  { id: "g4", name: "Coach Bo Williams", when: "2 weeks ago", amount: 1.0, cat: CATEGORIES[0] },
+  { id: "g1", nominationId: "n1", name: "Ms. Eileen Ortega", when: "today", amount: 1.5, cat: CATEGORIES[3] },
+  { id: "g2", nominationId: "n2", name: "Marcus Reyes", when: "last week", amount: 1.5, cat: CATEGORIES[4] },
 ];
+
+/** True once the viewer has piled on — unlocks giver counts on feed & shared pages. */
+export function hasDonatedTo(nominationId: string): boolean {
+  return MY_GIVES.some((g) => g.nominationId === nominationId);
+}
 
 export const MY_NOMINATIONS = [
   {
