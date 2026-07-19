@@ -3,20 +3,30 @@ import React, { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
 import { NavBar } from "../components/NavBar";
+import { useDemoWallet } from "../lib/demoWallet";
 import { useSession } from "../lib/session";
 import { colors, fonts, shadows } from "../theme";
 
 export default function Auth() {
   const router = useRouter();
   const { signInDemo } = useSession();
+  const demoWallet = useDemoWallet();
   const [busy, setBusy] = useState<string | null>(null);
 
-  // Simulated social login for now — skip real OAuth and continue.
-  const continueAs = (provider: string, name: string) => async () => {
+  // Simulated social login — Apple unlocks the payout simulation; Google stays on the normal path.
+  const continueAs = (provider: "apple" | "google" | "facebook", name: string) => async () => {
     setBusy(provider);
     await new Promise((r) => setTimeout(r, 400));
-    signInDemo(name);
+    signInDemo(name, provider);
     setBusy(null);
+
+    if (provider === "apple") {
+      demoWallet.seedForAppleDemo();
+      router.replace("/payout");
+      return;
+    }
+
+    demoWallet.reset();
     router.replace("/(tabs)/feed");
   };
 

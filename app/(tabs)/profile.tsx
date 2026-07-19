@@ -4,6 +4,7 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from
 import { LinearGradient } from "expo-linear-gradient";
 import { NavBar } from "../../components/NavBar";
 import { IconShare } from "../../components/Icon";
+import { formatCents, useDemoWallet } from "../../lib/demoWallet";
 import { ME, MY_GIVES, MY_NOMINATIONS } from "../../lib/mockData";
 import { useSession } from "../../lib/session";
 import { useShare } from "../../lib/share";
@@ -12,26 +13,29 @@ import { fetchWallet, requestCashout, type WalletSummary } from "../../lib/walle
 import { colors, fonts } from "../../theme";
 
 function formatDollars(cents: number) {
-  return `$${(cents / 100).toFixed(cents % 100 === 0 ? 0 : 2)}`;
+  return formatCents(cents);
 }
 
 export default function Profile() {
   const router = useRouter();
   const { openShare } = useShare();
-  const { userId, name } = useSession();
+  const { userId, name, authProvider } = useSession();
+  const demoWallet = useDemoWallet();
   const [tab, setTab] = useState<"noms" | "giving">("noms");
   const [wallet, setWallet] = useState<WalletSummary | null>(null);
   const [cashoutBusy, setCashoutBusy] = useState(false);
   const [cashoutMsg, setCashoutMsg] = useState<string | null>(null);
 
+  const isAppleDemo = authProvider === "apple" && (!supabaseConfigured || userId === "local-demo-apple");
+
   const refreshWallet = useCallback(async () => {
-    if (!userId || !supabaseConfigured) {
+    if (!userId || !supabaseConfigured || isAppleDemo) {
       setWallet(null);
       return;
     }
     const w = await fetchWallet(userId);
     setWallet(w);
-  }, [userId]);
+  }, [userId, isAppleDemo]);
 
   useFocusEffect(
     useCallback(() => {
@@ -64,9 +68,15 @@ export default function Profile() {
   };
 
   const displayName = name ?? ME.name;
-  const receivedDisplay = wallet
-    ? formatDollars(wallet.lifetimeReceivedCents)
-    : `$${ME.received}`;
+  const demoBalance = demoWallet.balanceCents;
+  const receivedDisplay = isAppleDemo
+    ? formatDollars(demoWallet.lifetimeReceivedCents)
+    : wallet
+      ? formatDollars(wallet.lifetimeReceivedCents)
+      : `$${ME.received}`;
+
+  const showLiveBalance = Boolean(supabaseConfigured && userId && !isAppleDemo);
+  const showDemoBalance = isAppleDemo;
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.green }}>
@@ -94,7 +104,7 @@ export default function Profile() {
           </View>
         </View>
 
-        {supabaseConfigured && userId && (
+        {showLiveBalance && (
           <View style={styles.balanceCard}>
             <View style={{ flex: 1 }}>
               <Text style={styles.balanceLabel}>Available to cash out</Text>
@@ -120,6 +130,39 @@ export default function Profile() {
                 </Text>
               )}
             </Pressable>
+          </View>
+        )}
+
+        {showDemoBalance && (
+          <View style={styles.balanceCard}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.balanceLabel}>
+                {demoBalance > 0 ? "Available to use" : "Balance"}
+              </Text>
+              <Text style={styles.balanceValue}>{formatDollars(demoBalance)}</Text>
+              {demoWallet.lastMethod && demoBalance === 0 && (
+                <Text style={styles.demoHint}>
+                  {demoWallet.lastMethod === "giftcard"
+                    ? `${formatDollars(demoWallet.lastAmountCents)} ${demoWallet.lastBrand} card redeemed`
+                    : `${formatDollars(demoWallet.lastAmountCents)} cashed out`}
+                </Text>
+              )}
+            </View>
+            {demoBalance >= 100 ? (
+              <Pressable style={styles.cashoutBtn} onPress={() => router.push("/payout")}>
+                <Text style={styles.cashoutBtnText}>Use balance</Text>
+              </Pressable>
+            ) : demoBalance === 0 && !demoWallet.lastMethod ? (
+              <Pressable
+                style={styles.cashoutBtn}
+                onPress={() => {
+                  demoWallet.seedForAppleDemo();
+                  router.push("/payout");
+                }}
+              >
+                <Text style={styles.cashoutBtnText}>Simulate receive</Text>
+              </Pressable>
+            ) : null}
           </View>
         )}
         {cashoutMsg && <Text style={styles.cashoutMsg}>{cashoutMsg}</Text>}
@@ -282,6 +325,13 @@ const styles = StyleSheet.create({
     fontSize: 28,
     color: colors.marigold,
     marginTop: 2,
+  },
+  demoHint: {
+    fontFamily: fonts.body,
+    fontSize: 12,
+    color: colors.cream,
+    opacity: 0.7,
+    marginTop: 4,
   },
   cashoutBtn: {
     paddingHorizontal: 16,

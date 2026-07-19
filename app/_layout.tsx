@@ -25,6 +25,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { NominationProvider } from "../lib/nomination";
 import { SessionProvider } from "../lib/session";
+import { DemoWalletProvider } from "../lib/demoWallet";
 import { ShareProvider } from "../lib/share";
 import { ToneProvider } from "../lib/tone";
 
@@ -59,19 +60,21 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <StripeProviderShim publishableKey={STRIPE_PK}>
           <SessionProvider>
-            <ToneProvider>
-              <NominationProvider>
-                <ShareProvider>
-                  <Stack
-                    screenOptions={{
-                      headerShown: false,
-                      animation: "slide_from_right",
-                      contentStyle: { backgroundColor: "#F8F9F4" },
-                    }}
-                  />
-                </ShareProvider>
-              </NominationProvider>
-            </ToneProvider>
+            <DemoWalletProvider>
+              <ToneProvider>
+                <NominationProvider>
+                  <ShareProvider>
+                    <Stack
+                      screenOptions={{
+                        headerShown: false,
+                        animation: "slide_from_right",
+                        contentStyle: { backgroundColor: "#F8F9F4" },
+                      }}
+                    />
+                  </ShareProvider>
+                </NominationProvider>
+              </ToneProvider>
+            </DemoWalletProvider>
           </SessionProvider>
         </StripeProviderShim>
       </SafeAreaProvider>

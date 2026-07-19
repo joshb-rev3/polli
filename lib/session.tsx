@@ -7,21 +7,26 @@ import { supabase, supabaseConfigured } from "./supabase";
 
 WebBrowser.maybeCompleteAuthSession();
 
+export type AuthProvider = "apple" | "google" | "facebook" | null;
+
 interface Session {
   userId: string | null;
   name: string | null;
+  authProvider: AuthProvider;
   eligible: boolean;
   loading: boolean;
   signInWithApple: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signInWithFacebook: () => Promise<void>;
-  signInDemo: (name: string) => void; // fallback when Supabase not configured
+  /** Demo/local sign-in. Pass provider so Apple can unlock the payout simulation. */
+  signInDemo: (name: string, provider?: AuthProvider) => void;
   signOut: () => Promise<void>;
 }
 
 const SessionContext = createContext<Session>({
   userId: null,
   name: null,
+  authProvider: null,
   eligible: false,
   loading: true,
   signInWithApple: async () => {},
@@ -36,6 +41,7 @@ const redirectTo = AuthSession.makeRedirectUri({ scheme: "polli" });
 export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [userId, setUserId] = useState<string | null>(null);
   const [name, setName] = useState<string | null>(null);
+  const [authProvider, setAuthProvider] = useState<AuthProvider>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -77,7 +83,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithApple = async () => {
     if (!supabaseConfigured || Platform.OS !== "ios") {
-      return signInDemo("Apple User");
+      return signInDemo("Apple User", "apple");
     }
     try {
       const cred = await AppleAuthentication.signInAsync({
@@ -92,6 +98,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
           token: cred.identityToken,
         });
         if (error) throw error;
+        setAuthProvider("apple");
       }
     } catch (e: any) {
       console.warn("Apple sign-in failed:", e?.message);
@@ -100,7 +107,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithOAuth = async (provider: "google" | "facebook") => {
     if (!supabaseConfigured) {
-      return signInDemo(`${provider} User`);
+      return signInDemo(`${provider} User`, provider);
     }
     const { data } = await supabase.auth.signInWithOAuth({
       provider,
@@ -114,18 +121,21 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     const refresh = url.searchParams.get("refresh_token") || new URLSearchParams(url.hash.slice(1)).get("refresh_token");
     if (access && refresh) {
       await supabase.auth.setSession({ access_token: access, refresh_token: refresh });
+      setAuthProvider(provider);
     }
   };
 
-  const signInDemo = (n: string) => {
-    setUserId("local-demo");
+  const signInDemo = (n: string, provider: AuthProvider = null) => {
+    setUserId(provider === "apple" ? "local-demo-apple" : "local-demo");
     setName(n);
+    setAuthProvider(provider);
   };
 
   const signOut = async () => {
     if (supabaseConfigured) await supabase.auth.signOut();
     setUserId(null);
     setName(null);
+    setAuthProvider(null);
   };
 
   return (
@@ -133,6 +143,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       value={{
         userId,
         name,
+        authProvider,
         eligible: Boolean(userId),
         loading,
         signInWithApple,
