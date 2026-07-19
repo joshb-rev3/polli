@@ -153,6 +153,8 @@ Site settings → **Environment variables** → add these for **Production** (an
 | `EXPO_PUBLIC_SUPABASE_ANON_KEY` | `eyJ…` or `sb_publishable_…` | Anon / publishable key only |
 | `EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY` | `pk_test_…` | Optional until checkout on web |
 
+Do **not** mark these as “Contains secret values” in Netlify — they are public by design (`EXPO_PUBLIC_*` is inlined into the JS bundle). `netlify.toml` already sets `SECRETS_SCAN_OMIT_KEYS` for them. Never put `sk_…`, service-role, or webhook secrets in Netlify.
+
 Do **not** add `ASSEMBLYAI_API_KEY` to Netlify — it belongs in Supabase secrets only.
 
 Redeploy after changing env vars (Expo bakes `EXPO_PUBLIC_*` into the bundle at build time).

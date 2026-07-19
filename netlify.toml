@@ -4,6 +4,9 @@
 
 [build.environment]
   NODE_VERSION = "20"
+  # These EXPO_PUBLIC_* values are intentionally baked into the client bundle
+  # (Supabase URL/anon + Stripe publishable). Omit them from Netlify secret scanning.
+  SECRETS_SCAN_OMIT_KEYS = "EXPO_PUBLIC_SUPABASE_URL,EXPO_PUBLIC_SUPABASE_ANON_KEY,EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY"
 
 # Expo Router (SPA) — client-side routes need index.html fallback.
 [[redirects]]
