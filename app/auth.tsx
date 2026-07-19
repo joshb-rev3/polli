@@ -5,29 +5,49 @@ import Svg, { Path } from "react-native-svg";
 import { NavBar } from "../components/NavBar";
 import { useDemoWallet } from "../lib/demoWallet";
 import { useSession } from "../lib/session";
+import { supabase, supabaseConfigured } from "../lib/supabase";
 import { colors, fonts, shadows } from "../theme";
 
 export default function Auth() {
   const router = useRouter();
-  const { signInDemo } = useSession();
+  const { signInDemo, signInWithApple, signInWithGoogle, signInWithFacebook } = useSession();
   const demoWallet = useDemoWallet();
   const [busy, setBusy] = useState<string | null>(null);
 
-  // Simulated social login — Apple unlocks the payout simulation; Google stays on the normal path.
   const continueAs = (provider: "apple" | "google" | "facebook", name: string) => async () => {
     setBusy(provider);
-    await new Promise((r) => setTimeout(r, 400));
-    signInDemo(name, provider);
-    setBusy(null);
+    try {
+      if (supabaseConfigured) {
+        if (provider === "apple") await signInWithApple();
+        else if (provider === "google") await signInWithGoogle();
+        else await signInWithFacebook();
 
-    if (provider === "apple") {
-      demoWallet.seedForAppleDemo();
-      router.replace("/payout");
-      return;
+        const { data } = await supabase.auth.getSession();
+        if (!data.session && provider !== "apple") {
+          throw new Error("No session after sign-in. Add this app URL to Supabase Auth → Redirect URLs.");
+        }
+        if (!data.session && provider === "apple") {
+          signInDemo(name, "apple");
+        }
+      } else {
+        await new Promise((r) => setTimeout(r, 400));
+        signInDemo(name, provider);
+      }
+
+      if (provider === "apple") {
+        demoWallet.seedForAppleDemo();
+        router.replace("/payout");
+        return;
+      }
+
+      demoWallet.reset();
+      router.replace("/(tabs)/feed");
+    } catch (e: any) {
+      console.warn("Auth failed:", e?.message);
+      alert(e?.message ?? "Sign-in failed");
+    } finally {
+      setBusy(null);
     }
-
-    demoWallet.reset();
-    router.replace("/(tabs)/feed");
   };
 
   return (
@@ -36,7 +56,11 @@ export default function Auth() {
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.card}>
           <Text style={styles.title}>Give kindness today.</Text>
-          <Text style={styles.sub}>Create your polli account</Text>
+          <Text style={styles.sub}>
+            {supabaseConfigured
+              ? "Sign in to give — Stripe test mode is ready when keys are set."
+              : "Create your polli account"}
+          </Text>
           <View style={styles.authBtns}>
             <Pressable
               style={[styles.authBtn, styles.authBtnDark]}
@@ -69,6 +93,11 @@ export default function Auth() {
               </Text>
             </Pressable>
           </View>
+          {!supabaseConfigured && (
+            <Text style={styles.hint}>
+              Demo mode — add real EXPO_PUBLIC_SUPABASE_* keys to .env to hit Stripe sandbox.
+            </Text>
+          )}
           <Text style={styles.fine}>
             By continuing, you agree to our Terms and acknowledge our Privacy Policy.
           </Text>
@@ -159,6 +188,13 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bodySemi,
     fontSize: 15,
     color: colors.ink,
+  },
+  hint: {
+    fontFamily: fonts.body,
+    fontSize: 12,
+    color: colors.ink2,
+    textAlign: "center",
+    lineHeight: 17,
   },
   fine: {
     fontFamily: fonts.body,

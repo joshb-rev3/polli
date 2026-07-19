@@ -2,6 +2,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   Alert,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -15,15 +16,17 @@ import { NavBar } from "../components/NavBar";
 import { success } from "../lib/haptics";
 import { FEED, QUICK_NOTES } from "../lib/mockData";
 import { payWithStripe } from "../lib/paymentSheet";
-import { supabaseConfigured } from "../lib/supabase";
+import { ensureSandboxNomination } from "../lib/sandboxNomination";
+import { useSession } from "../lib/session";
+import { stripeConfigured, supabaseConfigured } from "../lib/supabase";
 import { colors, fonts, shadows } from "../theme";
 
 export default function Checkout() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { userId } = useSession();
   const n = FEED.find((f) => f.id === id);
 
-  const [method, setMethod] = useState<"apple" | "card" | "paypal">("apple");
   const [coverFees, setCoverFees] = useState(true);
   const [note, setNote] = useState("");
   const [anon, setAnon] = useState(false);
@@ -50,8 +53,9 @@ export default function Checkout() {
   const pay = async () => {
     setLoading(true);
     try {
-      // Dev/simulator mode: no Supabase → simulated checkout so the flow still exits correctly.
+      // Offline / placeholder env → simulated checkout
       if (!supabaseConfigured) {
+        console.warn("[checkout] simulating — supabase not configured");
         setTimeout(() => {
           setLoading(false);
           finish();
@@ -59,14 +63,34 @@ export default function Checkout() {
         return;
       }
 
+      if (!stripeConfigured) {
+        setLoading(false);
+        Alert.alert(
+          "Stripe not configured",
+          "Add EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_… to .env and restart Expo.",
+        );
+        return;
+      }
+
+      if (!userId || userId.startsWith("local-demo")) {
+        setLoading(false);
+        Alert.alert(
+          "Sign in required",
+          "Use Continue with Google so you have a real Supabase session, then try again.",
+        );
+        return;
+      }
+
+      const nominationId = await ensureSandboxNomination(n!);
       const result = await payWithStripe({
-        nominationId: n!.id,
+        nominationId,
         coverFees,
         note: note.trim() || undefined,
         anonymous: anon,
       });
       setLoading(false);
-      if (result === "succeeded") finish();
+      // On web, payWithStripe redirects to Stripe — finish() happens on return via pay-complete
+      if (result === "succeeded" && Platform.OS !== "web") finish();
     } catch (e: any) {
       setLoading(false);
       Alert.alert("Payment failed", e?.message ?? "Please try again.");
@@ -155,33 +179,6 @@ export default function Checkout() {
             </View>
           </Pressable>
 
-          <Text style={[styles.eyebrow, { marginTop: 22, marginBottom: 10 }]}>PAYMENT METHOD</Text>
-          {[
-            { id: "apple", l: "Apple Pay", s: "•••• 4242", color: "#000", mark: "" },
-            { id: "card", l: "Card", s: "Visa •••• 8109", color: "#1A1F71", mark: "VISA" },
-            { id: "paypal", l: "PayPal", s: "you@email.com", color: "#003087", mark: "PP" },
-          ].map((o) => {
-            const active = method === o.id;
-            return (
-              <Pressable
-                key={o.id}
-                onPress={() => setMethod(o.id as any)}
-                style={[styles.payRow, active && styles.payRowActive]}
-              >
-                <View style={[styles.payMark, { backgroundColor: o.color }]}>
-                  <Text style={styles.payMarkText}>{o.mark}</Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.payTitle}>{o.l}</Text>
-                  <Text style={styles.paySub}>{o.s}</Text>
-                </View>
-                <View style={[styles.radio, active && { backgroundColor: colors.green, borderColor: colors.green }]}>
-                  {active && <IconCheck size={12} color="#fff" />}
-                </View>
-              </Pressable>
-            );
-          })}
-
           <View style={styles.summary}>
             <Row label="Your $1 gift" value="$1.00" />
             {coverFees && <Row label="Processing & platform" value="$0.43" />}
@@ -191,18 +188,19 @@ export default function Checkout() {
           </View>
 
           <Text style={styles.fine}>
-            Payments securely processed by <Text style={{ fontFamily: fonts.bodyBold }}>Stripe</Text>.
+            You'll choose how to pay on the next screen — securely handled by{" "}
+            <Text style={{ fontFamily: fonts.bodyBold }}>Stripe</Text>.
           </Text>
         </View>
       </ScrollView>
       <View style={styles.sticky}>
         <Button
           full
-          label={loading ? "Processing…" : `Pay $${total.toFixed(2)}`}
-          variant={method === "apple" ? "dark" : "dark"}
+          label={loading ? "Opening Stripe…" : `Pay $${total.toFixed(2)}`}
+          variant="dark"
           disabled={loading}
           onPress={pay}
-          style={method === "apple" ? { backgroundColor: "#000" } : { backgroundColor: colors.green }}
+          style={{ backgroundColor: colors.green }}
         />
       </View>
     </View>
@@ -407,54 +405,6 @@ const styles = StyleSheet.create({
     color: colors.ink2,
     marginTop: 4,
     lineHeight: 17,
-  },
-  payRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    padding: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.line2,
-    backgroundColor: "#fff",
-    marginBottom: 8,
-  },
-  payRowActive: {
-    borderColor: colors.green,
-    borderWidth: 1.5,
-    backgroundColor: "rgba(83,162,104,0.08)",
-  },
-  payMark: {
-    width: 36,
-    height: 24,
-    borderRadius: 6,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  payMarkText: {
-    color: "#fff",
-    fontFamily: fonts.bodyExtra,
-    fontSize: 10,
-  },
-  payTitle: {
-    fontFamily: fonts.bodySemi,
-    fontSize: 14,
-    color: colors.ink,
-  },
-  paySub: {
-    fontFamily: fonts.body,
-    fontSize: 12,
-    color: colors.ink2,
-  },
-  radio: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 1.5,
-    borderColor: colors.line2,
-    backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
   },
   summary: {
     marginTop: 18,

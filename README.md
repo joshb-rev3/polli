@@ -41,6 +41,10 @@ npm run android
 
 > **Note:** Stripe's React Native SDK and Apple Authentication can't run under Expo Go. For full-fidelity dev, create a dev client build: `eas build --profile development --platform ios` (or android), install it once on your device, then `npm start` will hot-reload into it.
 
+### Stripe sandbox (test mode)
+
+See [docs/stripe-sandbox.md](docs/stripe-sandbox.md) for wiring Polli to Stripe **test** keys + your Supabase project (no live charges). Summary: put `pk_test_…` in `.env`, set `sk_test_…` as Supabase secrets, deploy payment functions, then sign in with Google and donate with card `4242…`.
+
 ## Backend setup (Supabase)
 
 ### 1. Create a project

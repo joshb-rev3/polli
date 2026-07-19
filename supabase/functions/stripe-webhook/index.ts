@@ -25,6 +25,9 @@ Deno.serve(async (req) => {
 
   try {
     switch (event.type) {
+      case "checkout.session.completed":
+        await onCheckoutCompleted(admin, event.data.object as Stripe.Checkout.Session);
+        break;
       case "payment_intent.succeeded":
         await onPaymentSucceeded(admin, event.data.object as Stripe.PaymentIntent);
         break;
@@ -48,15 +51,87 @@ Deno.serve(async (req) => {
   return new Response("ok", { status: 200 });
 });
 
+async function onCheckoutCompleted(
+  admin: ReturnType<typeof adminClient>,
+  session: Stripe.Checkout.Session,
+) {
+  const donationId = session.metadata?.donation_id || session.client_reference_id;
+  if (!donationId) {
+    console.error(`checkout.session.completed missing donation_id: ${session.id}`);
+    return;
+  }
+
+  const pi =
+    typeof session.payment_intent === "string"
+      ? session.payment_intent
+      : session.payment_intent?.id;
+
+  if (pi) {
+    await admin
+      .from("donations")
+      .update({ stripe_payment_intent_id: pi })
+      .eq("id", donationId)
+      .is("stripe_payment_intent_id", null);
+  }
+
+  const { data: donation } = await admin
+    .from("donations")
+    .select("id, status")
+    .eq("id", donationId)
+    .maybeSingle();
+
+  if (!donation) {
+    console.error(`no donation for checkout session ${session.id}`);
+    return;
+  }
+  if (donation.status === "succeeded") return;
+
+  const { data: result, error } = await admin.rpc("complete_donation", {
+    p_donation_id: donation.id,
+  });
+  if (error) throw error;
+  if (result && result.ok === false) {
+    console.error(`complete_donation rejected for ${donation.id}:`, result);
+    if (result.error === "annual_cap_exceeded") {
+      await admin
+        .from("donations")
+        .update({ failure_reason: "annual_cap_exceeded_post_capture" })
+        .eq("id", donation.id);
+      return;
+    }
+    throw new Error(`complete_donation rejected: ${result.error}`);
+  }
+}
+
 async function onPaymentSucceeded(
   admin: ReturnType<typeof adminClient>,
   pi: Stripe.PaymentIntent,
 ) {
-  const { data: donation } = await admin
+  // Prefer lookup by PI id; fall back to metadata.donation_id (Checkout flow)
+  let donation: { id: string; status: string } | null = null;
+
+  const byPi = await admin
     .from("donations")
     .select("id, status")
     .eq("stripe_payment_intent_id", pi.id)
     .maybeSingle();
+  donation = byPi.data;
+
+  if (!donation && pi.metadata?.donation_id) {
+    const byMeta = await admin
+      .from("donations")
+      .select("id, status")
+      .eq("id", pi.metadata.donation_id)
+      .maybeSingle();
+    donation = byMeta.data;
+    if (donation) {
+      await admin
+        .from("donations")
+        .update({ stripe_payment_intent_id: pi.id })
+        .eq("id", donation.id)
+        .is("stripe_payment_intent_id", null);
+    }
+  }
 
   if (!donation) {
     console.error(`no donation for payment_intent ${pi.id}`);

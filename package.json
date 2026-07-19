@@ -7,7 +7,9 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "build:web": "expo export -p web"
+    "build:web": "expo export -p web",
+    "db:push": "npx supabase db push",
+    "functions:deploy:stripe": "npx supabase functions deploy create-payment-intent && npx supabase functions deploy create-checkout-session && npx supabase functions deploy stripe-webhook && npx supabase functions deploy sandbox-ensure-nomination && npx supabase functions deploy connect-onboard && npx supabase functions deploy request-cashout"
   },
   "dependencies": {
     "@expo-google-fonts/figtree": "^0.4.1",

@@ -31,7 +31,8 @@ import { ToneProvider } from "../lib/tone";
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
-const STRIPE_PK = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || "pk_test_placeholder";
+const STRIPE_PK =
+  process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || "pk_test_placeholder";
 
 export default function RootLayout() {
   const [loaded] = useFonts({

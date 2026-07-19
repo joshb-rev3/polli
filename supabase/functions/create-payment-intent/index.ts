@@ -24,10 +24,33 @@ Deno.serve(async (req) => {
     const user = await userFromAuthHeader(req);
     if (!user) return jsonErr(401, "unauthorized");
 
+    const admin = adminClient();
+
+    // Ensure public.users row exists (trigger may lag on first sign-in)
+    await admin.from("users").upsert(
+      {
+        id: user.id,
+        email: user.email ?? null,
+        display_name:
+          (user.user_metadata?.full_name as string) ||
+          (user.user_metadata?.name as string) ||
+          user.email?.split("@")[0] ||
+          null,
+        first_name:
+          (user.user_metadata?.first_name as string) ||
+          String(user.user_metadata?.full_name || user.user_metadata?.name || "").split(" ")[0] ||
+          null,
+      },
+      { onConflict: "id" },
+    );
+    try {
+      await admin.rpc("ensure_wallet", { p_user_id: user.id });
+    } catch {
+      // wallet may already exist; donations still proceed
+    }
+
     const { nominationId, coverFees = true, note, anonymous = false } = await req.json();
     if (!nominationId) return jsonErr(400, "nominationId required");
-
-    const admin = adminClient();
 
     const { data: nom, error: nomErr } = await admin
       .from("nominations")

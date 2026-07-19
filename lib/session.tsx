@@ -109,20 +109,45 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     if (!supabaseConfigured) {
       return signInDemo(`${provider} User`, provider);
     }
-    const { data } = await supabase.auth.signInWithOAuth({
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider,
-      options: { redirectTo, skipBrowserRedirect: true },
+      options: {
+        redirectTo,
+        skipBrowserRedirect: true,
+        queryParams: { prompt: "select_account" },
+      },
     });
-    if (!data?.url) return;
+    if (error) throw error;
+    if (!data?.url) throw new Error("No OAuth URL returned from Supabase");
+
     const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
-    if (result.type !== "success") return;
-    const url = new URL(result.url);
-    const access = url.searchParams.get("access_token") || new URLSearchParams(url.hash.slice(1)).get("access_token");
-    const refresh = url.searchParams.get("refresh_token") || new URLSearchParams(url.hash.slice(1)).get("refresh_token");
-    if (access && refresh) {
-      await supabase.auth.setSession({ access_token: access, refresh_token: refresh });
-      setAuthProvider(provider);
+    if (result.type !== "success" || !("url" in result) || !result.url) {
+      throw new Error("Sign-in was cancelled");
     }
+
+    const url = new URL(result.url);
+    const code = url.searchParams.get("code");
+    if (code) {
+      const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+      if (exchangeError) throw exchangeError;
+      setAuthProvider(provider);
+      return;
+    }
+
+    const hash = new URLSearchParams(url.hash.replace(/^#/, ""));
+    const access = url.searchParams.get("access_token") || hash.get("access_token");
+    const refresh = url.searchParams.get("refresh_token") || hash.get("refresh_token");
+    if (access && refresh) {
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: access,
+        refresh_token: refresh,
+      });
+      if (sessionError) throw sessionError;
+      setAuthProvider(provider);
+      return;
+    }
+
+    throw new Error("Sign-in completed but no session tokens were returned. Check redirect URLs in Supabase Auth settings.");
   };
 
   const signInDemo = (n: string, provider: AuthProvider = null) => {
