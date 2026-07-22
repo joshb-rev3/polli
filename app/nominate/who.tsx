@@ -40,7 +40,7 @@ export default function Who() {
                 value={draft.first}
                 onChangeText={(t) => set({ first: t })}
                 placeholder="Josh"
-                placeholderTextColor={colors.ink2}
+                placeholderTextColor={colors.inkMuted}
                 style={styles.input}
               />
             </Field>
@@ -49,7 +49,7 @@ export default function Who() {
                 value={draft.last}
                 onChangeText={(t) => set({ last: t })}
                 placeholder="Bauer"
-                placeholderTextColor={colors.ink2}
+                placeholderTextColor={colors.inkMuted}
                 style={styles.input}
               />
             </Field>
@@ -72,7 +72,7 @@ export default function Who() {
                   value={draft.contact}
                   onChangeText={(t) => set({ contact: t })}
                   placeholder={draft.notify === "phone" ? "(555) 123-4567" : "them@example.com"}
-                  placeholderTextColor={colors.ink2}
+                  placeholderTextColor={colors.inkMuted}
                   keyboardType={draft.notify === "phone" ? "phone-pad" : "email-address"}
                   autoCapitalize="none"
                   style={styles.input}

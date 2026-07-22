@@ -137,7 +137,7 @@ export default function Checkout() {
               onChangeText={(t) => setNote(t.slice(0, MAX))}
               onFocus={() => setNoteOpen(true)}
               placeholder={`Say something nice to ${firstName}…`}
-              placeholderTextColor={colors.ink2}
+              placeholderTextColor={colors.inkMuted}
               multiline
               style={[
                 styles.textarea,

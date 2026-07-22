@@ -4,6 +4,8 @@ export const colors = {
   white: "#FFFFFF",
   ink: "#19191B",
   ink2: "#3A3A3E",
+  /** Placeholder / hint text — lighter than ink2 so empty fields don't look filled */
+  inkMuted: "rgba(25, 25, 27, 0.38)",
   green: "#1B4D3E",
   green2: "#1E4136",
   green3: "#0F3D2F",

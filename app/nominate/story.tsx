@@ -96,7 +96,7 @@ export default function Story() {
                   value={draft.story}
                   onChangeText={(t) => set({ story: t.slice(0, MAX) })}
                   placeholder={copy.story_prompt(draft.first)}
-                  placeholderTextColor={colors.ink2}
+                  placeholderTextColor={colors.inkMuted}
                   multiline
                   style={styles.textarea}
                 />
