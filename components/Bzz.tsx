@@ -435,11 +435,11 @@ export function BzzPath({ variant, size = 46, delay = 0, style }: BzzPathProps) 
       };
     }
     if (variant === "feed") {
-      // Drift left-to-right
+      // Drift left-to-right within the feed flight lane
       return {
         transform: [
-          { translateX: -60 + p * 460 },
-          { translateY: Math.sin(p * Math.PI * 3) * 14 },
+          { translateX: -40 + p * 360 },
+          { translateY: 2 + Math.sin(p * Math.PI * 3) * 8 },
         ],
         opacity: p < 0.08 ? p * 12 : p > 0.92 ? (1 - p) * 12 : 1,
       };
@@ -469,7 +469,7 @@ export function BzzPath({ variant, size = 46, delay = 0, style }: BzzPathProps) 
     <Animated.View
       pointerEvents="none"
       style={[
-        { position: "absolute", top: 0, left: 0, zIndex: 5 },
+        { position: "absolute", top: 0, left: 0, zIndex: 20, elevation: 20 },
         animStyle,
         style,
       ]}

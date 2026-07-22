@@ -8,7 +8,7 @@ import Animated, {
 import { colors, fonts } from "../theme";
 import { tap } from "../lib/haptics";
 
-type Variant = "primary" | "ghost" | "dark" | "danger" | "marigold";
+type Variant = "primary" | "secondary" | "ghost" | "dark" | "danger" | "marigold";
 type Size = "default" | "sm";
 
 interface Props {
@@ -80,6 +80,15 @@ const VARIANTS: Record<Variant, { container: ViewStyle; text: any }> = {
   primary: {
     container: {
       backgroundColor: colors.marigold,
+    },
+    text: { color: colors.green },
+  },
+  /** Quieter give / support action — doesn’t compete with Start a Polli */
+  secondary: {
+    container: {
+      backgroundColor: "#E8F0EA",
+      borderWidth: 1.5,
+      borderColor: colors.green,
     },
     text: { color: colors.green },
   },

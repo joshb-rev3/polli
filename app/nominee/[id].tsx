@@ -152,6 +152,7 @@ export default function Nominee() {
         ) : (
           <Button
             full
+            variant="secondary"
             label={`Send $1 to ${first}`}
             icon={<IconHeart size={16} color={colors.green} />}
             onPress={() => router.push({ pathname: "/checkout", params: { id: n.id } })}
@@ -164,19 +165,19 @@ export default function Nominee() {
 
 const styles = StyleSheet.create({
   scroll: {
-    padding: 20,
-    paddingBottom: 40,
+    padding: 16,
+    paddingBottom: 32,
   },
   headerCard: {
-    marginTop: 4,
-    padding: 18,
+    marginTop: 0,
+    padding: 14,
     backgroundColor: colors.cream,
-    borderRadius: 16,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: colors.line2,
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
+    gap: 12,
   },
   headerText: {
     flex: 1,
@@ -198,13 +199,13 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     fontSize: 13,
     color: colors.ink2,
-    marginTop: 8,
+    marginTop: 6,
     lineHeight: 19,
   },
   typeEmoji: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
+    width: 52,
+    height: 52,
+    borderRadius: 14,
     backgroundColor: "#fff",
     borderWidth: 1,
     borderColor: colors.line2,
@@ -215,7 +216,7 @@ const styles = StyleSheet.create({
     fontSize: 28,
   },
   metaRow: {
-    marginTop: 14,
+    marginTop: 12,
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
@@ -233,14 +234,14 @@ const styles = StyleSheet.create({
     color: colors.ink2,
   },
   section: {
-    marginTop: 22,
+    marginTop: 18,
   },
   eyebrow: {
     fontFamily: fonts.bodyBold,
     fontSize: 11,
     color: colors.ink2,
     letterSpacing: 0.88,
-    marginBottom: 8,
+    marginBottom: 6,
   },
   nominator: {
     flexDirection: "row",
@@ -266,7 +267,7 @@ const styles = StyleSheet.create({
     color: colors.ink,
   },
   story: {
-    marginTop: 12,
+    marginTop: 10,
     fontFamily: fonts.serif,
     fontSize: 17,
     lineHeight: 26,
@@ -276,7 +277,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     fontSize: 12,
     color: colors.ink2,
-    marginTop: 10,
+    marginTop: 8,
   },
   myNote: {
     marginTop: 4,
@@ -284,7 +285,7 @@ const styles = StyleSheet.create({
     fontSize: 17,
     lineHeight: 26,
     color: colors.ink,
-    padding: 16,
+    padding: 14,
     backgroundColor: colors.blossomSoft,
     borderRadius: 12,
     borderWidth: 1,
@@ -305,8 +306,8 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   sageBox: {
-    marginTop: 20,
-    padding: 14,
+    marginTop: 16,
+    padding: 12,
     backgroundColor: colors.sageSoft,
     borderWidth: 1,
     borderColor: "rgba(83,162,104,0.4)",
@@ -334,15 +335,15 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   sticky: {
-    padding: 16,
-    paddingBottom: 24,
+    padding: 14,
+    paddingBottom: 20,
     backgroundColor: colors.paper,
     borderTopWidth: 1,
     borderTopColor: colors.line,
   },
   stickyThanks: {
-    backgroundColor: "#E8F0EA",
-    borderTopColor: "rgba(83,162,104,0.25)",
+    backgroundColor: "rgba(83,162,104,0.08)",
+    borderTopColor: "rgba(83,162,104,0.18)",
   },
   thanksBox: {
     flexDirection: "row",

@@ -20,38 +20,48 @@ export default function Feed() {
   const onShare = (n: FeedItem) => openShare({ name: n.name });
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.green }}>
-      <NavBar variant="green" />
-      <ScrollView contentContainerStyle={styles.list}>
-        <View style={styles.intro}>
-          <View style={styles.introText}>
-            <Text style={styles.introTitle}>Your garden</Text>
-            <Text style={styles.introSub}>
-              Pollis you've started or supported — small gifts growing into something meaningful.
-            </Text>
-          </View>
+    <View style={{ flex: 1, backgroundColor: colors.paper }}>
+      <NavBar
+        variant="paper"
+        right={
           <Pressable
             style={styles.nominateBtn}
             onPress={() => router.push("/nominate/who")}
             accessibilityRole="button"
-            accessibilityLabel="Nominate"
+            accessibilityLabel="Start a Polli"
           >
-            <IconPlus size={22} color={colors.green} />
-            <Text style={styles.nominateBtnText}>Nominate</Text>
+            <IconPlus size={16} color={colors.green} />
+            <Text style={styles.nominateBtnText}>Start a Polli</Text>
           </Pressable>
+        }
+      />
+      <ScrollView contentContainerStyle={styles.list}>
+        <View style={styles.intro}>
+          <Text style={styles.introTitle}>Your garden</Text>
+          <Text style={styles.introSub}>
+            Pollis you've started or supported — small gifts growing into something meaningful.
+          </Text>
         </View>
 
-        <BzzPath variant="feed" size={38} delay={4} />
-        {FEED.map((n) => (
-          <FeedCard
-            key={n.id}
-            n={n}
-            viewerHasDonated={hasDonatedTo(n.id)}
-            onGive={onGive}
-            onOpen={onOpen}
-            onShare={onShare}
-          />
-        ))}
+        <View style={styles.beeLane} pointerEvents="none" collapsable={false}>
+          <BzzPath variant="feed" size={36} delay={4} />
+        </View>
+
+        <View style={styles.feedStack}>
+          {FEED.map((n, i) => (
+            <View key={n.id}>
+              {i > 0 ? <View style={styles.separator} /> : null}
+              <FeedCard
+                n={n}
+                viewerHasDonated={hasDonatedTo(n.id)}
+                onGive={onGive}
+                onOpen={onOpen}
+                onShare={onShare}
+              />
+            </View>
+          ))}
+        </View>
+
         <Text style={styles.endCap}>— {copy.feed_empty} —</Text>
       </ScrollView>
     </View>
@@ -59,56 +69,70 @@ export default function Feed() {
 }
 
 const styles = StyleSheet.create({
-  list: {
-    padding: 14,
-    paddingBottom: 40,
-    gap: 18,
-    backgroundColor: colors.green,
-    minHeight: "100%",
-  },
-  intro: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 12,
-    paddingHorizontal: 4,
-    paddingTop: 4,
-  },
-  introText: {
-    flex: 1,
-    minWidth: 0,
-  },
-  introTitle: {
-    fontFamily: fonts.serifBold,
-    fontSize: 22,
-    color: colors.cream,
-    lineHeight: 26,
-  },
-  introSub: {
-    fontFamily: fonts.body,
-    fontSize: 13,
-    color: "rgba(243,233,220,0.78)",
-    marginTop: 4,
-    lineHeight: 18,
-  },
   nominateBtn: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 4,
     backgroundColor: colors.marigold,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: 999,
+    zIndex: 1,
   },
   nominateBtnText: {
     fontFamily: fonts.bodySemi,
     fontSize: 13,
     color: colors.green,
   },
+  list: {
+    paddingHorizontal: 12,
+    paddingBottom: 40,
+    backgroundColor: colors.paper,
+    minHeight: "100%",
+  },
+  intro: {
+    paddingHorizontal: 2,
+    paddingTop: 16,
+    paddingBottom: 18,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line2,
+    zIndex: 1,
+  },
+  introTitle: {
+    fontFamily: fonts.serifBold,
+    fontSize: 22,
+    color: colors.green,
+    lineHeight: 26,
+  },
+  introSub: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    color: colors.ink2,
+    marginTop: 6,
+    lineHeight: 18,
+  },
+  beeLane: {
+    height: 48,
+    zIndex: 20,
+    marginBottom: 4,
+    overflow: "visible",
+  },
+  feedStack: {
+    gap: 0,
+    zIndex: 1,
+  },
+  separator: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors.line2,
+    marginVertical: 18,
+    marginHorizontal: 2,
+  },
   endCap: {
     textAlign: "center",
-    color: "rgba(243,233,220,0.6)",
+    color: colors.inkMuted,
     fontSize: 12,
-    paddingVertical: 12,
+    paddingVertical: 8,
+    marginTop: 8,
     fontFamily: fonts.serifItalic,
   },
 });

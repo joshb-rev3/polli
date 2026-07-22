@@ -28,7 +28,14 @@ export function TabBar({ active, onGo }: Props) {
         <View style={[styles.fab, shadows.fab]}>
           <IconPlus size={28} color={colors.green} />
         </View>
-        <Text style={[styles.label, { color: colors.green, marginTop: 4 }]}>Nominate</Text>
+        <Text
+          style={[styles.label, styles.centerLabel, { color: colors.green }]}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.85}
+        >
+          Start a Polli
+        </Text>
       </Pressable>
       <Tab
         icon={<IconProfile color={active === "profile" ? colors.green : colors.ink2} />}
@@ -98,5 +105,10 @@ const styles = StyleSheet.create({
     fontSize: 10.5,
     letterSpacing: 0.2,
     color: colors.ink2,
+  },
+  centerLabel: {
+    marginTop: 4,
+    textAlign: "center",
+    paddingHorizontal: 2,
   },
 });

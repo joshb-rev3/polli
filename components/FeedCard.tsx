@@ -1,4 +1,3 @@
-import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, {
@@ -9,7 +8,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { tap } from "../lib/haptics";
 import { FeedItem } from "../lib/mockData";
-import { colors, fonts, shadows } from "../theme";
+import { colors, fonts } from "../theme";
 import { IconHeart, IconShare } from "./Icon";
 
 interface Props {
@@ -20,7 +19,7 @@ interface Props {
   onShare: (n: FeedItem) => void;
 }
 
-/** Feed card — short color strip for identity; full “why” is the north star. */
+/** Feed item — matches nominee detail: cream header, quiet meta, why-first body. */
 export function FeedCard({ n, viewerHasDonated = false, onGive, onOpen, onShare }: Props) {
   const [bursts, setBursts] = useState<{ id: number; x: number }[]>([]);
   const first = n.name.split(" ")[0];
@@ -34,101 +33,78 @@ export function FeedCard({ n, viewerHasDonated = false, onGive, onOpen, onShare 
 
   return (
     <View style={styles.card}>
-      <Pressable onPress={() => onOpen(n)}>
-        <LinearGradient
-          colors={n.photo as [string, string]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.ph}
-        >
-          <LinearGradient
-            colors={["transparent", "rgba(0,0,0,0.35)"]}
-            style={styles.scrim}
-            pointerEvents="none"
-          />
-
-          <View style={styles.liveRow}>
-            <View style={styles.liveDot} />
-            <Text style={styles.liveText}>Live · {n.daysLeft}d</Text>
-          </View>
-
-          <View style={styles.heroBottom}>
-            <Text style={styles.heroCat}>
-              {n.cat.emoji}  {n.cat.title}
-            </Text>
-            <Text style={styles.heroName} numberOfLines={1}>
-              {n.name}
-            </Text>
-          </View>
-        </LinearGradient>
-      </Pressable>
-
-      <View style={styles.body}>
-        <View style={styles.who}>
-          <View style={styles.avSm}>
-            <Text style={styles.avSmText}>{n.nominatorAv}</Text>
-          </View>
-          <View style={{ flex: 1, minWidth: 0 }}>
-            <Text style={styles.whoText} numberOfLines={1}>
-              <Text style={styles.whoName}>{n.nominator}</Text>
-              {" started this"}
-            </Text>
-            {viewerHasDonated ? (
-              <Text style={styles.whoMeta} numberOfLines={1}>
-                {n.backers} friends have chipped in
-              </Text>
-            ) : null}
-          </View>
-        </View>
-
-        <Pressable onPress={() => onOpen(n)} style={styles.whyBlock}>
-          <Text style={styles.whyLabel}>Why chip in</Text>
-          <Text style={styles.storyText}>{n.story}</Text>
-        </Pressable>
-
-        <View style={styles.actions}>
-          {bursts.map((b) => (
-            <Burst key={b.id} x={b.x} />
-          ))}
+      <Pressable onPress={() => onOpen(n)} style={styles.headerCard}>
+        <View style={styles.headerText}>
+          <Text style={styles.headerName}>{n.name}</Text>
+          <Text style={styles.headerType}>{n.cat.title}</Text>
           {viewerHasDonated ? (
-            <View style={styles.givenRow}>
-              <IconHeart size={16} color={colors.green} />
-              <Text style={styles.givenText}>Thank you for showing up for {first}</Text>
-              <Pressable
-                style={styles.shareBtn}
-                onPress={() => onShare(n)}
-                accessibilityRole="button"
-                accessibilityLabel="Share"
-                hitSlop={6}
-              >
-                <IconShare size={18} color={colors.ink2} />
-              </Pressable>
-            </View>
+            <Text style={styles.headerSub}>
+              Thank you — you're part of {first}'s Polli with {n.backers} others.
+            </Text>
           ) : (
-            <>
-              <Pressable
-                style={styles.giveBtn}
-                onPress={() => {
-                  tap();
-                  spawnBurst();
-                  onGive(n);
-                }}
-              >
-                <IconHeart size={16} color={colors.green} />
-                <Text style={styles.giveBtnText}>Send $1 to {first}</Text>
-              </Pressable>
-              <Pressable
-                style={styles.shareBtn}
-                onPress={() => onShare(n)}
-                accessibilityRole="button"
-                accessibilityLabel="Share"
-                hitSlop={6}
-              >
-                <IconShare size={18} color={colors.ink2} />
-              </Pressable>
-            </>
+            <Text style={styles.headerSub}>
+              A little from you goes a long way for {first}.
+            </Text>
           )}
         </View>
+        <View style={styles.typeEmoji}>
+          <Text style={styles.typeEmojiText}>{n.cat.emoji}</Text>
+        </View>
+      </Pressable>
+
+      <View style={styles.metaRow}>
+        <View style={styles.liveDot} />
+        <Text style={styles.metaText}>
+          {viewerHasDonated
+            ? `Live · ${n.daysLeft}d left · ${n.backers} chipping in`
+            : `Live · ${n.daysLeft}d left`}
+        </Text>
+        <Pressable
+          style={styles.shareIcon}
+          onPress={() => onShare(n)}
+          accessibilityRole="button"
+          accessibilityLabel="Share"
+          hitSlop={8}
+        >
+          <IconShare size={16} color={colors.ink2} />
+        </Pressable>
+      </View>
+
+      <Pressable onPress={() => onOpen(n)} style={styles.whyBlock}>
+        <Text style={styles.eyebrow}>WHY CHIP IN</Text>
+        <View style={styles.nominator}>
+          <View style={styles.nomAv}>
+            <Text style={styles.nomAvText}>{n.nominatorAv}</Text>
+          </View>
+          <Text style={styles.nomText}>
+            <Text style={{ fontFamily: fonts.bodyBold }}>{n.nominator}</Text> shared this overview:
+          </Text>
+        </View>
+        <Text style={styles.story}>"{n.story}"</Text>
+      </Pressable>
+
+      <View style={styles.actions}>
+        {bursts.map((b) => (
+          <Burst key={b.id} x={b.x} />
+        ))}
+        {viewerHasDonated ? (
+          <View style={styles.thanksBox}>
+            <IconHeart size={16} color={colors.green} />
+            <Text style={styles.thanksText}>Thank you for showing up for {first}</Text>
+          </View>
+        ) : (
+          <Pressable
+            style={styles.giveBtn}
+            onPress={() => {
+              tap();
+              spawnBurst();
+              onGive(n);
+            }}
+          >
+            <IconHeart size={16} color={colors.green} />
+            <Text style={styles.giveBtnText}>Send $1 to {first}</Text>
+          </Pressable>
+        )}
       </View>
     </View>
   );
@@ -154,120 +130,119 @@ function Burst({ x }: { x: number }) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: "#fff",
-    borderRadius: 20,
-    overflow: "hidden",
-    ...shadows.feed,
+    backgroundColor: colors.paper,
+    borderRadius: 16,
+    padding: 4,
+    gap: 10,
   },
-  ph: {
-    height: 96,
-    justifyContent: "flex-end",
-    position: "relative",
-  },
-  scrim: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  liveRow: {
-    position: "absolute",
-    top: 10,
-    left: 14,
+  headerCard: {
+    padding: 12,
+    backgroundColor: colors.cream,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.line2,
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 10,
+  },
+  headerText: {
+    flex: 1,
+    minWidth: 0,
+  },
+  headerName: {
+    fontFamily: fonts.serifHeavy,
+    fontSize: 22,
+    lineHeight: 26,
+    color: colors.ink,
+  },
+  headerType: {
+    fontFamily: fonts.bodySemi,
+    fontSize: 13,
+    color: colors.green,
+    marginTop: 4,
+  },
+  headerSub: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    color: colors.ink2,
+    marginTop: 6,
+    lineHeight: 18,
+  },
+  typeEmoji: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: colors.line2,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  typeEmojiText: {
+    fontSize: 26,
+  },
+  metaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 2,
   },
   liveDot: {
     width: 7,
     height: 7,
     borderRadius: 4,
-    backgroundColor: "#5FE08A",
-    borderWidth: 1.5,
-    borderColor: "rgba(255,255,255,0.85)",
+    backgroundColor: colors.sage,
   },
-  liveText: {
-    fontFamily: fonts.bodySemi,
-    fontSize: 11,
-    color: "#fff",
-    letterSpacing: 0.2,
-    textShadowColor: "rgba(0,0,0,0.35)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
-  },
-  heroBottom: {
-    paddingHorizontal: 14,
-    paddingBottom: 10,
-    zIndex: 1,
-  },
-  heroCat: {
-    color: "rgba(255,255,255,0.88)",
-    fontFamily: fonts.body,
-    fontSize: 12,
-  },
-  heroName: {
-    color: "#fff",
-    fontFamily: fonts.serifHeavy,
-    fontSize: 20,
-    lineHeight: 24,
-    marginTop: 1,
-  },
-  body: {
-    paddingHorizontal: 16,
-    paddingTop: 14,
-    paddingBottom: 14,
-    gap: 14,
-  },
-  who: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  avSm: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: colors.green,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  avSmText: {
-    color: "#fff",
-    fontFamily: fonts.bodyBold,
-    fontSize: 12,
-  },
-  whoText: {
+  metaText: {
+    flex: 1,
     fontFamily: fonts.body,
     fontSize: 13,
     color: colors.ink2,
   },
-  whoName: {
-    fontFamily: fonts.bodySemi,
-    color: colors.ink,
-  },
-  whoMeta: {
-    fontFamily: fonts.body,
-    fontSize: 12,
-    color: colors.inkMuted,
-    marginTop: 1,
+  shareIcon: {
+    padding: 6,
   },
   whyBlock: {
-    gap: 8,
+    gap: 6,
   },
-  whyLabel: {
+  eyebrow: {
     fontFamily: fonts.bodyBold,
     fontSize: 11,
-    letterSpacing: 0.7,
-    textTransform: "uppercase",
     color: colors.ink2,
+    letterSpacing: 0.88,
   },
-  storyText: {
-    fontFamily: fonts.serif,
-    fontSize: 16,
-    lineHeight: 25,
-    color: colors.ink,
-  },
-  actions: {
+  nominator: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
+  },
+  nomAv: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.marigold,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  nomAvText: {
+    color: "#fff",
+    fontFamily: fonts.bodyBold,
+    fontSize: 13,
+  },
+  nomText: {
+    flex: 1,
+    fontFamily: fonts.body,
+    fontSize: 13,
+    color: colors.ink,
+  },
+  story: {
+    fontFamily: fonts.serif,
+    fontSize: 16,
+    lineHeight: 24,
+    color: colors.ink,
+    marginTop: 2,
+  },
+  actions: {
     position: "relative",
     marginTop: 2,
   },
@@ -280,42 +255,35 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   giveBtn: {
-    flex: 1,
-    backgroundColor: colors.marigold,
-    paddingVertical: 13,
+    backgroundColor: "#E8F0EA",
+    borderWidth: 1.5,
+    borderColor: colors.green,
+    paddingVertical: 12,
     borderRadius: 12,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
+    width: "100%",
   },
   giveBtnText: {
     fontFamily: fonts.bodyBold,
     fontSize: 15,
     color: colors.green,
   },
-  givenRow: {
-    flex: 1,
+  thanksBox: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 4,
+    gap: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    backgroundColor: "rgba(83,162,104,0.08)",
   },
-  givenText: {
+  thanksText: {
     flex: 1,
     fontFamily: fonts.bodySemi,
     fontSize: 14,
     color: colors.green,
-  },
-  shareBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: colors.paper,
-    borderWidth: 1,
-    borderColor: colors.line2,
   },
 });

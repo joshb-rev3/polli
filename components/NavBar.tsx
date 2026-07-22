@@ -16,9 +16,9 @@ interface Props {
 }
 
 /**
- * Always shows the Polli wordmark centered.
+ * Polli wordmark on the left; optional actions on the right (space-between).
  * `green` = cream masthead with marigold pollen edge for garden screens.
- * Optional back control sits on the left; `right` / menu on the right.
+ * Optional back control sits before the logo.
  */
 export function NavBar({ variant = "cream", back, title, onBack, onMenu, right }: Props) {
   const garden = variant === "green";
@@ -37,7 +37,7 @@ export function NavBar({ variant = "cream", back, title, onBack, onMenu, right }
 
   return (
     <View style={[styles.bar, { backgroundColor: bg }, garden && styles.gardenBar]}>
-      <View style={styles.side}>
+      <View style={styles.left}>
         {back ? (
           <Pressable
             onPress={onBack}
@@ -52,14 +52,12 @@ export function NavBar({ variant = "cream", back, title, onBack, onMenu, right }
               <Text style={[styles.backLabel, { color: fg }]}>{title}</Text>
             ) : null}
           </Pressable>
-        ) : null}
+        ) : (
+          <Logo />
+        )}
       </View>
 
-      <View style={styles.logoWrap} pointerEvents="none">
-        <Logo />
-      </View>
-
-      <View style={[styles.side, styles.sideRight]}>{rightNode}</View>
+      {rightNode ? <View style={styles.right}>{rightNode}</View> : null}
     </View>
   );
 }
@@ -78,21 +76,17 @@ const styles = StyleSheet.create({
     borderBottomWidth: 2,
     borderBottomColor: colors.marigold,
   },
-  side: {
-    flex: 1,
+  left: {
     flexDirection: "row",
     alignItems: "center",
     minWidth: 0,
+    flexShrink: 1,
   },
-  sideRight: {
-    justifyContent: "flex-end",
-  },
-  logoWrap: {
-    position: "absolute",
-    left: 0,
-    right: 0,
+  right: {
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "flex-end",
+    flexShrink: 0,
   },
   back: {
     flexDirection: "row",
@@ -101,7 +95,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 10,
     borderRadius: 12,
-    zIndex: 1,
   },
   backLabel: {
     fontFamily: fonts.bodySemi,
