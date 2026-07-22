@@ -13,6 +13,7 @@ import {
 import { Button } from "../components/Button";
 import { IconCheck } from "../components/Icon";
 import { NavBar } from "../components/NavBar";
+import { FEE_COVER_CENTS, formatDollars, giftTotals } from "../lib/fees";
 import { success } from "../lib/haptics";
 import { FEED, QUICK_NOTES } from "../lib/mockData";
 import { payWithStripe } from "../lib/paymentSheet";
@@ -33,8 +34,7 @@ export default function Checkout() {
   const [noteOpen, setNoteOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const total = coverFees ? 1.43 : 1.0;
-  const toNominee = coverFees ? 1.0 : 0.57;
+  const totals = giftTotals(coverFees);
   const MAX = 140;
   const firstName = n?.name?.split(" ")[0] || "them";
 
@@ -87,6 +87,7 @@ export default function Checkout() {
         coverFees,
         note: note.trim() || undefined,
         anonymous: anon,
+        returnId: n?.id,
       });
       setLoading(false);
       // On web, payWithStripe redirects to Stripe — finish() happens on return via pay-complete
@@ -117,7 +118,7 @@ export default function Checkout() {
             <Text style={styles.eyebrow}>YOUR GIFT</Text>
             <Text style={styles.amount}>$1</Text>
             <Text style={styles.amountSub}>One dollar. That's the whole thing.</Text>
-            <Text style={styles.amountNote}>polli is always $1 — no more, no less.</Text>
+            <Text style={styles.amountNote}>Polli gifts are always $1 — no more, no less.</Text>
           </View>
 
           <View style={styles.noteCard}>
@@ -128,7 +129,8 @@ export default function Checkout() {
               <View style={{ flex: 1 }}>
                 <Text style={styles.noteCardTitle}>Add a note for {firstName}</Text>
                 <Text style={styles.noteCardSub}>
-                  the more the merrier — {note.length ? `${note.length}/${MAX}` : "optional"}
+                  Only {firstName} will see what you share here
+                  {note.length ? ` · ${note.length}/${MAX}` : " · optional"}
                 </Text>
               </View>
             </View>
@@ -139,6 +141,8 @@ export default function Checkout() {
               placeholder={`Say something nice to ${firstName}…`}
               placeholderTextColor={colors.inkMuted}
               multiline
+              spellCheck
+              autoCorrect
               style={[
                 styles.textarea,
                 { minHeight: noteOpen || note ? 72 : 44 },
@@ -170,21 +174,25 @@ export default function Checkout() {
               {coverFees && <IconCheck size={13} color="#fff" />}
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.feeTitle}>Cover the $0.43 in fees</Text>
+              <Text style={styles.feeTitle}>
+                Cover the {formatDollars(FEE_COVER_CENTS)} in fees
+              </Text>
               <Text style={styles.feeDesc}>
                 {coverFees
-                  ? `${firstName} gets the full $1.00. You pay $1.43.`
-                  : `Without this, ${firstName} receives $0.57 after processing. You pay $1.00.`}
+                  ? `${firstName} gets the full $1.00. You pay ${formatDollars(totals.totalCents)}.`
+                  : `Without this, ${firstName} receives $0.57 after processing. You pay ${formatDollars(totals.totalCents)}.`}
               </Text>
             </View>
           </Pressable>
 
           <View style={styles.summary}>
             <Row label="Your $1 gift" value="$1.00" />
-            {coverFees && <Row label="Processing & platform" value="$0.43" />}
+            {coverFees && (
+              <Row label="Processing & platform" value={formatDollars(FEE_COVER_CENTS)} />
+            )}
             <View style={styles.summaryDivider} />
-            <Row label="Total charged to you" value={`$${total.toFixed(2)}`} bold />
-            <Row label={`${firstName} receives`} value={`$${toNominee.toFixed(2)}`} green />
+            <Row label="Total charged to you" value={formatDollars(totals.totalCents)} bold />
+            <Row label={`${firstName} receives`} value={formatDollars(totals.netCents)} green />
           </View>
 
           <Text style={styles.fine}>
@@ -196,7 +204,7 @@ export default function Checkout() {
       <View style={styles.sticky}>
         <Button
           full
-          label={loading ? "Opening Stripe…" : `Pay $${total.toFixed(2)}`}
+          label={loading ? "Opening Stripe…" : `Pay ${formatDollars(totals.totalCents)}`}
           variant="dark"
           disabled={loading}
           onPress={pay}

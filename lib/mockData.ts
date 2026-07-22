@@ -36,13 +36,13 @@ export interface Note {
 
 export const CATEGORIES: Category[] = [
   { id: "just-because", emoji: "🌼", title: "Just Because", sub: "A little cheer" },
-  { id: "birthday", emoji: "🎂", title: "Birthday", sub: "Another trip around" },
+  { id: "birthday", emoji: "🎂", title: "Birthday", sub: "Another trip around the sun" },
   { id: "hard-time", emoji: "🤍", title: "Hard Time", sub: "A lift when needed" },
   { id: "teacher", emoji: "🍎", title: "Amazing Teacher", sub: "An A+ in everything" },
   { id: "nurse", emoji: "🩺", title: "Healthcare Hero", sub: "Quiet, steady care" },
   { id: "new-parent", emoji: "🍼", title: "New Parent", sub: "Small hands, long days" },
   { id: "thanks", emoji: "✨", title: "Thank You", sub: "You saw me" },
-  { id: "community", emoji: "🌿", title: "Community", sub: "The glue of a block" },
+  { id: "community", emoji: "🌿", title: "Community Role Model", sub: "The glue of the block" },
 ];
 
 export const TIMELINES = [
@@ -50,6 +50,12 @@ export const TIMELINES = [
   { id: "14", label: "2 weeks" },
   { id: "30", label: "1 month" },
 ] as const;
+
+export const OVERVIEW_INSPO = [
+  "{name} shows up for everyone — this is our turn to show up for them.",
+  "A little from each of us becomes something meaningful for {name}.",
+  "If you know {name}, you know why this matters. Chip in $1 and pass it on.",
+];
 
 export const INSPO = [
   "You make everything feel a little easier — thank you.",
@@ -69,7 +75,7 @@ export const FEED: FeedItem[] = [
     nominatorAv: "M",
     story:
       "Ms. Ortega stayed after school three times this week to help my 3rd grader work through his reading. She asked nothing for herself — just packed an extra lunch and handed over a stack of library books. She is an A+ in everything.",
-    photo: ["#c98b5e", "#6b3920"],
+    photo: ["#FFC56E", "#FF8A6A"],
     raised: 47,
     backers: 47,
     daysLeft: 3,
@@ -84,7 +90,7 @@ export const FEED: FeedItem[] = [
     nominatorAv: "D",
     story:
       "Marcus worked a 14-hour shift and still drove my mom home when her ride fell through. He's the quietest kind of hero and he deserves a lunch that isn't a vending machine granola bar.",
-    photo: ["#6b93a8", "#263a4a"],
+    photo: ["#9AD8F0", "#7BA3F0"],
     raised: 82,
     backers: 82,
     daysLeft: 5,
@@ -99,7 +105,7 @@ export const FEED: FeedItem[] = [
     nominatorAv: "J",
     story:
       "Baby Kiran arrived two weeks early and Priya is running on vibes and oat milk. Her mom group is spreading the word so she can pick up dinner without math. Just because.",
-    photo: ["#e7c8a0", "#a77f4f"],
+    photo: ["#F8B4CC", "#FF8F72"],
     raised: 23,
     backers: 23,
     daysLeft: 6,
@@ -114,7 +120,7 @@ export const FEED: FeedItem[] = [
     nominatorAv: "B",
     story:
       "Coach Bo never missed a Saturday. Not one. Twenty-two of us got together to say thank you — and to buy him the pair of running shoes he absolutely will not buy himself.",
-    photo: ["#83a268", "#1b4d3e"],
+    photo: ["#B5E08A", "#6DC9A0"],
     raised: 134,
     backers: 134,
     daysLeft: 2,
@@ -132,14 +138,45 @@ export const ME = {
 };
 
 /** Gifts the signed-in user has already made. Counts stay hidden on feed/share until then. */
-export const MY_GIVES = [
-  { id: "g1", nominationId: "n1", name: "Ms. Eileen Ortega", when: "today", amount: 1.5, cat: CATEGORIES[3] },
-  { id: "g2", nominationId: "n2", name: "Marcus Reyes", when: "last week", amount: 1.5, cat: CATEGORIES[4] },
+export const MY_GIVES: Array<{
+  id: string;
+  nominationId: string;
+  name: string;
+  when: string;
+  amount: number;
+  cat: Category;
+  /** Private note left with this gift — only shown back to the giver. */
+  note?: string;
+}> = [
+  {
+    id: "g1",
+    nominationId: "n1",
+    name: "Ms. Eileen Ortega",
+    when: "today",
+    amount: 1.5,
+    cat: CATEGORIES[3],
+    note: "You were my favorite teacher in 4th grade — still think about your classroom.",
+  },
+  {
+    id: "g2",
+    nominationId: "n2",
+    name: "Marcus Reyes",
+    when: "last week",
+    amount: 1.5,
+    cat: CATEGORIES[4],
+  },
 ];
 
 /** True once the viewer has piled on — unlocks giver counts on feed & shared pages. */
 export function hasDonatedTo(nominationId: string): boolean {
   return MY_GIVES.some((g) => g.nominationId === nominationId);
+}
+
+/** Viewer's private note for a nomination, if they donated and left one. */
+export function myNoteFor(nominationId: string): string | null {
+  const gift = MY_GIVES.find((g) => g.nominationId === nominationId);
+  const note = gift?.note?.trim();
+  return note ? note : null;
 }
 
 export const MY_NOMINATIONS = [

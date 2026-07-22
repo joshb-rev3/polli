@@ -1,15 +1,12 @@
-import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Button } from "../../components/Button";
 import { IconHeart, IconShare } from "../../components/Icon";
 import { NavBar } from "../../components/NavBar";
-import { FEED, NOTES, hasDonatedTo } from "../../lib/mockData";
-import { ordinal } from "../../lib/ordinal";
+import { FEED, hasDonatedTo, myNoteFor } from "../../lib/mockData";
 import { useShare } from "../../lib/share";
 import { colors, fonts } from "../../theme";
-import { VoiceMessagePlayer } from "../../components/voice/VoiceMessageComposer";
 
 export default function Nominee() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -28,8 +25,9 @@ export default function Nominee() {
     );
   }
 
-  const notes = NOTES[n.id] || [];
   const viewerHasDonated = hasDonatedTo(n.id);
+  const myNote = myNoteFor(n.id);
+  const first = n.name.split(" ")[0];
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.paper }}>
@@ -49,109 +47,55 @@ export default function Nominee() {
         }
       />
       <ScrollView contentContainerStyle={styles.scroll}>
-        <LinearGradient colors={n.photo as [string, string]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.hero}>
-          <View style={styles.livePill}>
-            <View style={styles.liveDot} />
-            <Text style={styles.liveText}>LIVE · {n.daysLeft}D LEFT</Text>
-          </View>
-          <View style={styles.heroBottom}>
-            <Text style={styles.heroCat}>
-              {n.cat.emoji} {n.cat.title.toUpperCase()}
-            </Text>
-            <Text style={styles.heroName}>{n.name}</Text>
-            <Text style={styles.heroRole}>{n.role}</Text>
-          </View>
-        </LinearGradient>
-
-        <View style={styles.giverCard}>
-          <View style={{ flex: 1 }}>
+        <View style={styles.headerCard}>
+          <View style={styles.headerText}>
+            <Text style={styles.headerName}>{n.name}</Text>
+            <Text style={styles.headerType}>{n.cat.title}</Text>
             {viewerHasDonated ? (
-              <>
-                <Text style={styles.giverBig}>{n.backers}</Text>
-                <Text style={styles.giverSub}>
-                  friends have piled on.{"\n"}Be the {n.backers + 1}
-                  <Text style={{ fontSize: 11 }}>{ordinal(n.backers + 1)}</Text>.
-                </Text>
-              </>
+              <Text style={styles.headerSub}>
+                Thank you — you're part of {first}'s Polli with {n.backers} others.
+              </Text>
             ) : (
-              <>
-                <Text style={styles.giverInvite}>Join the circle</Text>
-                <Text style={styles.giverSub}>
-                  Friends are already showing up for {n.name.split(" ")[0]}.{"\n"}
-                  Chip in $1 — no scoreboard needed.
-                </Text>
-              </>
+              <Text style={styles.headerSub}>
+                A little from you goes a long way for {first}.
+              </Text>
             )}
           </View>
-          <View style={styles.divider} />
-          <View style={{ alignItems: "flex-end" }}>
-            <Text style={styles.daysBig}>
-              {n.daysLeft}
-              <Text style={styles.daysSm}>d</Text>
-            </Text>
-            <Text style={styles.daysLabel}>LEFT</Text>
+          <View style={styles.typeEmoji}>
+            <Text style={styles.typeEmojiText}>{n.cat.emoji}</Text>
           </View>
         </View>
 
+        <View style={styles.metaRow}>
+          <View style={styles.liveDot} />
+          <Text style={styles.metaText}>
+            {viewerHasDonated
+              ? `Live · ${n.daysLeft}d left · ${n.backers} chipping in`
+              : `Live · ${n.daysLeft}d left`}
+          </Text>
+        </View>
+
         <View style={styles.section}>
-          <Text style={styles.eyebrow}>NOMINATED BY</Text>
+          <Text style={styles.eyebrow}>WHY CHIP IN</Text>
           <View style={styles.nominator}>
             <View style={styles.nomAv}>
               <Text style={styles.nomAvText}>{n.nominatorAv}</Text>
             </View>
             <Text style={styles.nomText}>
-              <Text style={{ fontFamily: fonts.bodyBold }}>{n.nominator}</Text> wrote:
+              <Text style={{ fontFamily: fonts.bodyBold }}>{n.nominator}</Text> shared this overview:
             </Text>
           </View>
           <Text style={styles.story}>"{n.story}"</Text>
-          {n.storyAudioUri && n.storyWords && n.storySignatures ? (
-            <View style={{ marginTop: 12 }}>
-              <VoiceMessagePlayer
-                uri={n.storyAudioUri}
-                words={n.storyWords}
-                signatures={n.storySignatures}
-                durationMs={n.storyAudioDurationMs ?? 0}
-              />
-            </View>
-          ) : null}
+          <Text style={styles.publicHint}>Public · anyone with the link can read this</Text>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.eyebrow}>💌 NOTES FROM THE GARDEN</Text>
-          {notes.length === 0 ? (
-            <View style={styles.emptyNote}>
-              <Text style={styles.emptyNoteText}>Be the first to leave a note.</Text>
-            </View>
-          ) : (
-            <View style={{ gap: 10 }}>
-              {notes.slice(0, 4).map((note, i) => (
-                <View key={i} style={styles.noteCard}>
-                  <View style={styles.noteHead}>
-                    <View
-                      style={[
-                        styles.noteAv,
-                        note.anon && { backgroundColor: colors.marigold },
-                        !note.anon && { backgroundColor: `hsl(${(i * 73) % 360}, 55%, 55%)` },
-                      ]}
-                    >
-                      <Text style={styles.noteAvText}>{note.av}</Text>
-                    </View>
-                    <Text style={styles.noteFrom}>{note.from}</Text>
-                    <Text style={styles.noteWhen}>{note.when}</Text>
-                  </View>
-                  <Text style={styles.noteText}>"{note.text}"</Text>
-                </View>
-              ))}
-              {notes.length > 4 && (
-                <Pressable style={styles.seeAll}>
-                  <Text style={styles.seeAllText}>
-                    {viewerHasDonated ? `See all ${notes.length} notes` : "See more notes"}
-                  </Text>
-                </Pressable>
-              )}
-            </View>
-          )}
-        </View>
+        {myNote ? (
+          <View style={styles.section}>
+            <Text style={styles.eyebrow}>YOUR NOTE FOR {first.toUpperCase()}</Text>
+            <Text style={styles.myNote}>"{myNote}"</Text>
+            <Text style={styles.publicHint}>Only {first} will see this</Text>
+          </View>
+        ) : null}
 
         {viewerHasDonated ? (
           <View style={styles.section}>
@@ -184,21 +128,35 @@ export default function Nominee() {
 
         <View style={styles.sageBox}>
           <Text style={styles.sageText}>
-            💚 <Text style={{ fontFamily: fonts.bodyBold }}>Every $1 goes to {n.name.split(" ")[0]}.</Text> Paid out via Stripe within 5 business days of close.
+            💚 <Text style={{ fontFamily: fonts.bodyBold }}>Every $1 goes to {first}.</Text>
           </Text>
+          <Text style={styles.sageSub}>Paid out via Stripe within 5 business days of close.</Text>
         </View>
-        <Text style={styles.eligibleLine}>Give once and you'll be eligible to be nominated for 12 months.</Text>
+        <Text style={styles.eligibleLine}>
+          Give once and you'll be eligible to be nominated for 12 months.
+        </Text>
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      <View style={styles.sticky}>
-        <Button
-          full
-          label={`Give $1 to ${n.name.split(" ")[0]}`}
-          variant="danger"
-          icon={<IconHeart size={16} color="#fff" />}
-          onPress={() => router.push({ pathname: "/checkout", params: { id: n.id } })}
-        />
+      <View style={[styles.sticky, viewerHasDonated && styles.stickyThanks]}>
+        {viewerHasDonated ? (
+          <View style={styles.thanksBox}>
+            <IconHeart size={18} color={colors.green} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.thanksTitle}>Thank you for showing up for {first}</Text>
+              <Text style={styles.thanksSub}>
+                Your $1 is already part of their Polli. Pass the link along if you want.
+              </Text>
+            </View>
+          </View>
+        ) : (
+          <Button
+            full
+            label={`Send $1 to ${first}`}
+            icon={<IconHeart size={16} color={colors.green} />}
+            onPress={() => router.push({ pathname: "/checkout", params: { id: n.id } })}
+          />
+        )}
       </View>
     </View>
   );
@@ -209,63 +167,8 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 40,
   },
-  hero: {
-    height: 280,
-    borderRadius: 20,
-    overflow: "hidden",
-    position: "relative",
-    justifyContent: "flex-end",
-    padding: 16,
-    marginTop: 8,
-  },
-  livePill: {
-    position: "absolute",
-    top: 16,
-    left: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: "rgba(27,77,62,0.9)",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 999,
-  },
-  liveDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: "#7ED48A",
-  },
-  liveText: {
-    color: "#fff",
-    fontFamily: fonts.bodyBold,
-    fontSize: 11,
-    letterSpacing: 0.66,
-  },
-  heroBottom: {},
-  heroCat: {
-    color: "#fff",
-    fontFamily: fonts.bodySemi,
-    fontSize: 12,
-    letterSpacing: 0.48,
-    opacity: 0.85,
-  },
-  heroName: {
-    color: "#fff",
-    fontFamily: fonts.serifHeavy,
-    fontSize: 30,
-    lineHeight: 32,
+  headerCard: {
     marginTop: 4,
-  },
-  heroRole: {
-    color: "#fff",
-    fontFamily: fonts.body,
-    fontSize: 13,
-    opacity: 0.85,
-    marginTop: 2,
-  },
-  giverCard: {
-    marginTop: 20,
     padding: 18,
     backgroundColor: colors.cream,
     borderRadius: 16,
@@ -273,49 +176,61 @@ const styles = StyleSheet.create({
     borderColor: colors.line2,
     flexDirection: "row",
     alignItems: "center",
-    gap: 16,
+    gap: 14,
   },
-  giverBig: {
+  headerText: {
+    flex: 1,
+    minWidth: 0,
+  },
+  headerName: {
     fontFamily: fonts.serifHeavy,
-    fontSize: 42,
-    color: colors.green,
-    letterSpacing: -0.84,
-    lineHeight: 42,
-  },
-  giverInvite: {
-    fontFamily: fonts.serifHeavy,
-    fontSize: 22,
-    color: colors.green,
-    letterSpacing: -0.4,
-    lineHeight: 26,
-  },
-  giverSub: {
-    fontFamily: fonts.body,
-    fontSize: 13,
-    color: colors.ink2,
-    marginTop: 4,
-  },
-  divider: {
-    width: 1,
-    height: 44,
-    backgroundColor: colors.line2,
-  },
-  daysBig: {
-    fontFamily: fonts.serifBold,
-    fontSize: 24,
+    fontSize: 26,
+    lineHeight: 30,
     color: colors.ink,
   },
-  daysSm: {
+  headerType: {
+    fontFamily: fonts.bodySemi,
+    fontSize: 14,
+    color: colors.green,
+    marginTop: 4,
+  },
+  headerSub: {
     fontFamily: fonts.body,
     fontSize: 13,
     color: colors.ink2,
+    marginTop: 8,
+    lineHeight: 19,
   },
-  daysLabel: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 11,
+  typeEmoji: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: colors.line2,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  typeEmojiText: {
+    fontSize: 28,
+  },
+  metaRow: {
+    marginTop: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 2,
+  },
+  liveDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: colors.sage,
+  },
+  metaText: {
+    fontFamily: fonts.body,
+    fontSize: 13,
     color: colors.ink2,
-    letterSpacing: 0.66,
-    marginTop: 2,
   },
   section: {
     marginTop: 22,
@@ -357,71 +272,23 @@ const styles = StyleSheet.create({
     lineHeight: 26,
     color: colors.ink,
   },
-  emptyNote: {
-    padding: 18,
-    backgroundColor: colors.cream,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  emptyNoteText: {
-    fontFamily: fonts.serifItalic,
-    fontSize: 13,
-    color: colors.ink2,
-  },
-  noteCard: {
-    padding: 14,
-    backgroundColor: colors.cream,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.line2,
-  },
-  noteHead: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 6,
-  },
-  noteAv: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  noteAvText: {
-    color: "#fff",
-    fontFamily: fonts.bodyBold,
-    fontSize: 12,
-  },
-  noteFrom: {
-    fontFamily: fonts.bodySemi,
-    fontSize: 12,
-    color: colors.ink,
-  },
-  noteWhen: {
-    marginLeft: "auto",
+  publicHint: {
     fontFamily: fonts.body,
-    fontSize: 11,
+    fontSize: 12,
     color: colors.ink2,
+    marginTop: 10,
   },
-  noteText: {
-    fontFamily: fonts.serifItalic,
-    fontSize: 14,
+  myNote: {
+    marginTop: 4,
+    fontFamily: fonts.serif,
+    fontSize: 17,
+    lineHeight: 26,
     color: colors.ink,
-    lineHeight: 20,
-  },
-  seeAll: {
-    padding: 10,
-    borderStyle: "dashed",
+    padding: 16,
+    backgroundColor: colors.blossomSoft,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: colors.line2,
-    borderRadius: 10,
-    alignItems: "center",
-  },
-  seeAllText: {
-    fontFamily: fonts.bodySemi,
-    fontSize: 13,
-    color: colors.ink2,
+    borderColor: "rgba(244,164,184,0.45)",
   },
   giverAv: {
     width: 34,
@@ -451,6 +318,13 @@ const styles = StyleSheet.create({
     color: colors.ink,
     lineHeight: 20,
   },
+  sageSub: {
+    fontFamily: fonts.body,
+    fontSize: 12,
+    color: colors.ink2,
+    lineHeight: 18,
+    marginTop: 6,
+  },
   eligibleLine: {
     marginTop: 10,
     fontFamily: fonts.body,
@@ -465,5 +339,29 @@ const styles = StyleSheet.create({
     backgroundColor: colors.paper,
     borderTopWidth: 1,
     borderTopColor: colors.line,
+  },
+  stickyThanks: {
+    backgroundColor: "#E8F0EA",
+    borderTopColor: "rgba(83,162,104,0.25)",
+  },
+  thanksBox: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+    paddingVertical: 4,
+    paddingHorizontal: 4,
+  },
+  thanksTitle: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 15,
+    color: colors.green,
+    lineHeight: 20,
+  },
+  thanksSub: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    color: colors.ink2,
+    marginTop: 4,
+    lineHeight: 18,
   },
 });

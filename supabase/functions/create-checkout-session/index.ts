@@ -2,7 +2,7 @@
 // Same donation row model as create-payment-intent; webhook completes on
 // checkout.session.completed (and payment_intent.succeeded as a backup).
 //
-// Request: POST { nominationId, coverFees, note?, anonymous?, successUrl, cancelUrl }
+// Request: POST { nominationId, coverFees, note?, anonymous?, voiceKeepsake?, successUrl, cancelUrl }
 // Response: { url, sessionId, donationId }
 
 import Stripe from "https://esm.sh/stripe@17.5.0?target=denonext";
@@ -58,6 +58,7 @@ Deno.serve(async (req) => {
       coverFees = true,
       note,
       anonymous = false,
+      voiceKeepsake = false,
       successUrl,
       cancelUrl,
     } = await req.json();
@@ -75,6 +76,8 @@ Deno.serve(async (req) => {
     if (new Date(nom.closes_at).getTime() < Date.now()) {
       return jsonError(400, "nomination closed");
     }
+    // Nominee can't pile on their own campaign. Nominator kickoff is allowed
+    // (nominee_id is usually null until they claim the Polli).
     if (nom.nominee_id && nom.nominee_id === user.id) {
       return jsonError(400, "you can't donate to your own nomination");
     }
@@ -98,8 +101,10 @@ Deno.serve(async (req) => {
         .eq("status", "pending");
     }
 
+    const keepsakeCents = voiceKeepsake ? 100 : 0;
     const netCents = coverFees ? 100 : 57;
-    const totalCents = coverFees ? 143 : 100;
+    const feeCents = coverFees ? 43 : 0;
+    const totalCents = 100 + feeCents + keepsakeCents;
     const platformFeeCents = coverFees ? 10 : 7;
 
     if (nom.nominee_id) {
@@ -163,6 +168,36 @@ Deno.serve(async (req) => {
       return jsonError(500, insertErr?.message ?? "failed to create donation");
     }
 
+    const giftUnitAmount = 100 + feeCents;
+    const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [
+      {
+        quantity: 1,
+        price_data: {
+          currency: "usd",
+          unit_amount: giftUnitAmount,
+          product_data: {
+            name: `polli gift for ${nom.nominee_first}`,
+            description: coverFees
+              ? "$1 to nominee (fees covered)"
+              : "$1 gift (fees deducted from gift)",
+          },
+        },
+      },
+    ];
+    if (keepsakeCents > 0) {
+      lineItems.push({
+        quantity: 1,
+        price_data: {
+          currency: "usd",
+          unit_amount: keepsakeCents,
+          product_data: {
+            name: "Voice keepsake",
+            description: "Private voice note keepsake for the nominee",
+          },
+        },
+      });
+    }
+
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       customer: customerId,
@@ -171,19 +206,7 @@ Deno.serve(async (req) => {
         ? successUrl
         : `${successUrl}${successUrl.includes("?") ? "&" : "?"}session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: cancelUrl,
-      line_items: [
-        {
-          quantity: 1,
-          price_data: {
-            currency: "usd",
-            unit_amount: totalCents,
-            product_data: {
-              name: `polli gift for ${nom.nominee_first}`,
-              description: coverFees ? "$1 to nominee (fees covered)" : "$1 gift",
-            },
-          },
-        },
-      ],
+      line_items: lineItems,
       payment_intent_data: {
         description: `polli donation to ${nom.nominee_first}`,
         metadata: {
@@ -192,6 +215,7 @@ Deno.serve(async (req) => {
           donation_id: donation.id,
           cover_fees: coverFees ? "1" : "0",
           net_to_nominee_cents: String(netCents),
+          voice_keepsake: voiceKeepsake ? "1" : "0",
           note: note ?? "",
           anonymous: anonymous ? "1" : "0",
         },

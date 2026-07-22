@@ -16,43 +16,50 @@ interface Props {
 }
 
 /**
- * `green` = chrome for garden-green screens.
- * Uses a cream masthead so the green wordmark stays legible, with a marigold
- * pollen edge that echoes the logo’s i-dot and bridges into the green field below.
+ * Always shows the Polli wordmark centered.
+ * `green` = cream masthead with marigold pollen edge for garden screens.
+ * Optional back control sits on the left; `right` / menu on the right.
  */
 export function NavBar({ variant = "cream", back, title, onBack, onMenu, right }: Props) {
   const garden = variant === "green";
-  const bg =
-    variant === "paper" ? colors.paper : colors.cream;
+  const bg = variant === "paper" ? colors.paper : colors.cream;
   const fg = colors.ink;
+
+  const rightNode = right ? (
+    right
+  ) : onMenu ? (
+    <Pressable onPress={onMenu} style={styles.hamburger} hitSlop={8}>
+      <View style={[styles.hbar, { backgroundColor: fg }]} />
+      <View style={[styles.hbar, { backgroundColor: fg }]} />
+      <View style={[styles.hbar, { backgroundColor: fg }]} />
+    </Pressable>
+  ) : null;
 
   return (
     <View style={[styles.bar, { backgroundColor: bg }, garden && styles.gardenBar]}>
-      {back ? (
-        <Pressable
-          onPress={onBack}
-          style={({ pressed }) => [
-            styles.back,
-            pressed && { backgroundColor: "rgba(0,0,0,0.05)" },
-          ]}
-        >
-          <IconBack size={18} color={fg} />
-          <Text style={[styles.backLabel, { color: fg }]}>{title || "Back"}</Text>
-        </Pressable>
-      ) : (
+      <View style={styles.side}>
+        {back ? (
+          <Pressable
+            onPress={onBack}
+            style={({ pressed }) => [
+              styles.back,
+              pressed && { backgroundColor: "rgba(0,0,0,0.05)" },
+            ]}
+            hitSlop={8}
+          >
+            <IconBack size={18} color={fg} />
+            {title ? (
+              <Text style={[styles.backLabel, { color: fg }]}>{title}</Text>
+            ) : null}
+          </Pressable>
+        ) : null}
+      </View>
+
+      <View style={styles.logoWrap} pointerEvents="none">
         <Logo />
-      )}
-      {right ? (
-        right
-      ) : onMenu ? (
-        <Pressable onPress={onMenu} style={styles.hamburger} hitSlop={8}>
-          <View style={[styles.hbar, { backgroundColor: fg }]} />
-          <View style={[styles.hbar, { backgroundColor: fg }]} />
-          <View style={[styles.hbar, { backgroundColor: fg }]} />
-        </Pressable>
-      ) : (
-        <View style={{ width: 32 }} />
-      )}
+      </View>
+
+      <View style={[styles.side, styles.sideRight]}>{rightNode}</View>
     </View>
   );
 }
@@ -60,7 +67,7 @@ export function NavBar({ variant = "cream", back, title, onBack, onMenu, right }
 const styles = StyleSheet.create({
   bar: {
     height: 64,
-    paddingHorizontal: 20,
+    paddingHorizontal: 12,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -71,13 +78,30 @@ const styles = StyleSheet.create({
     borderBottomWidth: 2,
     borderBottomColor: colors.marigold,
   },
+  side: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    minWidth: 0,
+  },
+  sideRight: {
+    justifyContent: "flex-end",
+  },
+  logoWrap: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   back: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 12,
+    gap: 6,
+    paddingHorizontal: 10,
     paddingVertical: 10,
     borderRadius: 12,
+    zIndex: 1,
   },
   backLabel: {
     fontFamily: fonts.bodySemi,

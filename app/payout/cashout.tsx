@@ -61,7 +61,7 @@ export default function PayoutCashout() {
               </View>
               <Text style={styles.title}>Send to your bank</Text>
               <Text style={styles.sub}>
-                Confirm cashing out your full polli balance. This is a simulation — no real transfer will be made.
+                Confirm cashing out your full Polli balance. This is a simulation — no real transfer will be made.
               </Text>
               <View style={styles.amountBox}>
                 <Text style={styles.amountLabel}>You'll receive</Text>

@@ -46,7 +46,7 @@ export default function OnboardConnect() {
         <View style={styles.card}>
           <Text style={styles.title}>Set up your payout</Text>
           <Text style={styles.sub}>
-            To cash out your polli balance, link a debit card or bank account. We partner with Stripe so your
+            To cash out your Polli balance, link a debit card or bank account. We partner with Stripe so your
             details never touch our servers.
           </Text>
           <View style={styles.bullets}>

@@ -1,9 +1,8 @@
 import { useRouter } from "expo-router";
 import React from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { Button } from "../../components/Button";
-import { IconArrow } from "../../components/Icon";
 import { NavBar } from "../../components/NavBar";
+import { NominateFooter } from "../../components/NominateFooter";
 import { Stepper } from "../../components/Stepper";
 import { TIMELINES } from "../../lib/mockData";
 import { useNomination } from "../../lib/nomination";
@@ -16,8 +15,8 @@ export default function Timeline() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.paper }}>
       <NavBar back title="Back" variant="paper" onBack={() => router.back()} />
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 32 }}>
-        <Stepper step={3} total={5} />
+      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 24 }}>
+        <Stepper step={4} total={6} />
         <View style={styles.card}>
           <Text style={styles.title}>How long should it run?</Text>
           <Text style={styles.sub}>
@@ -45,14 +44,8 @@ export default function Timeline() {
             </Text>
           </View>
         </View>
-        <View style={{ flexDirection: "row", justifyContent: "flex-end", marginTop: 18 }}>
-          <Button
-            label="Continue"
-            iconRight={<IconArrow size={18} color={colors.green} />}
-            onPress={() => router.push("/nominate/review")}
-          />
-        </View>
       </ScrollView>
+      <NominateFooter label="Continue" onPress={() => router.push("/nominate/review")} />
     </View>
   );
 }

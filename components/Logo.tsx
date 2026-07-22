@@ -22,6 +22,6 @@ export function Logo({ size = 34, dark = false }: Props) {
 
 const styles = StyleSheet.create({
   image: {
-    alignSelf: "flex-start",
+    alignSelf: "center",
   },
 });

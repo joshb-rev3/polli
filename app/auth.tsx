@@ -59,7 +59,7 @@ export default function Auth() {
           <Text style={styles.sub}>
             {supabaseConfigured
               ? "Sign in to give — Stripe test mode is ready when keys are set."
-              : "Create your polli account"}
+              : "Create your Polli account"}
           </Text>
           <View style={styles.authBtns}>
             <Pressable

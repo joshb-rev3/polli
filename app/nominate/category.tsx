@@ -1,9 +1,8 @@
 import { useRouter } from "expo-router";
 import React from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { Button } from "../../components/Button";
-import { IconArrow } from "../../components/Icon";
 import { NavBar } from "../../components/NavBar";
+import { NominateFooter } from "../../components/NominateFooter";
 import { Stepper } from "../../components/Stepper";
 import { CATEGORIES } from "../../lib/mockData";
 import { useNomination } from "../../lib/nomination";
@@ -16,10 +15,10 @@ export default function Category() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.paper }}>
       <NavBar back title="Back" variant="paper" onBack={() => router.back()} />
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 32 }}>
-        <Stepper step={1} total={5} />
+      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 24 }}>
+        <Stepper step={1} total={6} />
         <View style={styles.card}>
-          <Text style={styles.title}>Choose your kindness</Text>
+          <Text style={styles.title}>What is the reason for this Polli?</Text>
           <Text style={styles.sub}>Why are you nominating {draft.first || "them"}?</Text>
           <View style={styles.chips}>
             {CATEGORIES.map((c) => {
@@ -39,9 +38,7 @@ export default function Category() {
                     <Text style={{ fontSize: 22 }}>{c.emoji}</Text>
                   </View>
                   <View style={{ flex: 1, minWidth: 0 }}>
-                    <Text style={styles.chipT} numberOfLines={1}>
-                      {c.title}
-                    </Text>
+                    <Text style={styles.chipT}>{c.title}</Text>
                     <Text style={styles.chipS}>{c.sub}</Text>
                   </View>
                 </Pressable>
@@ -49,15 +46,12 @@ export default function Category() {
             })}
           </View>
         </View>
-        <View style={{ flexDirection: "row", justifyContent: "flex-end", marginTop: 18 }}>
-          <Button
-            label="Continue"
-            iconRight={<IconArrow size={18} color={colors.green} />}
-            disabled={!draft.catId}
-            onPress={() => router.push("/nominate/story")}
-          />
-        </View>
       </ScrollView>
+      <NominateFooter
+        label="Continue"
+        disabled={!draft.catId}
+        onPress={() => router.push("/nominate/story")}
+      />
     </View>
   );
 }
@@ -86,17 +80,16 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   chips: {
-    flexDirection: "row",
-    flexWrap: "wrap",
     gap: 10,
     marginTop: 18,
   },
   chip: {
-    width: "48%",
+    width: "100%",
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    padding: 14,
+    gap: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
     borderRadius: 14,
     backgroundColor: "#fff",
     borderWidth: 1.5,
@@ -106,8 +99,8 @@ const styles = StyleSheet.create({
     borderColor: colors.green,
   },
   emo: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
     borderRadius: 10,
     backgroundColor: colors.paper,
     alignItems: "center",
@@ -115,12 +108,12 @@ const styles = StyleSheet.create({
   },
   chipT: {
     fontFamily: fonts.serifBold,
-    fontSize: 15,
+    fontSize: 17,
     color: colors.ink,
   },
   chipS: {
     fontFamily: fonts.body,
-    fontSize: 11,
+    fontSize: 13,
     color: colors.ink2,
     marginTop: 2,
   },

@@ -34,6 +34,7 @@ export async function createCheckoutSession(opts: {
   coverFees: boolean;
   note?: string;
   anonymous?: boolean;
+  voiceKeepsake?: boolean;
   successUrl: string;
   cancelUrl: string;
 }): Promise<{ url: string; sessionId: string; donationId: string }> {

@@ -8,9 +8,8 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { Button } from "../../components/Button";
-import { IconArrow } from "../../components/Icon";
 import { NavBar } from "../../components/NavBar";
+import { NominateFooter } from "../../components/NominateFooter";
 import { Stepper } from "../../components/Stepper";
 import { useNomination } from "../../lib/nomination";
 import { colors, fonts, shadows } from "../../theme";
@@ -26,14 +25,20 @@ export default function Who() {
     { id: "both", l: "Both" },
   ] as const;
 
+  const showEmail = draft.notify === "email" || draft.notify === "both";
+  const showPhone = draft.notify === "phone" || draft.notify === "both";
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.paper }}>
       <NavBar back title="Back" variant="paper" onBack={() => router.back()} />
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 32 }}>
-        <Stepper step={0} total={5} />
+      <ScrollView
+        contentContainerStyle={{ padding: 20, paddingBottom: 24 }}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Stepper step={0} total={6} />
         <View style={styles.card}>
           <Text style={styles.title}>Who deserves a little kindness today?</Text>
-          <Text style={styles.sub}>Let's set up their polli. Takes about 60 seconds.</Text>
+          <Text style={styles.sub}>Let's set up their Polli! This only takes 60 seconds.</Text>
           <View style={{ marginTop: 22, gap: 14 }}>
             <Field label="First name">
               <TextInput
@@ -59,7 +64,7 @@ export default function Who() {
                 <Pressable
                   key={o.id}
                   style={styles.radio}
-                  onPress={() => set({ notify: o.id as any })}
+                  onPress={() => set({ notify: o.id })}
                 >
                   <View style={[styles.radioDot, draft.notify === o.id && styles.radioDotChecked]}>
                     {draft.notify === o.id && <View style={styles.radioDotInner} />}
@@ -67,29 +72,43 @@ export default function Who() {
                   <Text style={styles.radioLbl}>{o.l}</Text>
                 </Pressable>
               ))}
-              <View style={[styles.fieldBox, { marginTop: 6 }]}>
-                <TextInput
-                  value={draft.contact}
-                  onChangeText={(t) => set({ contact: t })}
-                  placeholder={draft.notify === "phone" ? "(555) 123-4567" : "them@example.com"}
-                  placeholderTextColor={colors.inkMuted}
-                  keyboardType={draft.notify === "phone" ? "phone-pad" : "email-address"}
-                  autoCapitalize="none"
-                  style={styles.input}
-                />
+              <View style={{ marginTop: 6, gap: 10 }}>
+                {showEmail ? (
+                  <Field label="Email">
+                    <TextInput
+                      value={draft.email}
+                      onChangeText={(t) => set({ email: t })}
+                      placeholder="them@example.com"
+                      placeholderTextColor={colors.inkMuted}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      style={styles.input}
+                    />
+                  </Field>
+                ) : null}
+                {showPhone ? (
+                  <Field label="Mobile number">
+                    <TextInput
+                      value={draft.phone}
+                      onChangeText={(t) => set({ phone: t })}
+                      placeholder="(555) 123-4567"
+                      placeholderTextColor={colors.inkMuted}
+                      keyboardType="phone-pad"
+                      style={styles.input}
+                    />
+                  </Field>
+                ) : null}
               </View>
             </View>
           </View>
         </View>
-        <View style={{ flexDirection: "row", justifyContent: "flex-end", marginTop: 18 }}>
-          <Button
-            label="Continue"
-            iconRight={<IconArrow size={18} color={colors.green} />}
-            disabled={!ok}
-            onPress={() => router.push("/nominate/category")}
-          />
-        </View>
       </ScrollView>
+      <NominateFooter
+        label="Continue"
+        disabled={!ok}
+        onPress={() => router.push("/nominate/category")}
+      />
     </View>
   );
 }

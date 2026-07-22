@@ -1,24 +1,16 @@
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
-import {
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, {
   Easing,
-  runOnJS,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
 import { tap } from "../lib/haptics";
 import { FeedItem } from "../lib/mockData";
-import { ordinal } from "../lib/ordinal";
 import { colors, fonts, shadows } from "../theme";
 import { IconHeart, IconShare } from "./Icon";
-import { VoiceMessagePlayer } from "./voice/VoiceMessageComposer";
 
 interface Props {
   n: FeedItem;
@@ -28,12 +20,14 @@ interface Props {
   onShare: (n: FeedItem) => void;
 }
 
+/** Feed card — short color strip for identity; full “why” is the north star. */
 export function FeedCard({ n, viewerHasDonated = false, onGive, onOpen, onShare }: Props) {
   const [bursts, setBursts] = useState<{ id: number; x: number }[]>([]);
+  const first = n.name.split(" ")[0];
 
   const spawnBurst = () => {
     const id = Date.now() + Math.random();
-    const x = Math.random() * 40 + 20;
+    const x = Math.random() * 48 + 24;
     setBursts((b) => [...b, { id, x }]);
     setTimeout(() => setBursts((b) => b.filter((it) => it.id !== id)), 1100);
   };
@@ -41,22 +35,30 @@ export function FeedCard({ n, viewerHasDonated = false, onGive, onOpen, onShare 
   return (
     <View style={styles.card}>
       <Pressable onPress={() => onOpen(n)}>
-        <LinearGradient colors={n.photo as [string, string]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.ph}>
-          <View style={styles.livePill}>
+        <LinearGradient
+          colors={n.photo as [string, string]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.ph}
+        >
+          <LinearGradient
+            colors={["transparent", "rgba(0,0,0,0.35)"]}
+            style={styles.scrim}
+            pointerEvents="none"
+          />
+
+          <View style={styles.liveRow}>
             <View style={styles.liveDot} />
-            <Text style={styles.liveText}>LIVE · {n.daysLeft}d LEFT</Text>
+            <Text style={styles.liveText}>Live · {n.daysLeft}d</Text>
           </View>
-          <View style={styles.phBottom}>
-            <View style={styles.bigGivers}>
-              {viewerHasDonated ? (
-                <>
-                  <Text style={styles.giversBig}>{n.backers}</Text>
-                  <Text style={styles.giversLbl}>friends chipped in</Text>
-                </>
-              ) : (
-                <Text style={styles.giversLbl}>Friends are chipping in</Text>
-              )}
-            </View>
+
+          <View style={styles.heroBottom}>
+            <Text style={styles.heroCat}>
+              {n.cat.emoji}  {n.cat.title}
+            </Text>
+            <Text style={styles.heroName} numberOfLines={1}>
+              {n.name}
+            </Text>
           </View>
         </LinearGradient>
       </Pressable>
@@ -66,66 +68,66 @@ export function FeedCard({ n, viewerHasDonated = false, onGive, onOpen, onShare 
           <View style={styles.avSm}>
             <Text style={styles.avSmText}>{n.nominatorAv}</Text>
           </View>
-          <Text style={styles.whoText}>
-            <Text style={{ fontFamily: fonts.bodyBold }}>{n.nominator}</Text> shared kindness
-          </Text>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text style={styles.whoText} numberOfLines={1}>
+              <Text style={styles.whoName}>{n.nominator}</Text>
+              {" started this"}
+            </Text>
+            {viewerHasDonated ? (
+              <Text style={styles.whoMeta} numberOfLines={1}>
+                {n.backers} friends have chipped in
+              </Text>
+            ) : null}
+          </View>
         </View>
 
-        <Pressable onPress={() => onOpen(n)} style={styles.nameRow}>
-          <View style={styles.catIcon}>
-            <Text style={{ fontSize: 22 }}>{n.cat.emoji}</Text>
-          </View>
-          <View style={{ flex: 1, minWidth: 0 }}>
-            <Text style={styles.nameText} numberOfLines={1}>
-              {n.name}
-            </Text>
-            <Text style={styles.roleText}>{n.role}</Text>
-          </View>
-        </Pressable>
-
-        <Pressable onPress={() => onOpen(n)}>
-          <Text style={styles.storyLabel}>What makes {n.name.split(" ")[0]} special:</Text>
-          {n.storyAudioUri && n.storyWords && n.storySignatures ? (
-            <VoiceMessagePlayer
-              uri={n.storyAudioUri}
-              words={n.storyWords}
-              signatures={n.storySignatures}
-              durationMs={n.storyAudioDurationMs ?? 0}
-              compact
-            />
-          ) : (
-            <Text style={styles.storyText} numberOfLines={5}>
-              {n.story}
-            </Text>
-          )}
+        <Pressable onPress={() => onOpen(n)} style={styles.whyBlock}>
+          <Text style={styles.whyLabel}>Why chip in</Text>
+          <Text style={styles.storyText}>{n.story}</Text>
         </Pressable>
 
         <View style={styles.actions}>
           {bursts.map((b) => (
             <Burst key={b.id} x={b.x} />
           ))}
-          <Pressable
-            style={styles.giveBtn}
-            onPress={() => {
-              tap();
-              spawnBurst();
-              onGive(n);
-            }}
-          >
-            <IconHeart size={16} color={colors.green} />
-            {viewerHasDonated ? (
-              <Text style={styles.giveBtnText}>
-                Be the {n.backers + 1}
-                <Text style={{ fontSize: 10 }}>{ordinal(n.backers + 1)}</Text>
-              </Text>
-            ) : (
-              <Text style={styles.giveBtnText}>Give $1</Text>
-            )}
-          </Pressable>
-          <Pressable style={styles.shareBtn} onPress={() => onShare(n)}>
-            <IconShare size={14} color={colors.ink2} />
-            <Text style={styles.shareBtnText}>Share</Text>
-          </Pressable>
+          {viewerHasDonated ? (
+            <View style={styles.givenRow}>
+              <IconHeart size={16} color={colors.green} />
+              <Text style={styles.givenText}>Thank you for showing up for {first}</Text>
+              <Pressable
+                style={styles.shareBtn}
+                onPress={() => onShare(n)}
+                accessibilityRole="button"
+                accessibilityLabel="Share"
+                hitSlop={6}
+              >
+                <IconShare size={18} color={colors.ink2} />
+              </Pressable>
+            </View>
+          ) : (
+            <>
+              <Pressable
+                style={styles.giveBtn}
+                onPress={() => {
+                  tap();
+                  spawnBurst();
+                  onGive(n);
+                }}
+              >
+                <IconHeart size={16} color={colors.green} />
+                <Text style={styles.giveBtnText}>Send $1 to {first}</Text>
+              </Pressable>
+              <Pressable
+                style={styles.shareBtn}
+                onPress={() => onShare(n)}
+                accessibilityRole="button"
+                accessibilityLabel="Share"
+                hitSlop={6}
+              >
+                <IconShare size={18} color={colors.ink2} />
+              </Pressable>
+            </>
+          )}
         </View>
       </View>
     </View>
@@ -140,7 +142,7 @@ function Burst({ x }: { x: number }) {
     op.value = withTiming(0, { duration: 1100 });
   }, []);
   const style = useAnimatedStyle(() => ({
-    transform: [{ translateY: y.value }, { scale: 1 + (80 + y.value) / 80 * 0.4 }],
+    transform: [{ translateY: y.value }, { scale: 1 + ((80 + y.value) / 80) * 0.4 }],
     opacity: op.value,
   }));
   return (
@@ -153,74 +155,65 @@ function Burst({ x }: { x: number }) {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: "#fff",
-    borderRadius: 18,
+    borderRadius: 20,
     overflow: "hidden",
     ...shadows.feed,
   },
   ph: {
-    height: 280,
-    paddingHorizontal: 14,
-    paddingBottom: 14,
+    height: 96,
     justifyContent: "flex-end",
+    position: "relative",
   },
-  livePill: {
+  scrim: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  liveRow: {
     position: "absolute",
-    top: 14,
+    top: 10,
     left: 14,
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 999,
-    backgroundColor: colors.sageSoft,
-    borderWidth: 1,
-    borderColor: "rgba(83,162,104,0.35)",
   },
   liveDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: colors.sage,
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: "#5FE08A",
+    borderWidth: 1.5,
+    borderColor: "rgba(255,255,255,0.85)",
   },
   liveText: {
     fontFamily: fonts.bodySemi,
     fontSize: 11,
-    color: colors.cream,
-    letterSpacing: 0.22,
+    color: "#fff",
+    letterSpacing: 0.2,
+    textShadowColor: "rgba(0,0,0,0.35)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
   },
-  phBottom: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    gap: 10,
+  heroBottom: {
+    paddingHorizontal: 14,
+    paddingBottom: 10,
+    zIndex: 1,
   },
-  bigGivers: {
-    flexDirection: "row",
-    alignItems: "baseline",
-    gap: 8,
-    flex: 1,
-    flexWrap: "wrap",
+  heroCat: {
+    color: "rgba(255,255,255,0.88)",
+    fontFamily: fonts.body,
+    fontSize: 12,
   },
-  giversBig: {
+  heroName: {
+    color: "#fff",
     fontFamily: fonts.serifHeavy,
-    fontSize: 34,
-    color: "#fff",
-    textShadowColor: "rgba(0,0,0,0.4)",
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 10,
-    lineHeight: 36,
-  },
-  giversLbl: {
-    fontFamily: fonts.bodySemi,
-    fontSize: 14,
-    color: "#fff",
-    textShadowColor: "rgba(0,0,0,0.4)",
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 10,
+    fontSize: 20,
+    lineHeight: 24,
+    marginTop: 1,
   },
   body: {
-    padding: 18,
-    gap: 12,
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 14,
+    gap: 14,
   },
   who: {
     flexDirection: "row",
@@ -228,107 +221,101 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   avSm: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.marigold,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.green,
     alignItems: "center",
     justifyContent: "center",
   },
   avSmText: {
     color: "#fff",
     fontFamily: fonts.bodyBold,
-    fontSize: 13,
+    fontSize: 12,
   },
   whoText: {
     fontFamily: fonts.body,
     fontSize: 13,
     color: colors.ink2,
   },
-  nameRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    backgroundColor: colors.cream,
-    padding: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "rgba(235,79,48,0.35)",
-    minHeight: 66,
-  },
-  catIcon: {
-    width: 46,
-    height: 46,
-    borderRadius: 10,
-    backgroundColor: colors.coralSoft,
-    borderWidth: 1.5,
-    borderColor: colors.coral,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  nameText: {
-    fontFamily: fonts.serifBold,
-    fontSize: 17,
+  whoName: {
+    fontFamily: fonts.bodySemi,
     color: colors.ink,
-    lineHeight: 20,
   },
-  roleText: {
+  whoMeta: {
     fontFamily: fonts.body,
     fontSize: 12,
-    color: colors.ink2,
-    marginTop: 2,
+    color: colors.inkMuted,
+    marginTop: 1,
   },
-  storyLabel: {
+  whyBlock: {
+    gap: 8,
+  },
+  whyLabel: {
     fontFamily: fonts.bodyBold,
-    fontSize: 14,
-    color: colors.ink,
-    marginBottom: 6,
+    fontSize: 11,
+    letterSpacing: 0.7,
+    textTransform: "uppercase",
+    color: colors.ink2,
   },
   storyText: {
     fontFamily: fonts.serif,
-    fontSize: 15,
-    lineHeight: 22,
+    fontSize: 16,
+    lineHeight: 25,
     color: colors.ink,
   },
   actions: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    paddingTop: 4,
+    gap: 10,
     position: "relative",
+    marginTop: 2,
   },
   burst: {
     position: "absolute",
     fontFamily: fonts.serifHeavy,
-    fontSize: 28,
+    fontSize: 26,
     color: colors.marigold,
-    top: 0,
+    top: -4,
     zIndex: 10,
   },
   giveBtn: {
+    flex: 1,
     backgroundColor: colors.marigold,
-    paddingVertical: 10,
-    paddingLeft: 14,
-    paddingRight: 18,
+    paddingVertical: 13,
     borderRadius: 12,
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
     gap: 8,
   },
   giveBtnText: {
     fontFamily: fonts.bodyBold,
+    fontSize: 15,
+    color: colors.green,
+  },
+  givenRow: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+  },
+  givenText: {
+    flex: 1,
+    fontFamily: fonts.bodySemi,
     fontSize: 14,
     color: colors.green,
   },
   shareBtn: {
-    flexDirection: "row",
+    width: 48,
+    height: 48,
+    borderRadius: 12,
     alignItems: "center",
-    gap: 6,
-    padding: 4,
-  },
-  shareBtnText: {
-    fontFamily: fonts.bodySemi,
-    fontSize: 12,
-    color: colors.ink2,
+    justifyContent: "center",
+    backgroundColor: colors.paper,
+    borderWidth: 1,
+    borderColor: colors.line2,
   },
 });

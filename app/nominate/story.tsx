@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import React, { useMemo, useState } from "react";
+import React from "react";
 import {
   Pressable,
   ScrollView,
@@ -8,59 +8,37 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { Button } from "../../components/Button";
-import { IconArrow } from "../../components/Icon";
 import { NavBar } from "../../components/NavBar";
+import { NominateFooter } from "../../components/NominateFooter";
 import { Stepper } from "../../components/Stepper";
-import { VoiceMessageComposer } from "../../components/voice/VoiceMessageComposer";
-import { CATEGORIES, INSPO } from "../../lib/mockData";
+import { CATEGORIES, OVERVIEW_INSPO } from "../../lib/mockData";
 import { useNomination } from "../../lib/nomination";
-import { useTone } from "../../lib/tone";
-import { VoiceClip } from "../../lib/voice";
 import { colors, fonts, shadows } from "../../theme";
 
 const MAX = 480;
+const TOTAL = 6;
 
 export default function Story() {
   const router = useRouter();
   const { draft, set } = useNomination();
-  const { copy } = useTone();
   const cat = CATEGORIES.find((c) => c.id === draft.catId);
-
-  const voiceClip = useMemo<VoiceClip | null>(() => {
-    if (!draft.storyAudioUri) return null;
-    return {
-      uri: draft.storyAudioUri,
-      mimeType: "audio/m4a",
-      durationMs: draft.storyAudioDurationMs ?? 0,
-      words: draft.storyWords,
-      signatures: draft.storySignatures,
-    };
-  }, [
-    draft.storyAudioUri,
-    draft.storyAudioDurationMs,
-    draft.storyWords,
-    draft.storySignatures,
-  ]);
-
-  const [mode, setMode] = useState<"type" | "speak">(draft.storyMode);
-
-  const switchMode = (next: "type" | "speak") => {
-    setMode(next);
-    set({ storyMode: next });
-  };
-
-  const canContinue =
-    mode === "type" ? Boolean(draft.story.trim()) : Boolean(draft.storyAudioUri && draft.story.trim());
+  const canContinue = Boolean(draft.overview.trim());
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.paper }}>
       <NavBar back title="Back" variant="paper" onBack={() => router.back()} />
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 32 }}>
-        <Stepper step={2} total={5} />
+      <ScrollView
+        contentContainerStyle={{ padding: 20, paddingBottom: 24 }}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Stepper step={2} total={TOTAL} />
         <View style={styles.card}>
-          <Text style={styles.title}>Make their day with a message!</Text>
-          <Text style={styles.sub}>Your words matter. Let them know why they're special.</Text>
+          <Text style={styles.title}>Why should people chip in?</Text>
+          <Text style={styles.sub}>
+            Write a short public overview for {draft.first || "them"}'s Polli — this is what friends
+            see before they send $1.
+          </Text>
+          <Text style={styles.publicPill}>Public · everyone can read this</Text>
 
           <View style={styles.nameRow}>
             <View style={styles.catIcon}>
@@ -74,83 +52,43 @@ export default function Story() {
             </View>
           </View>
 
-          <View style={styles.modeRow}>
-            <Pressable
-              style={[styles.modeBtn, mode === "type" && styles.modeBtnActive]}
-              onPress={() => switchMode("type")}
-            >
-              <Text style={[styles.modeText, mode === "type" && styles.modeTextActive]}>Type</Text>
-            </Pressable>
-            <Pressable
-              style={[styles.modeBtn, mode === "speak" && styles.modeBtnActive]}
-              onPress={() => switchMode("speak")}
-            >
-              <Text style={[styles.modeText, mode === "speak" && styles.modeTextActive]}>Speak</Text>
-            </Pressable>
+          <View style={styles.textareaBox}>
+            <TextInput
+              value={draft.overview}
+              onChangeText={(t) => set({ overview: t.slice(0, MAX) })}
+              placeholder={`Share why ${draft.first || "they"} deserve this — the story that makes people want to join in…`}
+              placeholderTextColor={colors.inkMuted}
+              multiline
+              spellCheck
+              autoCorrect
+              style={styles.textarea}
+            />
           </View>
+          <Text style={styles.counter}>
+            {draft.overview.length}/{MAX}
+          </Text>
 
-          {mode === "type" ? (
-            <>
-              <View style={styles.textareaBox}>
-                <TextInput
-                  value={draft.story}
-                  onChangeText={(t) => set({ story: t.slice(0, MAX) })}
-                  placeholder={copy.story_prompt(draft.first)}
-                  placeholderTextColor={colors.inkMuted}
-                  multiline
-                  style={styles.textarea}
-                />
-              </View>
-              <Text style={styles.counter}>
-                {draft.story.length}/{MAX}
-              </Text>
-
-              <Text style={styles.inspoLabel}>Inspiration</Text>
-              <View style={{ gap: 8 }}>
-                {INSPO.slice(0, 3).map((t, i) => (
-                  <Pressable
-                    key={i}
-                    style={styles.inspoRow}
-                    onPress={() => set({ story: t.replace(/\{name\}/g, draft.first || "them") })}
-                  >
-                    <Text style={styles.inspoText}>{t}</Text>
-                  </Pressable>
-                ))}
-              </View>
-            </>
-          ) : (
-            <View style={styles.speakBox}>
-              <Text style={styles.speakHint}>
-                Record a short voice note — we'll transcribe it and bring your words to life.
-              </Text>
-              <VoiceMessageComposer
-                clip={voiceClip}
-                onClipChange={(clip, storyText) => {
-                  set({
-                    story: storyText.slice(0, MAX),
-                    storyAudioUri: clip?.uri ?? null,
-                    storyAudioDurationMs: clip?.durationMs ?? null,
-                    storyWords: clip?.words ?? [],
-                    storySignatures: clip?.signatures ?? [],
-                  });
-                }}
-              />
-              {draft.story ? (
-                <Text style={styles.counter}>{draft.story.length}/{MAX} transcribed</Text>
-              ) : null}
-            </View>
-          )}
-        </View>
-
-        <View style={{ flexDirection: "row", justifyContent: "flex-end", marginTop: 18 }}>
-          <Button
-            label="Continue"
-            iconRight={<IconArrow size={18} color={colors.green} />}
-            disabled={!canContinue}
-            onPress={() => router.push("/nominate/timeline")}
-          />
+          <Text style={styles.inspoLabel}>Inspiration — tap to use</Text>
+          <View style={{ gap: 8 }}>
+            {OVERVIEW_INSPO.slice(0, 3).map((t, i) => (
+              <Pressable
+                key={i}
+                style={styles.inspoRow}
+                onPress={() =>
+                  set({ overview: t.replace(/\{name\}/g, draft.first || "them") })
+                }
+              >
+                <Text style={styles.inspoText}>{t}</Text>
+              </Pressable>
+            ))}
+          </View>
         </View>
       </ScrollView>
+      <NominateFooter
+        label="Continue"
+        disabled={!canContinue}
+        onPress={() => router.push("/nominate/message")}
+      />
     </View>
   );
 }
@@ -177,6 +115,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.ink2,
     marginTop: 6,
+    lineHeight: 22,
+  },
+  publicPill: {
+    alignSelf: "flex-start",
+    marginTop: 12,
+    fontFamily: fonts.bodySemi,
+    fontSize: 11,
+    letterSpacing: 0.4,
+    textTransform: "uppercase",
+    color: colors.green,
+    backgroundColor: colors.sageSoft,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    overflow: "hidden",
   },
   nameRow: {
     marginTop: 16,
@@ -187,7 +140,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.cream,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "rgba(235,79,48,0.35)",
+    borderColor: "rgba(242,85,61,0.35)",
   },
   catIcon: {
     width: 46,
@@ -210,39 +163,12 @@ const styles = StyleSheet.create({
     color: colors.ink2,
     marginTop: 2,
   },
-  modeRow: {
-    flexDirection: "row",
-    gap: 8,
-    marginTop: 16,
-    padding: 4,
-    backgroundColor: colors.paper,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.line2,
-  },
-  modeBtn: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  modeBtnActive: {
-    backgroundColor: colors.green,
-  },
-  modeText: {
-    fontFamily: fonts.bodySemi,
-    fontSize: 14,
-    color: colors.ink2,
-  },
-  modeTextActive: {
-    color: colors.white,
-  },
   textareaBox: {
     marginTop: 16,
     borderWidth: 1,
     borderColor: colors.green3,
     borderRadius: 12,
-    backgroundColor: "rgba(248,249,244,0.5)",
+    backgroundColor: "rgba(255,251,245,0.5)",
     padding: 16,
   },
   textarea: {
@@ -277,16 +203,6 @@ const styles = StyleSheet.create({
     fontFamily: fonts.serif,
     fontSize: 14,
     color: colors.ink,
-    lineHeight: 20,
-  },
-  speakBox: {
-    marginTop: 16,
-    gap: 8,
-  },
-  speakHint: {
-    fontFamily: fonts.body,
-    fontSize: 14,
-    color: colors.ink2,
     lineHeight: 20,
   },
 });

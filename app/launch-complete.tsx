@@ -1,12 +1,13 @@
+import * as Clipboard from "expo-clipboard";
 import { useRouter } from "expo-router";
-import React from "react";
+import React, { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Bzz, BzzPath } from "../components/Bzz";
 import { Button } from "../components/Button";
 import { Confetti } from "../components/Confetti";
 import { IconClose, IconHeart, IconLink, IconShare } from "../components/Icon";
 import { NavBar } from "../components/NavBar";
-import { useNomination } from "../lib/nomination";
+import { launchProductDollars, useNomination } from "../lib/nomination";
 import { useShare } from "../lib/share";
 import { useTone } from "../lib/tone";
 import { colors, fonts } from "../theme";
@@ -16,14 +17,22 @@ export default function LaunchComplete() {
   const { draft, reset } = useNomination();
   const { copy } = useTone();
   const { openShare } = useShare();
+  const [copied, setCopied] = useState(false);
 
   const firstName = draft.first || "their";
   const slug = `${(draft.first || "me").toLowerCase()}-${(draft.last || "x").toLowerCase()}`;
   const url = `polli.to/${slug}`;
+  const total = launchProductDollars(draft);
 
   const home = () => {
     reset();
     router.replace("/(tabs)/feed");
+  };
+
+  const copyLink = async () => {
+    await Clipboard.setStringAsync(`https://${url}`);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
@@ -53,16 +62,21 @@ export default function LaunchComplete() {
           </View>
 
           <Text style={styles.title}>
-            <Text style={styles.titleAccent}>{firstName}'s polli</Text>
+            <Text style={styles.titleAccent}>{firstName}'s Polli</Text>
             {"\n"}
             {copy.launch_title}
           </Text>
-          <Text style={styles.sub}>{copy.launch_sub}</Text>
+          <Text style={styles.sub}>
+            {total > 1
+              ? `You kicked it off with $${total} (including your voice keepsake). Share the link so others can pile on.`
+              : copy.launch_sub}
+          </Text>
 
-          <View style={styles.urlChip}>
+          <Pressable style={styles.urlChip} onPress={copyLink} accessibilityRole="button">
             <IconLink size={14} color={colors.cream} />
             <Text style={styles.urlText}>{url}</Text>
-          </View>
+            <Text style={styles.copyHint}>{copied ? "Copied!" : "Tap to copy"}</Text>
+          </Pressable>
         </View>
         <View style={styles.actions}>
           <Button
@@ -136,9 +150,9 @@ const styles = StyleSheet.create({
     marginTop: 24,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: "rgba(248,249,244,0.12)",
+    backgroundColor: "rgba(255,251,245,0.12)",
     borderWidth: 1,
-    borderColor: "rgba(248,249,244,0.35)",
+    borderColor: "rgba(255,251,245,0.35)",
     borderStyle: "dashed",
     borderRadius: 12,
     flexDirection: "row",
@@ -149,6 +163,12 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     fontSize: 13,
     color: colors.cream,
+  },
+  copyHint: {
+    fontFamily: fonts.bodySemi,
+    fontSize: 11,
+    color: colors.marigold,
+    marginLeft: 4,
   },
   actions: {
     padding: 24,

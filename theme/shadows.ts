@@ -10,10 +10,10 @@ export const shadows = {
   } satisfies ViewStyle,
   feed: {
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.22,
-    shadowRadius: 18,
-    elevation: 10,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 4,
   } satisfies ViewStyle,
   fab: {
     shadowColor: "rgba(234,170,0,0.4)",

@@ -382,22 +382,23 @@ export default function Splash() {
               { fontSize: headlineSize, lineHeight: headlineSize + 2 },
             ]}
           >
-            One dollar.{"\n"}
-            <Text style={styles.headlineItalic}>Endless good.</Text>
+            Share $1 and{"\n"}
+            <Text style={styles.headlineItalic}>endless good…</Text>
             {"\n"}
-            Shared by everyone.
+            with everyone.
           </Text>
           <Text style={[styles.lede, { fontSize: ledeSize, lineHeight: ledeSize + 8 }]}>
-            Nominate a friend, a teacher, a neighbor. Everyone chips in $1, together.
-            Small contributions turn into one meaningful gift and message of support.
+            Nominate a friend, teacher, neighbor, or anyone who deserves a little extra kindness.
+            Everyone chips in just $1 — small contributions pollinate into a meaningful gift and
+            message of support.
           </Text>
         </View>
 
         <View style={styles.steps}>
           {[
             "Nominate someone special",
-            "Friends, family, and community each send $1",
-            "They receive a meaningful gift and message",
+            "Share with friends, family, and your community — ask everyone to send only $1",
+            "Your nominee receives a meaningful gift and message",
           ].map((txt, i) => (
             <View key={i} style={styles.step}>
               <View style={styles.stepNum}>
@@ -408,9 +409,29 @@ export default function Splash() {
           ))}
         </View>
 
+        <View style={styles.useCases}>
+          <Text style={styles.useCasesEyebrow}>Made for everyday kindness</Text>
+          <Text style={styles.useCasesTitle}>Start a Polli for</Text>
+          <View style={styles.useCaseGrid}>
+            {[
+              { emoji: "🎂", label: "A birthday" },
+              { emoji: "🤍", label: "A little lift" },
+              { emoji: "🍎", label: "A teacher or coach" },
+              { emoji: "🩺", label: "A healthcare hero" },
+              { emoji: "🍼", label: "A new parent" },
+              { emoji: "🌼", label: "Just because" },
+            ].map((item) => (
+              <View key={item.label} style={styles.useCaseChip}>
+                <Text style={styles.useCaseEmoji}>{item.emoji}</Text>
+                <Text style={styles.useCaseLabel}>{item.label}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
         <View style={styles.ctaBlock}>
           <Button
-            label="Start a nomination"
+            label="Start a Polli"
             full
             iconRight={<IconArrow size={20} color={colors.green} />}
             onPress={() => router.push("/auth")}
@@ -645,6 +666,53 @@ const styles = StyleSheet.create({
   stepText: {
     fontFamily: fonts.body,
     fontSize: 15,
+    color: colors.ink,
+  },
+  useCases: {
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "rgba(27,77,62,0.1)",
+    padding: 18,
+    gap: 12,
+  },
+  useCasesEyebrow: {
+    fontFamily: fonts.bodySemi,
+    fontSize: 11,
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
+    color: colors.ink2,
+  },
+  useCasesTitle: {
+    fontFamily: fonts.serifBold,
+    fontSize: 24,
+    lineHeight: 28,
+    color: colors.green,
+    marginTop: -4,
+  },
+  useCaseGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginTop: 4,
+  },
+  useCaseChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+    backgroundColor: colors.cream,
+    borderWidth: 1,
+    borderColor: "rgba(27,77,62,0.08)",
+  },
+  useCaseEmoji: {
+    fontSize: 16,
+  },
+  useCaseLabel: {
+    fontFamily: fonts.bodySemi,
+    fontSize: 13,
     color: colors.ink,
   },
   ctaBlock: {
