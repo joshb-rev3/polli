@@ -1,7 +1,8 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createClient } from "@supabase/supabase-js";
 import Constants from "expo-constants";
+import { Platform } from "react-native";
 import "react-native-url-polyfill/auto";
+import { authStorage } from "./authStorage";
 
 const url =
   process.env.EXPO_PUBLIC_SUPABASE_URL ||
@@ -22,12 +23,16 @@ function looksConfigured(value: string) {
   return true;
 }
 
+const isWeb = Platform.OS === "web";
+
 export const supabase = createClient(url || "https://placeholder.supabase.co", anonKey || "placeholder", {
   auth: {
-    storage: AsyncStorage as any,
+    storage: authStorage as any,
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: false,
+    // Web needs URL detection for OAuth / magic-link returns.
+    // Native completes OAuth via WebBrowser + code exchange in session.tsx.
+    detectSessionInUrl: isWeb,
   },
 });
 
