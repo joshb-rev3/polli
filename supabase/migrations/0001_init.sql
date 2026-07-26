@@ -192,7 +192,7 @@ create trigger users_touch before update on users for each row execute function 
 create trigger nominations_touch before update on nominations for each row execute function touch_updated_at();
 
 -- ─── Helpers ─────────────────────────────────────────────────────────────────
--- Slugify a name into a polli.to URL segment; called when inserting a nomination.
+-- Slugify a name into a polli-app.com URL segment; called when inserting a nomination.
 create or replace function slugify(input text) returns text language sql immutable as $$
   select regexp_replace(regexp_replace(lower(input), '[^a-z0-9]+', '-', 'g'), '(^-|-$)', '', 'g')
 $$;

@@ -1,0 +1,2 @@
+# Stripe signs requests with stripe-signature — it does not send a Supabase JWT.
+verify_jwt = false

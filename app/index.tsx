@@ -21,6 +21,7 @@ import { Bzz } from "../components/Bzz";
 import { Button } from "../components/Button";
 import { IconArrow } from "../components/Icon";
 import { Logo } from "../components/Logo";
+import { SiteHead } from "../components/SiteHead";
 import { colors, fonts } from "../theme";
 
 const HERO_FLOWERS = [
@@ -235,13 +236,14 @@ export default function Splash() {
 
   return (
     <View style={styles.screen}>
+      <SiteHead path="/" />
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
         bounces
       >
       <View style={styles.logoWrap}>
-        <Logo size={34} />
+        <Logo size={34} onDark />
       </View>
 
       <View style={styles.hero}>

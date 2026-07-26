@@ -16,16 +16,17 @@ import {
   Merriweather_700Bold,
   Merriweather_900Black,
 } from "@expo-google-fonts/merriweather";
-import { StripeProviderShim } from "../components/StripeProviderShim";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { SiteHead } from "../components/SiteHead";
+import { StripeProviderShim } from "../components/StripeProviderShim";
+import { DemoWalletProvider } from "../lib/demoWallet";
 import { NominationProvider } from "../lib/nomination";
 import { SessionProvider } from "../lib/session";
-import { DemoWalletProvider } from "../lib/demoWallet";
 import { ShareProvider } from "../lib/share";
 import { ToneProvider } from "../lib/tone";
 
@@ -58,6 +59,7 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
+      <SiteHead />
       <SafeAreaProvider>
         <StripeProviderShim publishableKey={STRIPE_PK}>
           <SessionProvider>
@@ -69,7 +71,7 @@ export default function RootLayout() {
                       screenOptions={{
                         headerShown: false,
                         animation: "slide_from_right",
-                        contentStyle: { backgroundColor: "#F8F9F4" },
+                        contentStyle: { backgroundColor: "#FFFBF5" },
                       }}
                     />
                   </ShareProvider>

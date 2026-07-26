@@ -8,6 +8,7 @@ import { Confetti } from "../components/Confetti";
 import { IconClose, IconHeart, IconLink, IconShare } from "../components/Icon";
 import { NavBar } from "../components/NavBar";
 import { launchProductDollars, useNomination } from "../lib/nomination";
+import { SITE_HOST } from "../lib/seo";
 import { useShare } from "../lib/share";
 import { useTone } from "../lib/tone";
 import { colors, fonts } from "../theme";
@@ -21,7 +22,7 @@ export default function LaunchComplete() {
 
   const firstName = draft.first || "their";
   const slug = `${(draft.first || "me").toLowerCase()}-${(draft.last || "x").toLowerCase()}`;
-  const url = `polli.to/${slug}`;
+  const url = `${SITE_HOST}/${slug}`;
   const total = launchProductDollars(draft);
 
   const home = () => {

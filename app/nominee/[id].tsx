@@ -4,9 +4,14 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Button } from "../../components/Button";
 import { IconHeart, IconShare } from "../../components/Icon";
 import { NavBar } from "../../components/NavBar";
+import { SiteHead } from "../../components/SiteHead";
 import { FEED, hasDonatedTo, myNoteFor } from "../../lib/mockData";
 import { useShare } from "../../lib/share";
 import { colors, fonts } from "../../theme";
+
+export function generateStaticParams(): { id: string }[] {
+  return FEED.map((f) => ({ id: f.id }));
+}
 
 export default function Nominee() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -17,6 +22,7 @@ export default function Nominee() {
   if (!n) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.paper }}>
+        <SiteHead title="Not found" path={`/nominee/${id || ""}`} noIndex />
         <NavBar back title="Back" variant="paper" onBack={() => router.back()} />
         <View style={{ padding: 24 }}>
           <Text style={{ fontFamily: fonts.body, color: colors.ink2 }}>Nominee not found.</Text>
@@ -28,9 +34,18 @@ export default function Nominee() {
   const viewerHasDonated = hasDonatedTo(n.id);
   const myNote = myNoteFor(n.id);
   const first = n.name.split(" ")[0];
+  const shareDescription = n.story?.trim()
+    ? n.story.trim().slice(0, 160)
+    : `Share $1 with ${first} on polli — endless good.`;
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.paper }}>
+      <SiteHead
+        title={`${n.name}'s Polli`}
+        description={shareDescription}
+        path={`/nominee/${n.id}`}
+        type="profile"
+      />
       <NavBar
         back
         title="Back"

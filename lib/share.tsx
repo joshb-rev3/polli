@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState } from "react";
 import { ShareSheet } from "../components/ShareSheet";
+import { SITE_HOST } from "./seo";
 
 interface ShareTarget {
   name?: string;
@@ -28,7 +29,9 @@ export function ShareProvider({ children }: { children: React.ReactNode }) {
     setOpen(true);
   };
 
-  const url = target ? `polli.to/${target.slug || slugify(target.name || "someone")}` : "polli.to/share";
+  const url = target
+    ? `${SITE_HOST}/${target.slug || slugify(target.name || "someone")}`
+    : `${SITE_HOST}/share`;
 
   return (
     <ShareContext.Provider value={{ openShare }}>

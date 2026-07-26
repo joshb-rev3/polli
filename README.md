@@ -232,10 +232,10 @@ The polli logo PNG you already have works perfectly — run it through an icon-g
 
 ## Universal / deep links
 
-`app.json` is already configured with `applinks:polli.to` (iOS) + an intent filter for Android. To actually make `polli.to/eileen-ortega` open the app, once you own the domain you need to host two tiny files:
+`app.json` is already configured with `applinks:polli-app.com` (iOS) + an intent filter for Android. To actually make `polli-app.com/eileen-ortega` open the app, once you own the domain you need to host two tiny files:
 
-- `https://polli.to/.well-known/apple-app-site-association`
-- `https://polli.to/.well-known/assetlinks.json`
+- `https://polli-app.com/.well-known/apple-app-site-association`
+- `https://polli-app.com/.well-known/assetlinks.json`
 
 Apple's and Google's docs have copy-paste templates. Our bundle ID is `com.rev3labs.polli` on both platforms.
 

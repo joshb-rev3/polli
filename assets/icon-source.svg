@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="polli">
+  <rect width="1024" height="1024" fill="#1B4D3E"/>
+
+  <!-- lowercase geometric p -->
+  <rect x="268" y="220" width="148" height="620" rx="74" fill="#FFFBF5"/>
+  <circle cx="490" cy="430" r="222" fill="#FFFBF5"/>
+  <circle cx="490" cy="430" r="108" fill="#1B4D3E"/>
+
+  <!-- bee head tittle, upper-right of bowl -->
+  <g transform="translate(668 118)">
+    <path d="M78 78 C52 42 34 18 42 0" fill="none" stroke="#19191B" stroke-width="14" stroke-linecap="round"/>
+    <path d="M162 78 C188 42 206 18 198 0" fill="none" stroke="#19191B" stroke-width="14" stroke-linecap="round"/>
+    <circle cx="40" cy="2" r="18" fill="#F2553D"/>
+    <circle cx="200" cy="2" r="18" fill="#F2553D"/>
+    <circle cx="120" cy="148" r="108" fill="#F5B800"/>
+    <circle cx="82" cy="136" r="28" fill="#19191B"/>
+    <circle cx="158" cy="136" r="28" fill="#19191B"/>
+    <circle cx="72" cy="124" r="9" fill="#FFFBF5"/>
+    <circle cx="148" cy="124" r="9" fill="#FFFBF5"/>
+    <ellipse cx="58" cy="172" rx="20" ry="12" fill="#F2553D" opacity="0.45"/>
+    <ellipse cx="182" cy="172" rx="20" ry="12" fill="#F2553D" opacity="0.45"/>
+    <path d="M86 188 Q120 218 154 188" fill="none" stroke="#19191B" stroke-width="12" stroke-linecap="round"/>
+  </g>
+</svg>
