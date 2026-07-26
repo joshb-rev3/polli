@@ -1,7 +1,6 @@
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -16,7 +15,7 @@ import Animated, {
   withRepeat,
   withTiming,
 } from "react-native-reanimated";
-import Svg, { Circle, Defs, Ellipse, Path, RadialGradient, Rect, Stop } from "react-native-svg";
+import Svg, { Circle, Defs, Ellipse, RadialGradient, Stop } from "react-native-svg";
 import { Bzz } from "../components/Bzz";
 import { Button } from "../components/Button";
 import { IconArrow } from "../components/Icon";
@@ -29,7 +28,6 @@ const HERO_FLOWERS = [
     id: "main",
     xRatio: 0.5,
     y: 84,
-    avatar: "https://i.pravatar.cc/96?img=32",
   },
 ] as const;
 
@@ -84,17 +82,22 @@ export default function Splash() {
     const baselineProgress =
       (STEM_BASELINE_COUNT - MIN_FLOWER_COUNT) / (MAX_FLOWER_COUNT - MIN_FLOWER_COUNT);
     const visualProgress = Math.max(baselineProgress, normalized);
-    const centerX = 42 + f.xRatio * (heroWidth - 84);
+    // Keep stem tip and flower head on the same x — frame is centered on this point.
+    const centerX = f.xRatio * heroWidth;
     const fullStemHeight =
       MIN_VISIBLE_STEM_HEIGHT +
       visualProgress * (MAX_VISIBLE_STEM_HEIGHT - MIN_VISIBLE_STEM_HEIGHT);
     const stemHeight = 6 + introProgress * (fullStemHeight - 6);
     const centerY = SOIL_TOP_Y - stemHeight;
+    // Attach under the bloom core so the visible shaft stays on the flower's centerline.
+    const stemTipY = centerY + 30;
     const bloomScale = 0.12 + introProgress * (0.88 + normalized * 0.22);
     const leafScale = 0.08 + introProgress * (0.7 + normalized * 0.4);
     return {
       x: centerX,
+      left: centerX - FLOWER_FRAME_SIZE / 2,
       centerY,
+      stemTipY,
       top: centerY - FLOWER_FRAME_SIZE / 2,
       bloomScale,
       leafScale,
@@ -169,11 +172,12 @@ export default function Splash() {
   });
 
   const flowerStyle = useAnimatedStyle(() => {
-    const sway = Math.sin((pulse.value + 0.0) * Math.PI * 2);
+    const sway = Math.sin(pulse.value * Math.PI * 2);
     return {
+      // Pivot at the stem attachment (bottom center) so sway stays planted.
+      transformOrigin: "50% 100%",
       transform: [
         { translateY: -sway * 1.8 },
-        { scale: 1 },
         { rotate: `${sway * 1.1}deg` },
       ],
     };
@@ -288,37 +292,42 @@ export default function Splash() {
               fill="url(#groundGrass)"
               opacity={0.8}
             />
-            {flowerMetrics.map((c, idx) => (
-              <Path
-                key={`stem-${idx}`}
-                d={`M ${c.x - 8} ${STEM_ROOT_Y} Q ${c.x - 18} ${Math.max(c.centerY + 68, 184)} ${c.x} ${c.centerY}`}
-                stroke="rgba(27,77,62,0.36)"
-                strokeWidth={2.8}
-                fill="none"
-              />
-            ))}
           </Svg>
 
-          {HERO_FLOWERS.map((f, i) => (
+          {HERO_FLOWERS.map((f, i) => {
+            const m = flowerMetrics[i];
+            const stemTop = m.stemTipY - m.top;
+            const stemLength = Math.max(STEM_ROOT_Y - m.stemTipY, 0);
+            return (
             <Animated.View
               key={f.id}
               style={[
                 styles.personFlower,
                 {
-                  left: f.xRatio * (heroWidth - FLOWER_FRAME_SIZE),
-                  top: flowerMetrics[i].top,
+                  left: m.left,
+                  top: m.top,
                 },
                 flowerStyles[i],
               ]}
               pointerEvents="none"
             >
+              {/* Stem lives in the flower frame so sway/position can't drift apart */}
+              <View
+                style={[
+                  styles.stem,
+                  {
+                    top: stemTop,
+                    height: stemLength,
+                  },
+                ]}
+              />
               <View
                 style={[
                   styles.leaf,
                   styles.leafLeft,
                   {
                     transform: [
-                      { scale: flowerMetrics[i].leafScale },
+                      { scale: m.leafScale },
                       { rotate: "-28deg" },
                     ],
                   },
@@ -330,15 +339,15 @@ export default function Splash() {
                   styles.leafRight,
                   {
                     transform: [
-                      { scale: flowerMetrics[i].leafScale },
+                      { scale: m.leafScale },
                       { rotate: "28deg" },
                     ],
                   },
                 ]}
               />
 
-              <View style={[styles.bloomWrap, { transform: [{ scale: flowerMetrics[i].bloomScale }] }]}> 
-                {flowerMetrics[i].bloomScale < 0.45 ? (
+              <View style={[styles.bloomWrap, { transform: [{ scale: m.bloomScale }] }]}> 
+                {m.bloomScale < 0.45 ? (
                   <View style={styles.seed} />
                 ) : (
                   <>
@@ -348,7 +357,8 @@ export default function Splash() {
                     <View style={[styles.petal, styles.petalRight]} />
 
                     <View style={styles.flowerCore}>
-                      <Image source={{ uri: f.avatar }} style={styles.flowerAvatar} />
+                      <View style={styles.flowerCoreRing} />
+                      <View style={styles.flowerCoreDot} />
                     </View>
 
                     <View style={styles.plusBud}>
@@ -362,7 +372,8 @@ export default function Splash() {
                 )}
               </View>
             </Animated.View>
-          ))}
+            );
+          })}
 
           <Animated.View style={[styles.pollinator, beeAStyle]} pointerEvents="none">
             <Bzz size={24} pose="flying" />
@@ -475,10 +486,13 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   heroArt: {
+    position: "relative",
     height: HERO_SCENE_HEIGHT,
     maxWidth: 560,
-    alignItems: "center",
-    justifyContent: "center",
+    // Avoid alignItems:"center" — on web it skews absolute flower left offsets.
+    alignItems: "stretch",
+    justifyContent: "flex-start",
+    overflow: "visible",
   },
   rippleRing: {
     position: "absolute",
@@ -500,12 +514,22 @@ const styles = StyleSheet.create({
     height: FLOWER_FRAME_SIZE,
     alignItems: "center",
     justifyContent: "center",
+    overflow: "visible",
+  },
+  stem: {
+    position: "absolute",
+    left: FLOWER_FRAME_SIZE / 2 - 1.4,
+    width: 2.8,
+    borderRadius: 2,
+    backgroundColor: "rgba(27,77,62,0.36)",
+    zIndex: 0,
   },
   bloomWrap: {
     width: FLOWER_FRAME_SIZE,
     height: FLOWER_FRAME_SIZE,
     alignItems: "center",
     justifyContent: "center",
+    zIndex: 1,
   },
   leaf: {
     position: "absolute",
@@ -554,19 +578,29 @@ const styles = StyleSheet.create({
     right: 1,
   },
   flowerCore: {
-    width: 66,
-    height: 66,
-    borderRadius: 33,
-    backgroundColor: colors.paper,
-    borderWidth: 1.8,
-    borderColor: "rgba(27,77,62,0.28)",
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: colors.marigold2,
+    borderWidth: 1.5,
+    borderColor: "rgba(234,170,0,0.85)",
     alignItems: "center",
     justifyContent: "center",
-    overflow: "hidden",
   },
-  flowerAvatar: {
-    width: "100%",
-    height: "100%",
+  flowerCoreRing: {
+    position: "absolute",
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: "rgba(255,210,80,0.55)",
+  },
+  flowerCoreDot: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: "#C47A1A",
+    borderWidth: 1,
+    borderColor: "rgba(110,60,10,0.35)",
   },
   plusBud: {
     position: "absolute",
