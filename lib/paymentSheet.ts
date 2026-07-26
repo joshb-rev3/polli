@@ -20,7 +20,7 @@ export async function payWithStripe(opts: {
   coverFees: boolean;
   note?: string;
   anonymous?: boolean;
-  /** Optional $1 voice keepsake line item (nominate Speak mode). */
+  /** Optional $1 voice keepsake line item (Speak mode on nominate or checkout). */
   voiceKeepsake?: boolean;
   /** Feed / mock id used in return URLs (pile-on flow). */
   returnId?: string;

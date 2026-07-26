@@ -19,10 +19,17 @@ import { colors, fonts } from "../theme";
 
 export default function PayComplete() {
   const router = useRouter();
-  const { id, note, anon } = useLocalSearchParams<{ id: string; note?: string; anon?: string }>();
+  const { id, note, anon, keepsake } = useLocalSearchParams<{
+    id: string;
+    note?: string;
+    anon?: string;
+    keepsake?: string;
+  }>();
   const n = FEED.find((f) => f.id === id);
   const { openShare } = useShare();
   const [shown, setShown] = useState(false);
+  const hasKeepsake = keepsake === "1";
+
 
   const scale = useSharedValue(0.2);
   const rot = useSharedValue(-20);
@@ -74,7 +81,10 @@ export default function PayComplete() {
             <Text style={styles.titleAccent}>someone's day.</Text>
           </Text>
           <Text style={styles.sub}>
-            Your $1 is on its way to <Text style={{ fontFamily: fonts.bodyBold }}>{n?.name || "them"}</Text>. Pass the link along so it spreads.
+            Your $1 is on its way to{" "}
+            <Text style={{ fontFamily: fonts.bodyBold }}>{n?.name || "them"}</Text>
+            {hasKeepsake ? ", along with your voice keepsake" : ""}. Pass the link along so it
+            spreads.
           </Text>
 
           {note ? (

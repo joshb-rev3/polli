@@ -13,6 +13,7 @@ import {
 import { Button } from "../components/Button";
 import { IconCheck } from "../components/Icon";
 import { NavBar } from "../components/NavBar";
+import { VoiceMessageComposer } from "../components/voice/VoiceMessageComposer";
 import { FEE_COVER_CENTS, formatDollars, giftTotals } from "../lib/fees";
 import { success } from "../lib/haptics";
 import { FEED, QUICK_NOTES } from "../lib/mockData";
@@ -20,7 +21,10 @@ import { payWithStripe } from "../lib/paymentSheet";
 import { ensureSandboxNomination } from "../lib/sandboxNomination";
 import { useSession } from "../lib/session";
 import { stripeConfigured, supabaseConfigured } from "../lib/supabase";
+import { VoiceClip } from "../lib/voice";
 import { colors, fonts, shadows } from "../theme";
+
+type NoteMode = "type" | "speak";
 
 export default function Checkout() {
   const router = useRouter();
@@ -28,14 +32,26 @@ export default function Checkout() {
   const { userId } = useSession();
   const n = FEED.find((f) => f.id === id);
 
+  const [mode, setMode] = useState<NoteMode>("type");
   const [note, setNote] = useState("");
+  const [voiceClip, setVoiceClip] = useState<VoiceClip | null>(null);
   const [anon, setAnon] = useState(false);
   const [noteOpen, setNoteOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const totals = giftTotals();
+  const keepsake = mode === "speak" && Boolean(voiceClip?.uri);
+  const totals = giftTotals({ keepsake });
   const MAX = 140;
   const firstName = n?.name?.split(" ")[0] || "them";
+
+  const switchMode = (next: NoteMode) => {
+    setMode(next);
+    if (next === "type") {
+      setVoiceClip(null);
+    } else {
+      setNoteOpen(true);
+    }
+  };
 
   const finish = () => {
     success();
@@ -45,6 +61,7 @@ export default function Checkout() {
         id: n?.id || "",
         note: note.trim(),
         anon: anon ? "1" : "0",
+        ...(keepsake ? { keepsake: "1" } : {}),
       },
     });
   };
@@ -86,7 +103,9 @@ export default function Checkout() {
         coverFees: true,
         note: note.trim() || undefined,
         anonymous: anon,
+        voiceKeepsake: keepsake,
         returnId: n?.id,
+        successQuery: keepsake ? { keepsake: "1" } : undefined,
       });
       setLoading(false);
       // On web, payWithStripe redirects to Stripe — finish() happens on return via pay-complete
@@ -117,7 +136,11 @@ export default function Checkout() {
             <Text style={styles.eyebrow}>YOUR GIFT</Text>
             <Text style={styles.amount}>$1</Text>
             <Text style={styles.amountSub}>One dollar. That's the whole thing.</Text>
-            <Text style={styles.amountNote}>Polli gifts are always $1 — no more, no less.</Text>
+            <Text style={styles.amountNote}>
+              {keepsake
+                ? "Optional voice keepsake is +$1 — they still get the full gift dollar."
+                : "Polli gifts are always $1 — no more, no less."}
+            </Text>
           </View>
 
           <View style={styles.noteCard}>
@@ -129,47 +152,110 @@ export default function Checkout() {
                 <Text style={styles.noteCardTitle}>Add a note for {firstName}</Text>
                 <Text style={styles.noteCardSub}>
                   Only {firstName} will see what you share here
-                  {note.length ? ` · ${note.length}/${MAX}` : " · optional"}
+                  {mode === "type" && note.length
+                    ? ` · ${note.length}/${MAX}`
+                    : mode === "speak" && note.length
+                      ? ` · ${note.length}/${MAX} transcribed`
+                      : " · optional"}
                 </Text>
               </View>
             </View>
-            <TextInput
-              value={note}
-              onChangeText={(t) => setNote(t.slice(0, MAX))}
-              onFocus={() => setNoteOpen(true)}
-              placeholder={`Say something nice to ${firstName}…`}
-              placeholderTextColor={colors.inkMuted}
-              multiline
-              spellCheck
-              autoCorrect
-              style={[
-                styles.textarea,
-                { minHeight: noteOpen || note ? 72 : 44 },
-              ]}
-            />
-            {(noteOpen || note) && (
-              <>
-                <View style={styles.chipRow}>
-                  {QUICK_NOTES.map((q, i) => (
-                    <Pressable key={i} onPress={() => setNote(q.slice(0, MAX))} style={styles.chip}>
-                      <Text style={styles.chipText}>{q}</Text>
-                    </Pressable>
-                  ))}
-                </View>
-                <Pressable style={styles.anonRow} onPress={() => setAnon(!anon)}>
-                  <View style={[styles.checkbox, anon && { backgroundColor: colors.green, borderColor: colors.green }]}>
-                    {anon && <IconCheck size={11} color="#fff" />}
-                  </View>
-                  <Text style={styles.anonText}>
-                    Sign as <Text style={{ fontFamily: fonts.bodyBold }}>anonymous bee</Text> 🐝
+
+            <View style={styles.modeRow}>
+              <Pressable
+                style={[styles.modeBtn, mode === "type" && styles.modeBtnActive]}
+                onPress={() => switchMode("type")}
+              >
+                <Text style={[styles.modeText, mode === "type" && styles.modeTextActive]}>Type</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.modeBtn, mode === "speak" && styles.modeBtnActive]}
+                onPress={() => switchMode("speak")}
+              >
+                <View style={styles.speakTabInner}>
+                  <Text style={[styles.modeText, mode === "speak" && styles.modeTextActive]}>
+                    Speak
                   </Text>
-                </Pressable>
+                  <View style={[styles.plusBadge, mode === "speak" && styles.plusBadgeActive]}>
+                    <Text
+                      style={[styles.plusBadgeText, mode === "speak" && styles.plusBadgeTextActive]}
+                    >
+                      +$1
+                    </Text>
+                  </View>
+                </View>
+              </Pressable>
+            </View>
+
+            {mode === "type" ? (
+              <>
+                <TextInput
+                  value={note}
+                  onChangeText={(t) => setNote(t.slice(0, MAX))}
+                  onFocus={() => setNoteOpen(true)}
+                  placeholder={`Say something nice to ${firstName}…`}
+                  placeholderTextColor={colors.inkMuted}
+                  multiline
+                  spellCheck
+                  autoCorrect
+                  style={[
+                    styles.textarea,
+                    { minHeight: noteOpen || note ? 72 : 44 },
+                  ]}
+                />
+                {(noteOpen || note) && (
+                  <View style={styles.chipRow}>
+                    {QUICK_NOTES.map((q, i) => (
+                      <Pressable
+                        key={i}
+                        onPress={() => setNote(q.slice(0, MAX))}
+                        style={styles.chip}
+                      >
+                        <Text style={styles.chipText}>{q}</Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                )}
               </>
+            ) : (
+              <View style={styles.speakBox}>
+                <View style={styles.speakUpsell}>
+                  <Text style={styles.speakUpsellTitle}>Voice keepsake · +$1</Text>
+                  <Text style={styles.speakHint}>
+                    Record a short voice note only {firstName} can keep and replay. We'll
+                    transcribe it too.
+                  </Text>
+                </View>
+                <VoiceMessageComposer
+                  clip={voiceClip}
+                  onClipChange={(clip, noteText) => {
+                    setVoiceClip(clip);
+                    setNote(noteText.slice(0, MAX));
+                  }}
+                />
+              </View>
+            )}
+
+            {(noteOpen || note || mode === "speak") && (
+              <Pressable style={styles.anonRow} onPress={() => setAnon(!anon)}>
+                <View
+                  style={[
+                    styles.checkbox,
+                    anon && { backgroundColor: colors.green, borderColor: colors.green },
+                  ]}
+                >
+                  {anon && <IconCheck size={11} color="#fff" />}
+                </View>
+                <Text style={styles.anonText}>
+                  Sign as <Text style={{ fontFamily: fonts.bodyBold }}>anonymous bee</Text> 🐝
+                </Text>
+              </Pressable>
             )}
           </View>
 
           <View style={styles.summary}>
             <Row label="Your $1 gift" value="$1.00" />
+            {keepsake ? <Row label="Voice keepsake" value="$1.00" /> : null}
             <Row label="Processing & platform" value={formatDollars(FEE_COVER_CENTS)} />
             <View style={styles.summaryDivider} />
             <Row label="Total charged to you" value={formatDollars(totals.totalCents)} bold />
@@ -196,13 +282,35 @@ export default function Checkout() {
   );
 }
 
-function Row({ label, value, bold, green }: { label: string; value: string; bold?: boolean; green?: boolean }) {
+function Row({
+  label,
+  value,
+  bold,
+  green,
+}: {
+  label: string;
+  value: string;
+  bold?: boolean;
+  green?: boolean;
+}) {
   return (
     <View style={rowStyles.row}>
-      <Text style={[rowStyles.label, bold && { color: colors.ink, fontFamily: fonts.bodyBold, fontSize: 15 }, green && { color: colors.green2, fontFamily: fonts.bodySemi }]}>
+      <Text
+        style={[
+          rowStyles.label,
+          bold && { color: colors.ink, fontFamily: fonts.bodyBold, fontSize: 15 },
+          green && { color: colors.green2, fontFamily: fonts.bodySemi },
+        ]}
+      >
         {label}
       </Text>
-      <Text style={[rowStyles.value, bold && { color: colors.ink, fontFamily: fonts.bodyBold, fontSize: 15 }, green && { color: colors.green2 }]}>
+      <Text
+        style={[
+          rowStyles.value,
+          bold && { color: colors.ink, fontFamily: fonts.bodyBold, fontSize: 15 },
+          green && { color: colors.green2 },
+        ]}
+      >
         {value}
       </Text>
     </View>
@@ -280,6 +388,8 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: colors.ink2,
     marginTop: 2,
+    textAlign: "center",
+    paddingHorizontal: 8,
   },
   noteCard: {
     marginTop: 18,
@@ -313,6 +423,78 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.ink2,
     marginTop: 1,
+  },
+  modeRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginBottom: 12,
+    padding: 4,
+    backgroundColor: colors.paper,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.line2,
+  },
+  modeBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modeBtnActive: {
+    backgroundColor: colors.green,
+  },
+  modeText: {
+    fontFamily: fonts.bodySemi,
+    fontSize: 14,
+    color: colors.ink2,
+  },
+  modeTextActive: {
+    color: colors.white,
+  },
+  speakTabInner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  plusBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    backgroundColor: colors.marigold,
+  },
+  plusBadgeActive: {
+    backgroundColor: colors.marigold2,
+  },
+  plusBadgeText: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 10,
+    color: colors.green,
+  },
+  plusBadgeTextActive: {
+    color: colors.green,
+  },
+  speakBox: {
+    gap: 10,
+  },
+  speakUpsell: {
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: colors.cream,
+    borderWidth: 1,
+    borderColor: "rgba(245,184,0,0.55)",
+    gap: 4,
+  },
+  speakUpsellTitle: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 13,
+    color: colors.green,
+  },
+  speakHint: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    color: colors.ink2,
+    lineHeight: 18,
   },
   textarea: {
     width: "100%",
