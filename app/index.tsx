@@ -247,7 +247,7 @@ export default function Splash() {
         bounces
       >
       <View style={styles.logoWrap}>
-        <Logo size={34} onDark />
+        <Logo size={34} />
       </View>
 
       <View style={styles.hero}>
