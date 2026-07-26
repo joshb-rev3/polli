@@ -1,3 +1,4 @@
+import { FunctionsHttpError } from "@supabase/supabase-js";
 import { supabase, supabaseConfigured } from "./supabase";
 
 export interface IntentResult {
@@ -8,43 +9,67 @@ export interface IntentResult {
   publishableKey: string;
 }
 
+async function edgeErrorMessage(error: unknown, data: unknown): Promise<string> {
+  if (data && typeof data === "object" && data !== null && "error" in data) {
+    const msg = String((data as { error?: unknown }).error ?? "").trim();
+    if (msg) return msg;
+  }
+  if (error instanceof FunctionsHttpError) {
+    try {
+      const body = await error.context.json();
+      if (body && typeof body === "object" && "error" in body) {
+        const msg = String((body as { error?: unknown }).error ?? "").trim();
+        if (msg) return msg;
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+  if (error instanceof Error && error.message) return error.message;
+  return "Request failed";
+}
+
+async function invokeEdge<T extends Record<string, unknown>>(
+  name: string,
+  body?: Record<string, unknown>,
+): Promise<T> {
+  if (!supabaseConfigured) throw new Error("Supabase not configured");
+  const { data, error } = await supabase.functions.invoke(name, { body });
+  if (error) throw new Error(await edgeErrorMessage(error, data));
+  if (data && typeof data === "object" && "error" in data && (data as { error?: unknown }).error) {
+    throw new Error(String((data as { error: unknown }).error));
+  }
+  return data as T;
+}
+
 export async function createPaymentIntent(opts: {
   nominationId: string;
-  coverFees: boolean;
   note?: string;
   anonymous?: boolean;
   voiceKeepsake?: boolean;
 }): Promise<IntentResult> {
-  if (!supabaseConfigured) throw new Error("Supabase not configured");
-  const { data, error } = await supabase.functions.invoke("create-payment-intent", {
-    body: opts,
-  });
-  if (error) throw error;
-  return data as IntentResult;
+  return invokeEdge<IntentResult>("create-payment-intent", { ...opts });
 }
 
 export async function getConnectOnboardingUrl(): Promise<string> {
-  if (!supabaseConfigured) throw new Error("Supabase not configured");
-  const { data, error } = await supabase.functions.invoke("connect-onboard", {});
-  if (error) throw error;
-  return (data as { url: string }).url;
+  const data = await invokeEdge<{ url: string }>("connect-onboard", {});
+  return data.url;
 }
 
 export async function createCheckoutSession(opts: {
   nominationId: string;
-  coverFees: boolean;
   note?: string;
   anonymous?: boolean;
   voiceKeepsake?: boolean;
   successUrl: string;
   cancelUrl: string;
 }): Promise<{ url: string; sessionId: string; donationId: string }> {
-  if (!supabaseConfigured) throw new Error("Supabase not configured");
-  const { data, error } = await supabase.functions.invoke("create-checkout-session", {
-    body: opts,
-  });
-  if (error) throw error;
-  if (data?.error) throw new Error(data.error);
+  const data = await invokeEdge<{
+    url?: string;
+    sessionId?: string;
+    donationId?: string;
+    error?: string;
+  }>("create-checkout-session", { ...opts });
   if (!data?.url) throw new Error("No Stripe Checkout URL returned");
   return data as { url: string; sessionId: string; donationId: string };
 }

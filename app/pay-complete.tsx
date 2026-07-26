@@ -14,22 +14,41 @@ import { Confetti } from "../components/Confetti";
 import { IconCheck, IconClose, IconShare } from "../components/Icon";
 import { NavBar } from "../components/NavBar";
 import { FEED } from "../lib/mockData";
+import {
+  clearPayComplete,
+  readPayComplete,
+  type PayCompletePayload,
+} from "../lib/payComplete";
 import { useShare } from "../lib/share";
 import { colors, fonts } from "../theme";
 
+function paramOne(value: string | string[] | undefined) {
+  if (Array.isArray(value)) return value[0] ?? "";
+  return value ?? "";
+}
+
 export default function PayComplete() {
   const router = useRouter();
-  const { id, note, anon, keepsake } = useLocalSearchParams<{
-    id: string;
+  const params = useLocalSearchParams<{
+    id?: string;
+    name?: string;
     note?: string;
     anon?: string;
     keepsake?: string;
   }>();
-  const n = FEED.find((f) => f.id === id);
   const { openShare } = useShare();
   const [shown, setShown] = useState(false);
-  const hasKeepsake = keepsake === "1";
+  const [stored, setStored] = useState<PayCompletePayload | null>(null);
 
+  useEffect(() => {
+    let alive = true;
+    readPayComplete().then((payload) => {
+      if (alive) setStored(payload);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const scale = useSharedValue(0.2);
   const rot = useSharedValue(-20);
@@ -47,7 +66,19 @@ export default function PayComplete() {
     opacity: op.value,
   }));
 
-  const home = () => router.replace("/(tabs)/feed");
+  const id = paramOne(params.id).trim() || stored?.id || "";
+  const feedItem = FEED.find((f) => f.id === id);
+  const name =
+    paramOne(params.name).trim() || stored?.name || feedItem?.name || "them";
+  const note = paramOne(params.note) || stored?.note || "";
+  const anon = paramOne(params.anon) === "1" || Boolean(stored?.anon);
+  const hasKeepsake = paramOne(params.keepsake) === "1" || Boolean(stored?.keepsake);
+  const firstName = name.split(" ")[0] || name;
+
+  const home = async () => {
+    await clearPayComplete();
+    router.replace("/(tabs)/feed");
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.green }}>
@@ -78,11 +109,11 @@ export default function PayComplete() {
 
           <Text style={styles.title}>
             You just made{"\n"}
-            <Text style={styles.titleAccent}>someone's day.</Text>
+            <Text style={styles.titleAccent}>{firstName}'s day.</Text>
           </Text>
           <Text style={styles.sub}>
             Your $1 is on its way to{" "}
-            <Text style={{ fontFamily: fonts.bodyBold }}>{n?.name || "them"}</Text>
+            <Text style={{ fontFamily: fonts.bodyBold }}>{name}</Text>
             {hasKeepsake ? ", along with your voice keepsake" : ""}. Pass the link along so it
             spreads.
           </Text>
@@ -91,13 +122,15 @@ export default function PayComplete() {
             <View style={styles.noteCard}>
               <Text style={styles.noteLbl}>YOUR NOTE</Text>
               <Text style={styles.noteText}>"{note}"</Text>
-              <Text style={styles.noteMeta}>— {anon === "1" ? "anonymous bee 🐝" : "you"}</Text>
+              <Text style={styles.noteMeta}>— {anon ? "anonymous bee 🐝" : "you"}</Text>
             </View>
           ) : null}
 
           <View style={styles.gardenCard}>
             <Text style={styles.gardenText}>
-              🌼 <Text style={{ fontFamily: fonts.bodyBold }}>You're in the garden.</Text> For 12 months, someone can pollinate <Text style={{ fontFamily: fonts.serifItalic }}>your</Text> day too.
+              🌼 <Text style={{ fontFamily: fonts.bodyBold }}>You're in the garden.</Text> For 12
+              months, someone can pollinate{" "}
+              <Text style={{ fontFamily: fonts.serifItalic }}>your</Text> day too.
             </Text>
           </View>
         </View>
@@ -108,7 +141,7 @@ export default function PayComplete() {
             label="Pass it along"
             variant="marigold"
             icon={<IconShare size={16} color={colors.ink} />}
-            onPress={() => openShare({ name: n?.name })}
+            onPress={() => openShare({ name })}
           />
           <Pressable style={styles.secondary} onPress={home}>
             <Text style={styles.secondaryText}>Back to feed</Text>

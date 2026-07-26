@@ -45,4 +45,5 @@ export const stripePublishableKey =
   "";
 
 export const stripeConfigured =
-  looksConfigured(stripePublishableKey) && stripePublishableKey.startsWith("pk_test_");
+  looksConfigured(stripePublishableKey) &&
+  (stripePublishableKey.startsWith("pk_test_") || stripePublishableKey.startsWith("pk_live_"));

@@ -14,10 +14,10 @@ function webUrl(origin: string, path: string, query?: Record<string, string>) {
 
 /**
  * Opens Stripe-hosted Checkout (test or live). Payment method choice happens on Stripe's page.
+ * Same path used by nominate kickoff and pile-on checkout.
  */
 export async function payWithStripe(opts: {
   nominationId: string;
-  coverFees: boolean;
   note?: string;
   anonymous?: boolean;
   /** Optional $1 voice keepsake line item (Speak mode on nominate or checkout). */
@@ -33,7 +33,7 @@ export async function payWithStripe(opts: {
 }): Promise<"succeeded" | "canceled"> {
   if (!stripeConfigured) {
     throw new Error(
-      "Add EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_… to .env (Stripe Dashboard → Test mode) and restart Expo.",
+      "Add EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_… (or pk_live_…) to .env and restart Expo.",
     );
   }
 
@@ -77,7 +77,6 @@ export async function payWithStripe(opts: {
 
   const { url } = await createCheckoutSession({
     nominationId: opts.nominationId,
-    coverFees: opts.coverFees,
     note: opts.note,
     anonymous: opts.anonymous,
     voiceKeepsake: opts.voiceKeepsake,

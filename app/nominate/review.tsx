@@ -121,7 +121,6 @@ export default function Review() {
       });
       const result = await payWithStripe({
         nominationId,
-        coverFees: true,
         note: draft.note.trim() || undefined,
         voiceKeepsake: keepsake,
         successPath: "launch-complete",

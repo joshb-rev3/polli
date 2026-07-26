@@ -17,6 +17,7 @@ import { VoiceMessageComposer } from "../components/voice/VoiceMessageComposer";
 import { FEE_COVER_CENTS, formatDollars, giftTotals } from "../lib/fees";
 import { success } from "../lib/haptics";
 import { FEED, QUICK_NOTES } from "../lib/mockData";
+import { savePayComplete } from "../lib/payComplete";
 import { payWithStripe } from "../lib/paymentSheet";
 import { ensureSandboxNomination } from "../lib/sandboxNomination";
 import { useSession } from "../lib/session";
@@ -53,12 +54,21 @@ export default function Checkout() {
     }
   };
 
-  const finish = () => {
+  const finish = async (opts?: { nominationId?: string }) => {
+    await savePayComplete({
+      id: n?.id || "",
+      name: n?.name,
+      note: note.trim() || undefined,
+      anon,
+      keepsake,
+      nominationId: opts?.nominationId,
+    });
     success();
     router.replace({
       pathname: "/pay-complete",
       params: {
         id: n?.id || "",
+        name: n?.name || "",
         note: note.trim(),
         anon: anon ? "1" : "0",
         ...(keepsake ? { keepsake: "1" } : {}),
@@ -67,6 +77,7 @@ export default function Checkout() {
   };
 
   const pay = async () => {
+    if (loading) return;
     setLoading(true);
     try {
       // Offline / placeholder env → simulated checkout
@@ -83,7 +94,7 @@ export default function Checkout() {
         setLoading(false);
         Alert.alert(
           "Stripe not configured",
-          "Add EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_… to .env and restart Expo.",
+          "Add EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_… (or pk_live_…) to .env and restart Expo.",
         );
         return;
       }
@@ -97,19 +108,42 @@ export default function Checkout() {
         return;
       }
 
-      const nominationId = await ensureSandboxNomination(n!);
+      if (!n) {
+        setLoading(false);
+        Alert.alert("Missing nomination", "Go back and pick someone to give to.");
+        return;
+      }
+
+      const nominationId = await ensureSandboxNomination(n);
+      await savePayComplete({
+        id: n.id,
+        name: n.name,
+        note: note.trim() || undefined,
+        anon,
+        keepsake,
+        nominationId,
+      });
+
       const result = await payWithStripe({
         nominationId,
-        coverFees: true,
         note: note.trim() || undefined,
         anonymous: anon,
         voiceKeepsake: keepsake,
-        returnId: n?.id,
-        successQuery: keepsake ? { keepsake: "1" } : undefined,
+        returnId: n.id,
+        successPath: "pay-complete",
+        cancelPath: "checkout",
+        successQuery: {
+          name: n.name,
+          note: note.trim(),
+          anon: anon ? "1" : "0",
+          ...(keepsake ? { keepsake: "1" } : {}),
+        },
       });
       setLoading(false);
       // On web, payWithStripe redirects to Stripe — finish() happens on return via pay-complete
-      if (result === "succeeded" && Platform.OS !== "web") finish();
+      if (result === "succeeded" && Platform.OS !== "web") {
+        await finish({ nominationId });
+      }
     } catch (e: any) {
       setLoading(false);
       Alert.alert("Payment failed", e?.message ?? "Please try again.");
