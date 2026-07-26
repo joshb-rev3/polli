@@ -71,22 +71,30 @@ export function useNomination() {
   return useContext(NominationContext);
 }
 
+/** True when the draft includes a paid voice keepsake (+$1). */
+export function hasVoiceKeepsake(
+  draft: Pick<NominationDraft, "noteMode" | "noteAudioUri">,
+) {
+  return draft.noteMode === "speak" && Boolean(draft.noteAudioUri);
+}
+
 /** Product dollars before fees: $1 kickoff + optional $1 Speak keepsake. */
-export function launchProductDollars(draft: Pick<NominationDraft, "noteMode">) {
-  return draft.noteMode === "speak" ? 2 : 1;
+export function launchProductDollars(
+  draft: Pick<NominationDraft, "noteMode" | "noteAudioUri">,
+) {
+  return hasVoiceKeepsake(draft) ? 2 : 1;
 }
 
 /** Alias for launchProductDollars (product total before fees). */
-export function launchTotalDollars(draft: Pick<NominationDraft, "noteMode">) {
+export function launchTotalDollars(
+  draft: Pick<NominationDraft, "noteMode" | "noteAudioUri">,
+) {
   return launchProductDollars(draft);
 }
 
-/** What the nominator is charged, including optional fee cover + keepsake. */
+/** What the nominator is charged, including fees + optional keepsake. */
 export function launchChargeDollars(
-  draft: Pick<NominationDraft, "noteMode">,
-  coverFees: boolean,
+  draft: Pick<NominationDraft, "noteMode" | "noteAudioUri">,
 ) {
-  return dollars(
-    giftTotals(coverFees, { keepsake: draft.noteMode === "speak" }).totalCents,
-  );
+  return dollars(giftTotals({ keepsake: hasVoiceKeepsake(draft) }).totalCents);
 }

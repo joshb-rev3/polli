@@ -6,6 +6,7 @@
     "noEmit": true,
     "module": "ESNext",
     "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
     "skipLibCheck": true
   },
   "include": ["**/*.ts", "deno.d.ts"]

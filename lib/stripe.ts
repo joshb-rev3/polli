@@ -13,6 +13,7 @@ export async function createPaymentIntent(opts: {
   coverFees: boolean;
   note?: string;
   anonymous?: boolean;
+  voiceKeepsake?: boolean;
 }): Promise<IntentResult> {
   if (!supabaseConfigured) throw new Error("Supabase not configured");
   const { data, error } = await supabase.functions.invoke("create-payment-intent", {

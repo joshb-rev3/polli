@@ -24,6 +24,8 @@ export async function payWithStripe(opts: {
   voiceKeepsake?: boolean;
   /** Feed / mock id used in return URLs (pile-on flow). */
   returnId?: string;
+  /** Extra query params on the success return URL (survive Stripe redirect). */
+  successQuery?: Record<string, string>;
   /** Where Stripe sends the donor after success (defaults to pay-complete). */
   successPath?: "pay-complete" | "launch-complete";
   /** Where Stripe sends the donor on cancel (defaults to checkout). */
@@ -48,7 +50,11 @@ export async function payWithStripe(opts: {
 
   const successPath = opts.successPath ?? "pay-complete";
   const cancelPath = opts.cancelPath ?? "checkout";
-  const idQuery = feedId ? { id: feedId } : undefined;
+  const successQuery: Record<string, string> = {
+    ...(feedId ? { id: feedId } : {}),
+    ...(opts.successQuery ?? {}),
+  };
+  const idQuery = Object.keys(successQuery).length ? successQuery : undefined;
 
   const successUrl =
     Platform.OS === "web"

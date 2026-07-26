@@ -1,18 +1,26 @@
 import { Audio, AVPlaybackStatus } from "expo-av";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from "react-native-reanimated";
 import { analyzeWords } from "../../lib/audioAnalysis";
+import { tap } from "../../lib/haptics";
 import { transcribeAudio } from "../../lib/transcribe";
 import { useVoiceRecorder } from "../../lib/useVoiceRecorder";
 import {
   fallbackSignatures,
   findActiveWordIndex,
+  formatAudioTime,
   TranscriptWord,
   VoiceClip,
   WordSignature,
   wordsToStory,
 } from "../../lib/voice";
-import { tap } from "../../lib/haptics";
 import { colors, fonts } from "../../theme";
 import { KaraokeTranscript } from "./KaraokeTranscript";
 import { PlaybackControls } from "./PlaybackControls";
@@ -23,9 +31,41 @@ interface Props {
   onClipChange: (clip: VoiceClip | null, storyText: string) => void;
 }
 
+function RecordingPulse() {
+  const scale = useSharedValue(1);
+  const opacity = useSharedValue(1);
+
+  useEffect(() => {
+    scale.value = withRepeat(
+      withTiming(1.55, { duration: 700, easing: Easing.out(Easing.ease) }),
+      -1,
+      true
+    );
+    opacity.value = withRepeat(
+      withTiming(0.15, { duration: 700, easing: Easing.out(Easing.ease) }),
+      -1,
+      true
+    );
+  }, [opacity, scale]);
+
+  const ringStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    opacity: opacity.value,
+  }));
+
+  return (
+    <View style={styles.pulseWrap} accessibilityElementsHidden>
+      <Animated.View style={[styles.pulseRing, ringStyle]} />
+      <View style={styles.pulseDot} />
+    </View>
+  );
+}
+
 export function VoiceMessageComposer({ clip, onClipChange }: Props) {
   const { isRecording, error: recordError, startRecording, stopRecording, clearError } =
     useVoiceRecorder();
+  const [starting, setStarting] = useState(false);
+  const [elapsedSec, setElapsedSec] = useState(0);
   const [transcribing, setTranscribing] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [transcribeError, setTranscribeError] = useState<string | null>(null);
@@ -53,6 +93,23 @@ export function VoiceMessageComposer({ clip, onClipChange }: Props) {
     setCurrentTime(0);
     setActiveIndex(-1);
   }, []);
+
+  useEffect(() => {
+    if (!isRecording) {
+      setElapsedSec(0);
+      return;
+    }
+    setElapsedSec(0);
+    const startedAt = Date.now();
+    const id = setInterval(() => {
+      setElapsedSec(Math.floor((Date.now() - startedAt) / 1000));
+    }, 250);
+    return () => clearInterval(id);
+  }, [isRecording]);
+
+  useEffect(() => {
+    if (isRecording) setStarting(false);
+  }, [isRecording]);
 
   const processRecording = useCallback(
     async (uri: string, mimeType: string, fileName: string, durationMs: number) => {
@@ -124,10 +181,29 @@ export function VoiceMessageComposer({ clip, onClipChange }: Props) {
       const result = await stopRecording();
       if (result) await processRecording(result.uri, result.mimeType, result.fileName, result.durationMs);
     } else {
+      setStarting(true);
       await unloadSound();
       abortRef.current?.abort();
       onClipChange(null, "");
+      try {
+        await startRecording();
+      } finally {
+        setStarting(false);
+      }
+    }
+  };
+
+  const beginRecording = async () => {
+    tap();
+    clearError();
+    setStarting(true);
+    await unloadSound();
+    abortRef.current?.abort();
+    onClipChange(null, "");
+    try {
       await startRecording();
+    } finally {
+      setStarting(false);
     }
   };
 
@@ -196,19 +272,62 @@ export function VoiceMessageComposer({ clip, onClipChange }: Props) {
   const activeSig = activeIndex >= 0 && clip ? clip.signatures[activeIndex] : undefined;
   const progress = duration > 0 ? currentTime / duration : 0;
   const busy = transcribing || analyzing;
+  const showRecorder = (!clip && !busy) || isRecording || starting;
 
   return (
     <View style={styles.wrap}>
-      {!clip && (
-        <Pressable
-          style={[styles.recordBtn, isRecording && styles.recordBtnActive]}
-          onPress={handleRecordToggle}
-          disabled={busy}
-        >
-          <Text style={[styles.recordLabel, isRecording && styles.recordLabelActive]}>
-            {isRecording ? "■ Stop recording" : "● Record your message"}
-          </Text>
-        </Pressable>
+      {showRecorder && (
+        <View style={[styles.recorderPanel, (isRecording || starting) && styles.recorderPanelLive]}>
+          {isRecording ? (
+            <>
+              <View style={styles.recordingHeader}>
+                <View style={styles.recordingStatus}>
+                  <RecordingPulse />
+                  <Text style={styles.recordingStatusText}>Recording</Text>
+                </View>
+                <Text style={styles.recordingTimer} accessibilityLiveRegion="polite">
+                  {formatAudioTime(elapsedSec)}
+                </Text>
+              </View>
+
+              <VoiceWaveform
+                progress={0}
+                isPlaying={false}
+                isRecording
+                seed={7}
+                height={88}
+              />
+
+              <Text style={styles.recordingHint}>Speak clearly — tap stop when you're done.</Text>
+
+              <Pressable
+                style={styles.stopBtn}
+                onPress={handleRecordToggle}
+                accessibilityRole="button"
+                accessibilityLabel="Stop recording"
+              >
+                <View style={styles.stopIcon} />
+                <Text style={styles.stopLabel}>Stop recording</Text>
+              </Pressable>
+            </>
+          ) : starting ? (
+            <View style={styles.startingRow}>
+              <ActivityIndicator size="small" color={colors.coral} />
+              <Text style={styles.startingText}>Starting microphone…</Text>
+            </View>
+          ) : (
+            <Pressable
+              style={styles.recordBtn}
+              onPress={handleRecordToggle}
+              disabled={busy}
+              accessibilityRole="button"
+              accessibilityLabel="Record your message"
+            >
+              <View style={styles.recordIdleDot} />
+              <Text style={styles.recordLabel}>Record your message</Text>
+            </Pressable>
+          )}
+        </View>
       )}
 
       {(recordError || transcribeError) && (
@@ -224,7 +343,7 @@ export function VoiceMessageComposer({ clip, onClipChange }: Props) {
         </View>
       )}
 
-      {clip && !busy && (
+      {clip && !busy && !isRecording && !starting && (
         <View style={styles.preview}>
           <View style={styles.stage}>
             <VoiceWaveform progress={progress} isPlaying={isPlaying} seed={clip.uri.length} />
@@ -264,12 +383,12 @@ export function VoiceMessageComposer({ clip, onClipChange }: Props) {
             </Pressable>
             <Pressable
               style={[styles.recordBtn, styles.rerecordBtn]}
-              onPress={async () => {
-                await discard();
-                await startRecording();
-              }}
+              onPress={beginRecording}
+              accessibilityRole="button"
+              accessibilityLabel="Re-record your message"
             >
-              <Text style={styles.recordLabel}>● Re-record</Text>
+              <View style={styles.recordIdleDot} />
+              <Text style={styles.recordLabel}>Re-record</Text>
             </Pressable>
           </View>
         </View>
@@ -361,7 +480,99 @@ export function VoiceMessagePlayer({ uri, words, signatures, durationMs, compact
 
 const styles = StyleSheet.create({
   wrap: { gap: 10 },
+  recorderPanel: {
+    gap: 12,
+  },
+  recorderPanelLive: {
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: "rgba(242,85,61,0.5)",
+    backgroundColor: colors.coralSoft,
+  },
+  recordingHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  recordingStatus: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  recordingStatusText: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 15,
+    color: colors.coral,
+    letterSpacing: 0.2,
+  },
+  recordingTimer: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 18,
+    color: colors.ink,
+    fontVariant: ["tabular-nums"],
+  },
+  recordingHint: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    color: colors.ink2,
+    lineHeight: 18,
+  },
+  pulseWrap: {
+    width: 18,
+    height: 18,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  pulseRing: {
+    position: "absolute",
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: colors.coral,
+  },
+  pulseDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: colors.coral,
+  },
+  stopBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    paddingVertical: 14,
+    paddingHorizontal: 18,
+    borderRadius: 12,
+    backgroundColor: colors.coral,
+  },
+  stopIcon: {
+    width: 12,
+    height: 12,
+    borderRadius: 2,
+    backgroundColor: colors.white,
+  },
+  stopLabel: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 15,
+    color: colors.white,
+  },
+  startingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    paddingVertical: 16,
+  },
+  startingText: {
+    fontFamily: fonts.bodySemi,
+    fontSize: 14,
+    color: colors.ink2,
+  },
   recordBtn: {
+    flexDirection: "row",
+    gap: 10,
     paddingVertical: 14,
     paddingHorizontal: 18,
     borderRadius: 12,
@@ -369,18 +580,18 @@ const styles = StyleSheet.create({
     borderColor: colors.green3,
     backgroundColor: colors.sageSoft,
     alignItems: "center",
+    justifyContent: "center",
   },
-  recordBtnActive: {
-    borderColor: colors.coral,
-    backgroundColor: colors.coralSoft,
+  recordIdleDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: colors.coral,
   },
   recordLabel: {
     fontFamily: fonts.bodyBold,
     fontSize: 15,
     color: colors.green,
-  },
-  recordLabelActive: {
-    color: colors.coral,
   },
   error: {
     fontFamily: fonts.body,
@@ -438,7 +649,6 @@ const styles = StyleSheet.create({
   },
   rerecordBtn: {
     flex: 1.4,
-    backgroundColor: colors.sageSoft,
   },
   playerCompact: {
     marginTop: 4,

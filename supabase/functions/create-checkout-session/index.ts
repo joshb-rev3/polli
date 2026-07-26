@@ -2,8 +2,10 @@
 // Same donation row model as create-payment-intent; webhook completes on
 // checkout.session.completed (and payment_intent.succeeded as a backup).
 //
-// Request: POST { nominationId, coverFees, note?, anonymous?, voiceKeepsake?, successUrl, cancelUrl }
+// Request: POST { nominationId, note?, anonymous?, voiceKeepsake?, successUrl, cancelUrl }
 // Response: { url, sessionId, donationId }
+
+/// <reference path="../deno.d.ts" />
 
 import Stripe from "https://esm.sh/stripe@17.5.0?target=denonext";
 import { corsHeaders, handleCors, jsonError, jsonResponse } from "../_shared/cors.ts";
@@ -19,6 +21,54 @@ function stripeClient() {
 }
 
 const YEAR_CAP_CENTS = 60000;
+const GIFT_CENTS = 100;
+const FEE_CENTS = 43;
+const PLATFORM_FEE_CENTS = 10;
+const KEEPSAKE_CENTS = 100;
+
+function truthyFlag(value: unknown): boolean {
+  return value === true || value === 1 || value === "1" || value === "true";
+}
+
+type NominationRow = {
+  id: string;
+  nominee_id: string | null;
+  nominee_first: string;
+  nominator_id: string;
+  status: string;
+  closes_at: string;
+  voice_keepsake?: boolean | null;
+};
+
+async function loadNomination(
+  admin: ReturnType<typeof adminClient>,
+  nominationId: string,
+): Promise<{ nom: NominationRow | null; error: string | null }> {
+  const withKeepsake = await admin
+    .from("nominations")
+    .select("id, nominee_id, nominee_first, nominator_id, status, closes_at, voice_keepsake")
+    .eq("id", nominationId)
+    .single();
+
+  if (!withKeepsake.error && withKeepsake.data) {
+    return { nom: withKeepsake.data as NominationRow, error: null };
+  }
+
+  const msg = withKeepsake.error?.message ?? "";
+  if (/voice_keepsake|schema cache/i.test(msg)) {
+    const legacy = await admin
+      .from("nominations")
+      .select("id, nominee_id, nominee_first, nominator_id, status, closes_at")
+      .eq("id", nominationId)
+      .single();
+    if (!legacy.error && legacy.data) {
+      return { nom: { ...(legacy.data as NominationRow), voice_keepsake: false }, error: null };
+    }
+    return { nom: null, error: legacy.error?.message ?? "nomination not found" };
+  }
+
+  return { nom: null, error: withKeepsake.error?.message ?? "nomination not found" };
+}
 
 Deno.serve(async (req) => {
   const pre = handleCors(req);
@@ -55,7 +105,6 @@ Deno.serve(async (req) => {
 
     const {
       nominationId,
-      coverFees = true,
       note,
       anonymous = false,
       voiceKeepsake = false,
@@ -66,12 +115,11 @@ Deno.serve(async (req) => {
     if (!nominationId) return jsonError(400, "nominationId required");
     if (!successUrl || !cancelUrl) return jsonError(400, "successUrl and cancelUrl required");
 
-    const { data: nom, error: nomErr } = await admin
-      .from("nominations")
-      .select("id, nominee_id, nominee_first, status, closes_at")
-      .eq("id", nominationId)
-      .single();
-    if (nomErr || !nom) return jsonError(404, "nomination not found");
+    // Fees are always covered so the nominee receives the full $1.
+    const coverFees = true;
+
+    const { nom, error: nomLoadErr } = await loadNomination(admin, nominationId);
+    if (!nom) return jsonError(404, nomLoadErr ?? "nomination not found");
     if (nom.status !== "live") return jsonError(400, "nomination not accepting donations");
     if (new Date(nom.closes_at).getTime() < Date.now()) {
       return jsonError(400, "nomination closed");
@@ -101,11 +149,16 @@ Deno.serve(async (req) => {
         .eq("status", "pending");
     }
 
-    const keepsakeCents = voiceKeepsake ? 100 : 0;
-    const netCents = coverFees ? 100 : 57;
-    const feeCents = coverFees ? 43 : 0;
-    const totalCents = 100 + feeCents + keepsakeCents;
-    const platformFeeCents = coverFees ? 10 : 7;
+    // Voice keepsake is a nominator kickoff add-on (+$1). Prefer the persisted
+    // nomination flag so launch can't accidentally omit it from Stripe.
+    const isNominatorKickoff = nom.nominator_id === user.id;
+    const chargeKeepsake =
+      truthyFlag(voiceKeepsake) || (isNominatorKickoff && Boolean(nom.voice_keepsake));
+    const keepsakeCents = chargeKeepsake ? KEEPSAKE_CENTS : 0;
+    const netCents = GIFT_CENTS;
+    const feeCents = FEE_CENTS;
+    const totalCents = GIFT_CENTS + feeCents + keepsakeCents;
+    const platformFeeCents = PLATFORM_FEE_CENTS;
 
     if (nom.nominee_id) {
       const curYear = new Date().getFullYear();
@@ -168,7 +221,7 @@ Deno.serve(async (req) => {
       return jsonError(500, insertErr?.message ?? "failed to create donation");
     }
 
-    const giftUnitAmount = 100 + feeCents;
+    const giftUnitAmount = GIFT_CENTS + feeCents;
     const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [
       {
         quantity: 1,
@@ -177,9 +230,7 @@ Deno.serve(async (req) => {
           unit_amount: giftUnitAmount,
           product_data: {
             name: `polli gift for ${nom.nominee_first}`,
-            description: coverFees
-              ? "$1 to nominee (fees covered)"
-              : "$1 gift (fees deducted from gift)",
+            description: "$1 to nominee (fees covered)",
           },
         },
       },
@@ -208,14 +259,16 @@ Deno.serve(async (req) => {
       cancel_url: cancelUrl,
       line_items: lineItems,
       payment_intent_data: {
-        description: `polli donation to ${nom.nominee_first}`,
+        description: chargeKeepsake
+          ? `polli donation + voice keepsake for ${nom.nominee_first}`
+          : `polli donation to ${nom.nominee_first}`,
         metadata: {
           nomination_id: nominationId,
           donor_id: user.id,
           donation_id: donation.id,
           cover_fees: coverFees ? "1" : "0",
           net_to_nominee_cents: String(netCents),
-          voice_keepsake: voiceKeepsake ? "1" : "0",
+          voice_keepsake: chargeKeepsake ? "1" : "0",
           note: note ?? "",
           anonymous: anonymous ? "1" : "0",
         },
@@ -224,6 +277,7 @@ Deno.serve(async (req) => {
         nomination_id: nominationId,
         donor_id: user.id,
         donation_id: donation.id,
+        voice_keepsake: chargeKeepsake ? "1" : "0",
       },
     });
 
@@ -239,4 +293,3 @@ Deno.serve(async (req) => {
     return jsonError(500, (e as Error).message);
   }
 });
-

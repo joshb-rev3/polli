@@ -2,7 +2,7 @@
 // Platform holds funds; recipient balance is credited to wallets via
 // complete_donation() on payment_intent.succeeded (no destination charges).
 //
-// Request: POST { nominationId: string, coverFees: boolean, note?: string, anonymous?: boolean }
+// Request: POST { nominationId: string, note?: string, anonymous?: boolean, voiceKeepsake?: boolean }
 // Response: { clientSecret, paymentIntentId, ephemeralKey, customer, publishableKey }
 
 import Stripe from "https://esm.sh/stripe@17.5.0?target=denonext";
@@ -15,6 +15,14 @@ const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
 });
 
 const YEAR_CAP_CENTS = 60000; // $600 silent cap per nominee per calendar year
+const GIFT_CENTS = 100;
+const FEE_CENTS = 43;
+const PLATFORM_FEE_CENTS = 10;
+const KEEPSAKE_CENTS = 100;
+
+function truthyFlag(value: unknown): boolean {
+  return value === true || value === 1 || value === "1" || value === "true";
+}
 
 Deno.serve(async (req) => {
   const pre = handleCors(req);
@@ -49,15 +57,40 @@ Deno.serve(async (req) => {
       // wallet may already exist; donations still proceed
     }
 
-    const { nominationId, coverFees = true, note, anonymous = false } = await req.json();
+    const { nominationId, note, anonymous = false, voiceKeepsake = false } = await req.json();
     if (!nominationId) return jsonErr(400, "nominationId required");
 
-    const { data: nom, error: nomErr } = await admin
-      .from("nominations")
-      .select("id, nominee_id, nominee_first, status, closes_at")
-      .eq("id", nominationId)
-      .single();
-    if (nomErr || !nom) return jsonErr(404, "nomination not found");
+    // Fees are always covered so the nominee receives the full $1.
+    const coverFees = true;
+
+    let nom: {
+      id: string;
+      nominee_id: string | null;
+      nominee_first: string;
+      nominator_id: string;
+      status: string;
+      closes_at: string;
+      voice_keepsake?: boolean | null;
+    } | null = null;
+
+    {
+      const primary = await admin
+        .from("nominations")
+        .select("id, nominee_id, nominee_first, nominator_id, status, closes_at, voice_keepsake")
+        .eq("id", nominationId)
+        .single();
+      if (!primary.error && primary.data) {
+        nom = primary.data;
+      } else if (primary.error?.message && /voice_keepsake|schema cache/i.test(primary.error.message)) {
+        const legacy = await admin
+          .from("nominations")
+          .select("id, nominee_id, nominee_first, nominator_id, status, closes_at")
+          .eq("id", nominationId)
+          .single();
+        if (!legacy.error && legacy.data) nom = { ...legacy.data, voice_keepsake: false };
+      }
+    }
+    if (!nom) return jsonErr(404, "nomination not found");
     if (nom.status !== "live") return jsonErr(400, "nomination not accepting donations");
     if (new Date(nom.closes_at).getTime() < Date.now()) {
       return jsonErr(400, "nomination closed");
@@ -121,9 +154,13 @@ Deno.serve(async (req) => {
         .eq("status", "pending");
     }
 
-    const netCents = coverFees ? 100 : 57;
-    const totalCents = coverFees ? 143 : 100;
-    const platformFeeCents = coverFees ? 10 : 7;
+    const isNominatorKickoff = nom.nominator_id === user.id;
+    const chargeKeepsake =
+      truthyFlag(voiceKeepsake) || (isNominatorKickoff && Boolean(nom.voice_keepsake));
+    const keepsakeCents = chargeKeepsake ? KEEPSAKE_CENTS : 0;
+    const netCents = GIFT_CENTS;
+    const totalCents = GIFT_CENTS + FEE_CENTS + keepsakeCents;
+    const platformFeeCents = PLATFORM_FEE_CENTS;
 
     // Silent $600/yr cap via recipient_annual_totals
     if (nom.nominee_id) {
@@ -169,12 +206,15 @@ Deno.serve(async (req) => {
         currency: "usd",
         customer: customerId,
         automatic_payment_methods: { enabled: true },
-        description: `polli donation to ${nom.nominee_first}`,
+        description: chargeKeepsake
+          ? `polli donation + voice keepsake for ${nom.nominee_first}`
+          : `polli donation to ${nom.nominee_first}`,
         metadata: {
           nomination_id: nominationId,
           donor_id: user.id,
           cover_fees: coverFees ? "1" : "0",
           net_to_nominee_cents: String(netCents),
+          voice_keepsake: chargeKeepsake ? "1" : "0",
           note: note ?? "",
           anonymous: anonymous ? "1" : "0",
         },

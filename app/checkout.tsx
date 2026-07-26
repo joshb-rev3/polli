@@ -28,13 +28,12 @@ export default function Checkout() {
   const { userId } = useSession();
   const n = FEED.find((f) => f.id === id);
 
-  const [coverFees, setCoverFees] = useState(true);
   const [note, setNote] = useState("");
   const [anon, setAnon] = useState(false);
   const [noteOpen, setNoteOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const totals = giftTotals(coverFees);
+  const totals = giftTotals();
   const MAX = 140;
   const firstName = n?.name?.split(" ")[0] || "them";
 
@@ -84,7 +83,7 @@ export default function Checkout() {
       const nominationId = await ensureSandboxNomination(n!);
       const result = await payWithStripe({
         nominationId,
-        coverFees,
+        coverFees: true,
         note: note.trim() || undefined,
         anonymous: anon,
         returnId: n?.id,
@@ -169,27 +168,9 @@ export default function Checkout() {
             )}
           </View>
 
-          <Pressable style={[styles.feeCard, coverFees && styles.feeCardActive]} onPress={() => setCoverFees(!coverFees)}>
-            <View style={[styles.checkbox, coverFees && { backgroundColor: colors.green, borderColor: colors.green }]}>
-              {coverFees && <IconCheck size={13} color="#fff" />}
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.feeTitle}>
-                Cover the {formatDollars(FEE_COVER_CENTS)} in fees
-              </Text>
-              <Text style={styles.feeDesc}>
-                {coverFees
-                  ? `${firstName} gets the full $1.00. You pay ${formatDollars(totals.totalCents)}.`
-                  : `Without this, ${firstName} receives $0.57 after processing. You pay ${formatDollars(totals.totalCents)}.`}
-              </Text>
-            </View>
-          </Pressable>
-
           <View style={styles.summary}>
             <Row label="Your $1 gift" value="$1.00" />
-            {coverFees && (
-              <Row label="Processing & platform" value={formatDollars(FEE_COVER_CENTS)} />
-            )}
+            <Row label="Processing & platform" value={formatDollars(FEE_COVER_CENTS)} />
             <View style={styles.summaryDivider} />
             <Row label="Total charged to you" value={formatDollars(totals.totalCents)} bold />
             <Row label={`${firstName} receives`} value={formatDollars(totals.netCents)} green />
@@ -385,34 +366,6 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     fontSize: 13,
     color: colors.ink2,
-  },
-  feeCard: {
-    marginTop: 16,
-    padding: 16,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.line2,
-    backgroundColor: "#fff",
-    flexDirection: "row",
-    gap: 12,
-    alignItems: "flex-start",
-  },
-  feeCardActive: {
-    backgroundColor: "rgba(255,185,0,0.14)",
-    borderColor: colors.marigold2,
-    borderWidth: 1.5,
-  },
-  feeTitle: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 14,
-    color: colors.ink,
-  },
-  feeDesc: {
-    fontFamily: fonts.body,
-    fontSize: 12,
-    color: colors.ink2,
-    marginTop: 4,
-    lineHeight: 17,
   },
   summary: {
     marginTop: 18,

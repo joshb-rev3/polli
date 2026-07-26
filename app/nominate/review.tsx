@@ -3,13 +3,11 @@ import React, { useState } from "react";
 import {
   Alert,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
-import { IconCheck } from "../../components/Icon";
 import { NavBar } from "../../components/NavBar";
 import { NominateFooter } from "../../components/NominateFooter";
 import { Stepper } from "../../components/Stepper";
@@ -19,6 +17,7 @@ import { FEE_COVER_CENTS, formatDollars, giftTotals } from "../../lib/fees";
 import { success } from "../../lib/haptics";
 import { CATEGORIES, TIMELINES } from "../../lib/mockData";
 import {
+  hasVoiceKeepsake,
   launchChargeDollars,
   launchProductDollars,
   useNomination,
@@ -35,18 +34,25 @@ export default function Review() {
   const cat = CATEGORIES.find((c) => c.id === draft.catId);
   const timeline = TIMELINES.find((t) => t.id === draft.timeline);
   const speak = draft.noteMode === "speak";
+  const keepsake = hasVoiceKeepsake(draft);
   const firstName = draft.first || "them";
 
-  const [coverFees, setCoverFees] = useState(true);
   const [loading, setLoading] = useState(false);
 
-  const totals = giftTotals(coverFees, { keepsake: speak });
+  const totals = giftTotals({ keepsake });
   const product = launchProductDollars(draft);
-  const charge = launchChargeDollars(draft, coverFees);
+  const charge = launchChargeDollars(draft);
 
   const finish = () => {
     success();
-    router.replace("/launch-complete");
+    router.replace({
+      pathname: "/launch-complete",
+      params: {
+        first: draft.first.trim(),
+        last: draft.last.trim(),
+        ...(keepsake ? { keepsake: "1" } : {}),
+      },
+    });
   };
 
   const launch = async () => {
@@ -83,14 +89,28 @@ export default function Review() {
       const { nominationId } = await createLiveNomination(draft);
       const result = await payWithStripe({
         nominationId,
-        coverFees,
+        coverFees: true,
         note: draft.note.trim() || undefined,
-        voiceKeepsake: speak,
+        voiceKeepsake: keepsake,
         successPath: "launch-complete",
         cancelPath: "nominate/review",
+        successQuery: {
+          first: draft.first.trim(),
+          last: draft.last.trim(),
+          ...(keepsake ? { keepsake: "1" } : {}),
+        },
       });
       setLoading(false);
-      if (result === "succeeded" && Platform.OS !== "web") finish();
+      if (result === "succeeded" && Platform.OS !== "web") {
+        router.replace({
+          pathname: "/launch-complete",
+          params: {
+            first: draft.first.trim(),
+            last: draft.last.trim(),
+            ...(keepsake ? { keepsake: "1" } : {}),
+          },
+        });
+      }
     } catch (e: any) {
       setLoading(false);
       Alert.alert("Launch failed", e?.message ?? "Please try again.");
@@ -105,8 +125,8 @@ export default function Review() {
         <View style={styles.card}>
           <Text style={styles.title}>Look good?</Text>
           <Text style={styles.sub}>
-            Kick it off with ${product.toFixed(2)}, cover fees so {firstName} gets the full
-            dollar, then share the link.
+            Kick it off with ${product.toFixed(2)} (plus fees so {firstName} gets the full
+            dollar), then share the link.
           </Text>
 
           <View style={styles.nameRow}>
@@ -149,36 +169,10 @@ export default function Review() {
             <Text style={styles.metaValue}>{timeline?.label}</Text>
           </View>
 
-          <Pressable
-            style={[styles.feeCard, coverFees && styles.feeCardActive]}
-            onPress={() => setCoverFees(!coverFees)}
-          >
-            <View
-              style={[
-                styles.checkbox,
-                coverFees && { backgroundColor: colors.green, borderColor: colors.green },
-              ]}
-            >
-              {coverFees && <IconCheck size={13} color="#fff" />}
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.feeTitle}>
-                Cover the {formatDollars(FEE_COVER_CENTS)} in fees
-              </Text>
-              <Text style={styles.feeDesc}>
-                {coverFees
-                  ? `${firstName} gets the full $1.00. You pay ${formatDollars(totals.totalCents)}.`
-                  : `Without this, ${firstName} receives $0.57 after processing. You pay ${formatDollars(totals.totalCents)}.`}
-              </Text>
-            </View>
-          </Pressable>
-
           <View style={styles.lineItems}>
             <Row label="Kick off their Polli" value="$1.00" />
-            {speak ? <Row label="Voice keepsake" value="$1.00" /> : null}
-            {coverFees ? (
-              <Row label="Processing & platform" value={formatDollars(FEE_COVER_CENTS)} />
-            ) : null}
+            {keepsake ? <Row label="Voice keepsake" value="$1.00" /> : null}
+            <Row label="Processing & platform" value={formatDollars(FEE_COVER_CENTS)} />
             <View style={styles.lineDivider} />
             <Row label="Total charged to you" value={formatDollars(totals.totalCents)} bold />
             <Row
@@ -355,44 +349,6 @@ const styles = StyleSheet.create({
     fontFamily: fonts.serifBold,
     fontSize: 18,
     color: colors.green,
-  },
-  feeCard: {
-    marginTop: 16,
-    padding: 16,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.line2,
-    backgroundColor: "#fff",
-    flexDirection: "row",
-    gap: 12,
-    alignItems: "flex-start",
-  },
-  feeCardActive: {
-    backgroundColor: "rgba(255,185,0,0.14)",
-    borderColor: colors.marigold2,
-    borderWidth: 1.5,
-  },
-  checkbox: {
-    width: 20,
-    height: 20,
-    borderRadius: 6,
-    borderWidth: 1.5,
-    borderColor: colors.line2,
-    backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  feeTitle: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 14,
-    color: colors.ink,
-  },
-  feeDesc: {
-    fontFamily: fonts.body,
-    fontSize: 12,
-    color: colors.ink2,
-    marginTop: 4,
-    lineHeight: 17,
   },
   lineItems: {
     marginTop: 14,

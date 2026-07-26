@@ -1,5 +1,5 @@
 import * as Clipboard from "expo-clipboard";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Bzz, BzzPath } from "../components/Bzz";
@@ -7,23 +7,34 @@ import { Button } from "../components/Button";
 import { Confetti } from "../components/Confetti";
 import { IconClose, IconHeart, IconLink, IconShare } from "../components/Icon";
 import { NavBar } from "../components/NavBar";
-import { launchProductDollars, useNomination } from "../lib/nomination";
+import { hasVoiceKeepsake, useNomination } from "../lib/nomination";
 import { SITE_HOST } from "../lib/seo";
 import { useShare } from "../lib/share";
 import { useTone } from "../lib/tone";
 import { colors, fonts } from "../theme";
 
+function paramOne(value: string | string[] | undefined) {
+  if (Array.isArray(value)) return value[0] ?? "";
+  return value ?? "";
+}
+
 export default function LaunchComplete() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ first?: string; last?: string; keepsake?: string }>();
   const { draft, reset } = useNomination();
   const { copy } = useTone();
   const { openShare } = useShare();
   const [copied, setCopied] = useState(false);
 
-  const firstName = draft.first || "their";
-  const slug = `${(draft.first || "me").toLowerCase()}-${(draft.last || "x").toLowerCase()}`;
+  // Stripe web redirects remount the app and wipe nomination context — prefer URL params.
+  const firstName = paramOne(params.first).trim() || draft.first.trim();
+  const lastName = paramOne(params.last).trim() || draft.last.trim();
+  const keepsake =
+    paramOne(params.keepsake) === "1" || hasVoiceKeepsake(draft);
+  const titleName = firstName || "Your";
+  const slug = `${(firstName || "me").toLowerCase()}-${(lastName || "x").toLowerCase()}`;
   const url = `${SITE_HOST}/${slug}`;
-  const total = launchProductDollars(draft);
+  const total = keepsake ? 2 : 1;
 
   const home = () => {
     reset();
@@ -63,7 +74,9 @@ export default function LaunchComplete() {
           </View>
 
           <Text style={styles.title}>
-            <Text style={styles.titleAccent}>{firstName}'s Polli</Text>
+            <Text style={styles.titleAccent}>
+              {firstName ? `${firstName}'s Polli` : "Your Polli"}
+            </Text>
             {"\n"}
             {copy.launch_title}
           </Text>
@@ -85,7 +98,12 @@ export default function LaunchComplete() {
             label="Pass it along"
             variant="marigold"
             icon={<IconShare size={16} color={colors.ink} />}
-            onPress={() => openShare({ name: `${draft.first} ${draft.last}`, slug })}
+            onPress={() =>
+              openShare({
+                name: `${firstName} ${lastName}`.trim() || titleName,
+                slug,
+              })
+            }
           />
           <Pressable style={styles.secondary} onPress={home}>
             <Text style={styles.secondaryText}>Later</Text>
