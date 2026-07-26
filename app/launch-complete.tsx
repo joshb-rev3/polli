@@ -1,15 +1,33 @@
 import * as Clipboard from "expo-clipboard";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  Alert,
+  Linking,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { Bzz, BzzPath } from "../components/Bzz";
 import { Button } from "../components/Button";
 import { Confetti } from "../components/Confetti";
-import { IconClose, IconHeart, IconLink, IconShare } from "../components/Icon";
+import { IconClose, IconHeart, IconLink, IconMail, IconMsg, IconShare } from "../components/Icon";
 import { NavBar } from "../components/NavBar";
+import {
+  clearLaunchComplete,
+  nomineeTipMessage,
+  nomineeTipSubject,
+  readLaunchComplete,
+  type LaunchCompletePayload,
+} from "../lib/launchComplete";
+import { tap } from "../lib/haptics";
 import { hasVoiceKeepsake, useNomination } from "../lib/nomination";
 import { SITE_HOST } from "../lib/seo";
 import { useShare } from "../lib/share";
+import { supabase, supabaseConfigured } from "../lib/supabase";
 import { useTone } from "../lib/tone";
 import { colors, fonts } from "../theme";
 
@@ -18,33 +36,155 @@ function paramOne(value: string | string[] | undefined) {
   return value ?? "";
 }
 
+function slugifyName(first: string, last: string) {
+  const base = `${first || "me"}-${last || "x"}`.toLowerCase().replace(/[^a-z0-9-]+/g, "-");
+  return base.replace(/(^-|-$)/g, "") || "friend";
+}
+
+function smsUrl(phone: string | undefined, body: string) {
+  const digits = (phone || "").replace(/[^\d+]/g, "");
+  const encoded = encodeURIComponent(body);
+  if (Platform.OS === "ios") {
+    return digits ? `sms:${digits}&body=${encoded}` : `sms:&body=${encoded}`;
+  }
+  return digits ? `sms:${digits}?body=${encoded}` : `sms:?body=${encoded}`;
+}
+
+function mailUrl(email: string | undefined, subject: string, body: string) {
+  const to = (email || "").trim();
+  const qs = `subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  return to ? `mailto:${to}?${qs}` : `mailto:?${qs}`;
+}
+
 export default function LaunchComplete() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ first?: string; last?: string; keepsake?: string }>();
+  const params = useLocalSearchParams<{
+    first?: string;
+    last?: string;
+    slug?: string;
+    nominationId?: string;
+    keepsake?: string;
+  }>();
   const { draft, reset } = useNomination();
   const { copy } = useTone();
   const { openShare } = useShare();
   const [copied, setCopied] = useState(false);
+  const [sharedOnce, setSharedOnce] = useState(false);
+  const [tipped, setTipped] = useState<"text" | "email" | null>(null);
+  const [stored, setStored] = useState<LaunchCompletePayload | null>(null);
 
-  // Stripe web redirects remount the app and wipe nomination context — prefer URL params.
-  const firstName = paramOne(params.first).trim() || draft.first.trim();
-  const lastName = paramOne(params.last).trim() || draft.last.trim();
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const fromStore = await readLaunchComplete();
+      if (!alive) return;
+
+      let resolved = fromStore;
+
+      const paramFirst = paramOne(params.first).trim();
+      const paramLast = paramOne(params.last).trim();
+      const paramSlug = paramOne(params.slug).trim();
+      const paramNomId = paramOne(params.nominationId).trim();
+
+      if (paramFirst || paramSlug || paramNomId) {
+        resolved = {
+          first: paramFirst || fromStore?.first || "",
+          last: paramLast || fromStore?.last || "",
+          slug: paramSlug || fromStore?.slug,
+          nominationId: paramNomId || fromStore?.nominationId,
+          keepsake: paramOne(params.keepsake) === "1" || Boolean(fromStore?.keepsake),
+          email: fromStore?.email,
+          phone: fromStore?.phone,
+          notify: fromStore?.notify,
+        };
+      }
+
+      if (resolved && !resolved.first && resolved.nominationId && supabaseConfigured) {
+        const { data } = await supabase
+          .from("nominations")
+          .select("nominee_first, nominee_last, slug, nominee_email, nominee_phone")
+          .eq("id", resolved.nominationId)
+          .maybeSingle();
+        if (data && alive) {
+          resolved = {
+            ...resolved,
+            first: String(data.nominee_first ?? "").trim(),
+            last: String(data.nominee_last ?? "").trim(),
+            slug: resolved.slug || String(data.slug ?? ""),
+            email: resolved.email || String(data.nominee_email ?? "").trim() || undefined,
+            phone: resolved.phone || String(data.nominee_phone ?? "").trim() || undefined,
+          };
+        }
+      }
+
+      if (alive) setStored(resolved);
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [params.first, params.last, params.slug, params.nominationId, params.keepsake]);
+
+  const firstName =
+    paramOne(params.first).trim() || stored?.first || draft.first.trim();
+  const lastName =
+    paramOne(params.last).trim() || stored?.last || draft.last.trim();
+  const slug =
+    paramOne(params.slug).trim() || stored?.slug || slugifyName(firstName, lastName);
   const keepsake =
-    paramOne(params.keepsake) === "1" || hasVoiceKeepsake(draft);
-  const titleName = firstName || "Your";
-  const slug = `${(firstName || "me").toLowerCase()}-${(lastName || "x").toLowerCase()}`;
-  const url = `${SITE_HOST}/${slug}`;
+    paramOne(params.keepsake) === "1" ||
+    Boolean(stored?.keepsake) ||
+    hasVoiceKeepsake(draft);
+  const email = stored?.email || draft.email.trim() || "";
+  const phone = stored?.phone || draft.phone.trim() || "";
+  const displayName = firstName || "Your friend";
+  const fullName = `${firstName} ${lastName}`.trim() || displayName;
+  const shareUrl = `https://${SITE_HOST}/${slug}`;
   const total = keepsake ? 2 : 1;
 
-  const home = () => {
+  const tipBody = useMemo(() => nomineeTipMessage(firstName), [firstName]);
+  const tipSubject = useMemo(() => nomineeTipSubject(firstName), [firstName]);
+
+  const home = async () => {
+    await clearLaunchComplete();
     reset();
     router.replace("/(tabs)/feed");
   };
 
   const copyLink = async () => {
-    await Clipboard.setStringAsync(`https://${url}`);
+    tap();
+    await Clipboard.setStringAsync(shareUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const sharePolli = () => {
+    tap();
+    setSharedOnce(true);
+    openShare({ name: fullName, slug });
+  };
+
+  const openTip = async (channel: "text" | "email") => {
+    tap();
+    const url =
+      channel === "text"
+        ? smsUrl(phone, tipBody)
+        : mailUrl(email, tipSubject, tipBody);
+    try {
+      const can = await Linking.canOpenURL(url);
+      if (!can && Platform.OS !== "web") {
+        Alert.alert(
+          channel === "text" ? "Messages unavailable" : "Mail unavailable",
+          "Copy the message and send it another way.",
+        );
+        await Clipboard.setStringAsync(tipBody);
+        return;
+      }
+      await Linking.openURL(url);
+      setTipped(channel);
+    } catch {
+      await Clipboard.setStringAsync(tipBody);
+      Alert.alert("Message copied", "Paste it into a text or email to send.");
+    }
   };
 
   return (
@@ -57,56 +197,104 @@ export default function LaunchComplete() {
           </Pressable>
         }
       />
-      <Confetti count={20} />
-      <BzzPath variant="launch" size={44} />
-      <BzzPath variant="launch" size={36} delay={1.8} style={{ left: "55%" }} />
+      <Confetti count={16} />
+      <BzzPath variant="launch" size={40} />
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
         bounces
       >
-        <View style={styles.body}>
+        <View style={styles.hero}>
           <View style={styles.checkCircle}>
-            <IconHeart size={44} color="#fff" />
+            <IconHeart size={36} color="#fff" />
             <View style={styles.waveBee}>
-              <Bzz pose="wave" size={52} />
+              <Bzz pose="wave" size={44} />
             </View>
           </View>
-
           <Text style={styles.title}>
-            <Text style={styles.titleAccent}>
-              {firstName ? `${firstName}'s Polli` : "Your Polli"}
-            </Text>
+            <Text style={styles.titleAccent}>{displayName}'s Polli</Text>
             {"\n"}
             {copy.launch_title}
           </Text>
           <Text style={styles.sub}>
             {total > 1
-              ? `You kicked it off with $${total} (including your voice keepsake). Share the link so others can pile on.`
-              : copy.launch_sub}
+              ? `You kicked it off with $${total} (including your voice keepsake).`
+              : "You gave the first dollar."}{" "}
+            Now share it — every share helps friends pile on.
           </Text>
-
-          <Pressable style={styles.urlChip} onPress={copyLink} accessibilityRole="button">
-            <IconLink size={14} color={colors.cream} />
-            <Text style={styles.urlText}>{url}</Text>
-            <Text style={styles.copyHint}>{copied ? "Copied!" : "Tap to copy"}</Text>
-          </Pressable>
         </View>
-        <View style={styles.actions}>
-          <Button
-            full
-            label="Pass it along"
-            variant="marigold"
-            icon={<IconShare size={16} color={colors.ink} />}
-            onPress={() =>
-              openShare({
-                name: `${firstName} ${lastName}`.trim() || titleName,
-                slug,
-              })
-            }
-          />
-          <Pressable style={styles.secondary} onPress={home}>
-            <Text style={styles.secondaryText}>Later</Text>
+
+        <View style={styles.panel}>
+          <View style={styles.primaryCard}>
+            <Text style={styles.stepEyebrow}>STEP 1 · MOST IMPORTANT</Text>
+            <Text style={styles.cardTitle}>Share so people pile on</Text>
+            <Text style={styles.cardBody}>
+              Post the link to your stories, group chats, and feeds. The more people who see it,
+              the more dollars {displayName} gets.
+            </Text>
+
+            <Pressable style={styles.linkChip} onPress={copyLink} accessibilityRole="button">
+              <IconLink size={14} color={colors.green} />
+              <Text style={styles.linkText} numberOfLines={1}>
+                {SITE_HOST}/{slug}
+              </Text>
+              <Text style={styles.copyHint}>{copied ? "Copied!" : "Copy"}</Text>
+            </Pressable>
+
+            <Button
+              full
+              label={sharedOnce ? "Share again" : "Share on social"}
+              variant="marigold"
+              icon={<IconShare size={16} color={colors.ink} />}
+              onPress={sharePolli}
+            />
+            {!sharedOnce ? (
+              <Text style={styles.nudge}>Don't skip this — sharing is how a Polli grows.</Text>
+            ) : (
+              <Text style={styles.nudgeDone}>Nice — share it in a couple more places if you can.</Text>
+            )}
+          </View>
+
+          <View style={styles.secondaryCard}>
+            <Text style={styles.stepEyebrowSecondary}>STEP 2 · GIVE THEM A HEADS-UP</Text>
+            <Text style={styles.cardTitleDark}>Let {displayName} know something's coming</Text>
+            <Text style={styles.cardBodyDark}>
+              Send a quick text or email so they know to watch for a message from Polli — that's
+              how they'll claim their funds.
+            </Text>
+
+            <View style={styles.tipActions}>
+              <Pressable
+                style={[styles.tipBtn, tipped === "text" && styles.tipBtnDone]}
+                onPress={() => openTip("text")}
+                accessibilityRole="button"
+                accessibilityLabel={`Text ${displayName}`}
+              >
+                <View style={[styles.tipIcon, { backgroundColor: "#25D366" }]}>
+                  <IconMsg size={18} color="#fff" />
+                </View>
+                <Text style={styles.tipBtnText}>
+                  {tipped === "text" ? "Text opened" : "Send a text"}
+                </Text>
+              </Pressable>
+              <Pressable
+                style={[styles.tipBtn, tipped === "email" && styles.tipBtnDone]}
+                onPress={() => openTip("email")}
+                accessibilityRole="button"
+                accessibilityLabel={`Email ${displayName}`}
+              >
+                <View style={[styles.tipIcon, { backgroundColor: "#EA4335" }]}>
+                  <IconMail size={18} color="#fff" />
+                </View>
+                <Text style={styles.tipBtnText}>
+                  {tipped === "email" ? "Email opened" : "Send an email"}
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+
+          <Pressable style={styles.later} onPress={home}>
+            <Text style={styles.laterText}>I'll finish this later</Text>
           </Pressable>
         </View>
       </ScrollView>
@@ -117,39 +305,38 @@ export default function LaunchComplete() {
 const styles = StyleSheet.create({
   scroll: {
     flexGrow: 1,
-    justifyContent: "space-between",
+    paddingBottom: 36,
   },
-  body: {
-    flexGrow: 1,
+  hero: {
     alignItems: "center",
-    justifyContent: "center",
     paddingHorizontal: 28,
-    paddingVertical: 24,
+    paddingTop: 8,
+    paddingBottom: 20,
   },
   checkCircle: {
-    width: 116,
-    height: 116,
-    borderRadius: 58,
+    width: 88,
+    height: 88,
+    borderRadius: 44,
     backgroundColor: colors.coral,
     alignItems: "center",
     justifyContent: "center",
     position: "relative",
     shadowColor: colors.coral,
-    shadowOpacity: 0.5,
-    shadowRadius: 24,
+    shadowOpacity: 0.45,
+    shadowRadius: 18,
   },
   waveBee: {
     position: "absolute",
-    top: -24,
-    right: -18,
+    top: -18,
+    right: -14,
   },
   title: {
     fontFamily: fonts.serifHeavy,
-    fontSize: 42,
-    lineHeight: 44,
+    fontSize: 34,
+    lineHeight: 36,
     color: colors.cream,
     textAlign: "center",
-    marginTop: 28,
+    marginTop: 20,
   },
   titleAccent: {
     fontFamily: fonts.serifItalic,
@@ -157,53 +344,148 @@ const styles = StyleSheet.create({
   },
   sub: {
     fontFamily: fonts.body,
-    fontSize: 16,
+    fontSize: 15,
     color: colors.cream,
-    opacity: 0.85,
-    marginTop: 14,
+    opacity: 0.9,
+    marginTop: 12,
     textAlign: "center",
-    maxWidth: 320,
-    lineHeight: 24,
+    maxWidth: 340,
+    lineHeight: 22,
   },
-  urlChip: {
-    marginTop: 24,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: "rgba(255,251,245,0.12)",
+  panel: {
+    paddingHorizontal: 20,
+    gap: 14,
+  },
+  primaryCard: {
+    backgroundColor: colors.cream,
+    borderRadius: 20,
+    padding: 20,
     borderWidth: 1,
     borderColor: "rgba(255,251,245,0.35)",
-    borderStyle: "dashed",
+    gap: 10,
+  },
+  secondaryCard: {
+    backgroundColor: "rgba(255,251,245,0.1)",
+    borderRadius: 20,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: "rgba(255,251,245,0.28)",
+    gap: 10,
+  },
+  stepEyebrow: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 11,
+    letterSpacing: 0.8,
+    color: colors.coral,
+  },
+  stepEyebrowSecondary: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 11,
+    letterSpacing: 0.8,
+    color: colors.marigold,
+  },
+  cardTitle: {
+    fontFamily: fonts.serifBold,
+    fontSize: 22,
+    color: colors.ink,
+    lineHeight: 26,
+  },
+  cardTitleDark: {
+    fontFamily: fonts.serifBold,
+    fontSize: 20,
+    color: colors.cream,
+    lineHeight: 24,
+  },
+  cardBody: {
+    fontFamily: fonts.body,
+    fontSize: 14,
+    color: colors.ink2,
+    lineHeight: 21,
+  },
+  cardBodyDark: {
+    fontFamily: fonts.body,
+    fontSize: 14,
+    color: colors.cream,
+    opacity: 0.88,
+    lineHeight: 21,
+  },
+  linkChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: colors.paper,
+    borderWidth: 1,
+    borderColor: colors.line2,
     borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    marginTop: 2,
+  },
+  linkText: {
+    flex: 1,
+    fontFamily: fonts.body,
+    fontSize: 13,
+    color: colors.ink2,
+  },
+  copyHint: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 12,
+    color: colors.green,
+  },
+  nudge: {
+    fontFamily: fonts.bodySemi,
+    fontSize: 12,
+    color: colors.coral,
+    textAlign: "center",
+    marginTop: 2,
+  },
+  nudgeDone: {
+    fontFamily: fonts.body,
+    fontSize: 12,
+    color: colors.green,
+    textAlign: "center",
+    marginTop: 2,
+  },
+  tipActions: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 4,
+  },
+  tipBtn: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
+    backgroundColor: colors.cream,
+    borderRadius: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
   },
-  urlText: {
-    fontFamily: fonts.body,
-    fontSize: 13,
-    color: colors.cream,
+  tipBtnDone: {
+    opacity: 0.85,
   },
-  copyHint: {
-    fontFamily: fonts.bodySemi,
-    fontSize: 11,
-    color: colors.marigold,
-    marginLeft: 4,
-  },
-  actions: {
-    padding: 24,
-    paddingBottom: 40,
-    gap: 10,
-  },
-  secondary: {
-    borderWidth: 1,
-    borderColor: "rgba(248,249,244,0.3)",
-    paddingVertical: 14,
-    borderRadius: 999,
+  tipIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
     alignItems: "center",
+    justifyContent: "center",
   },
-  secondaryText: {
+  tipBtnText: {
+    flex: 1,
+    fontFamily: fonts.bodyBold,
+    fontSize: 13,
+    color: colors.ink,
+  },
+  later: {
+    alignItems: "center",
+    paddingVertical: 14,
+  },
+  laterText: {
+    fontFamily: fonts.body,
+    fontSize: 14,
     color: colors.cream,
-    fontFamily: fonts.bodySemi,
-    fontSize: 15,
+    opacity: 0.65,
+    textDecorationLine: "underline",
   },
 });

@@ -68,7 +68,11 @@ export function ShareSheet({ open, onClose, url, name }: Props) {
 
   const handleShare = async () => {
     try {
-      await Share.share({ message: `Chip in $1 for ${name || "someone kind"}: ${url}` });
+      await Share.share({
+        message: `Chip in $1 for ${name || "someone kind"} on Polli — every dollar piles on: ${url}`,
+        url,
+        title: name ? `Help ${name}` : "Share on Polli",
+      });
     } catch {}
     onClose();
   };
@@ -90,8 +94,8 @@ export function ShareSheet({ open, onClose, url, name }: Props) {
       <Animated.View style={[styles.sheet, sheetStyle]}>
         <SafeAreaView edges={["bottom"]}>
           <View style={styles.grab} />
-          <Text style={styles.title}>Share {name ? `${name}'s` : ""} kindness</Text>
-          <Text style={styles.subtitle}>The more shares, the more dollars add up.</Text>
+          <Text style={styles.title}>Share {name ? `${name}'s` : "this"} Polli</Text>
+          <Text style={styles.subtitle}>Post it everywhere — shares are how the dollars add up.</Text>
           <View style={styles.linkRow}>
             <IconLink size={16} color={colors.ink} />
             <Text style={styles.linkText} numberOfLines={1}>

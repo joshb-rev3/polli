@@ -92,6 +92,13 @@ export const IconMsg = ({ size = 22, color = "#fff" }: IconProps) => (
   </Svg>
 );
 
+export const IconMail = ({ size = 22, color = "#fff" }: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24">
+    <Rect x={3} y={5} width={18} height={14} rx={2} {...stroke(color, 1.8)} />
+    <Path d="M3 7l9 7 9-7" {...stroke(color, 1.8)} />
+  </Svg>
+);
+
 export const IconCopy = ({ size = 22, color = "#fff" }: IconProps) => (
   <Svg width={size} height={size} viewBox="0 0 24 24">
     <Rect x={9} y={9} width={12} height={12} rx={2} {...stroke(color, 1.8)} />

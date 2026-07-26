@@ -54,6 +54,10 @@ export async function payWithStripe(opts: {
     ...(feedId ? { id: feedId } : {}),
     ...(opts.successQuery ?? {}),
   };
+  // Drop empty values so Stripe/Expo Router don't swallow the rest of the query.
+  for (const key of Object.keys(successQuery)) {
+    if (!successQuery[key]?.trim()) delete successQuery[key];
+  }
   const idQuery = Object.keys(successQuery).length ? successQuery : undefined;
 
   const successUrl =

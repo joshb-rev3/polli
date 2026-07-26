@@ -15,6 +15,7 @@ import { VoiceMessagePlayer } from "../../components/voice/VoiceMessageComposer"
 import { createLiveNomination } from "../../lib/createNomination";
 import { FEE_COVER_CENTS, formatDollars, giftTotals } from "../../lib/fees";
 import { success } from "../../lib/haptics";
+import { saveLaunchComplete } from "../../lib/launchComplete";
 import { CATEGORIES, TIMELINES } from "../../lib/mockData";
 import {
   hasVoiceKeepsake,
@@ -43,13 +44,32 @@ export default function Review() {
   const product = launchProductDollars(draft);
   const charge = launchChargeDollars(draft);
 
-  const finish = () => {
+  const finish = async (opts?: {
+    first?: string;
+    last?: string;
+    slug?: string;
+    nominationId?: string;
+  }) => {
+    const first = (opts?.first ?? draft.first).trim();
+    const last = (opts?.last ?? draft.last).trim();
+    await saveLaunchComplete({
+      first,
+      last,
+      slug: opts?.slug,
+      nominationId: opts?.nominationId,
+      keepsake,
+      email: draft.email.trim() || undefined,
+      phone: draft.phone.trim() || undefined,
+      notify: draft.notify,
+    });
     success();
     router.replace({
       pathname: "/launch-complete",
       params: {
-        first: draft.first.trim(),
-        last: draft.last.trim(),
+        first,
+        last,
+        ...(opts?.slug ? { slug: opts.slug } : {}),
+        ...(opts?.nominationId ? { nominationId: opts.nominationId } : {}),
         ...(keepsake ? { keepsake: "1" } : {}),
       },
     });
@@ -86,7 +106,19 @@ export default function Review() {
         return;
       }
 
-      const { nominationId } = await createLiveNomination(draft);
+      const { nominationId, slug } = await createLiveNomination(draft);
+      const first = draft.first.trim();
+      const last = draft.last.trim();
+      await saveLaunchComplete({
+        first,
+        last,
+        slug,
+        nominationId,
+        keepsake,
+        email: draft.email.trim() || undefined,
+        phone: draft.phone.trim() || undefined,
+        notify: draft.notify,
+      });
       const result = await payWithStripe({
         nominationId,
         coverFees: true,
@@ -95,21 +127,16 @@ export default function Review() {
         successPath: "launch-complete",
         cancelPath: "nominate/review",
         successQuery: {
-          first: draft.first.trim(),
-          last: draft.last.trim(),
+          first,
+          last,
+          slug,
+          nominationId,
           ...(keepsake ? { keepsake: "1" } : {}),
         },
       });
       setLoading(false);
       if (result === "succeeded" && Platform.OS !== "web") {
-        router.replace({
-          pathname: "/launch-complete",
-          params: {
-            first: draft.first.trim(),
-            last: draft.last.trim(),
-            ...(keepsake ? { keepsake: "1" } : {}),
-          },
-        });
+        await finish({ first, last, slug, nominationId });
       }
     } catch (e: any) {
       setLoading(false);
