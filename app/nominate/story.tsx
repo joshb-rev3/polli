@@ -9,6 +9,7 @@ import {
   View,
 } from "react-native";
 import { NavBar } from "../../components/NavBar";
+import { Content } from "../../components/Content";
 import { NominateFooter } from "../../components/NominateFooter";
 import { Stepper } from "../../components/Stepper";
 import { CATEGORIES, OVERVIEW_INSPO } from "../../lib/mockData";
@@ -28,9 +29,10 @@ export default function Story() {
     <View style={{ flex: 1, backgroundColor: colors.paper }}>
       <NavBar back title="Back" variant="paper" onBack={() => router.back()} />
       <ScrollView
-        contentContainerStyle={{ padding: 20, paddingBottom: 24 }}
+        contentContainerStyle={{ paddingBottom: 24 }}
         keyboardShouldPersistTaps="handled"
       >
+        <Content padTop={20}>
         <Stepper step={2} total={TOTAL} />
         <View style={styles.card}>
           <Text style={styles.title}>Why should people chip in?</Text>
@@ -83,6 +85,7 @@ export default function Story() {
             ))}
           </View>
         </View>
+        </Content>
       </ScrollView>
       <NominateFooter
         label="Continue"

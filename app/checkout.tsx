@@ -11,6 +11,7 @@ import {
   View,
 } from "react-native";
 import { Button } from "../components/Button";
+import { Content } from "../components/Content";
 import { IconCheck } from "../components/Icon";
 import { NavBar } from "../components/NavBar";
 import { VoiceMessageComposer } from "../components/voice/VoiceMessageComposer";
@@ -23,7 +24,7 @@ import { ensureSandboxNomination } from "../lib/sandboxNomination";
 import { useSession } from "../lib/session";
 import { stripeConfigured, supabaseConfigured } from "../lib/supabase";
 import { VoiceClip } from "../lib/voice";
-import { colors, fonts, shadows } from "../theme";
+import { colors, fonts, shadows, CONTENT_MAX, CONTENT_PAD } from "../theme";
 
 type NoteMode = "type" | "speak";
 
@@ -162,6 +163,7 @@ export default function Checkout() {
     <View style={{ flex: 1, backgroundColor: colors.paper }}>
       <NavBar back title="Cancel" variant="paper" onBack={() => router.back()} />
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <Content padTop={12} padBottom={32}>
         <View style={styles.card}>
           <Text style={styles.eyebrow}>YOU'RE GIVING TO</Text>
           <Text style={styles.name}>{n.name}</Text>
@@ -301,8 +303,10 @@ export default function Checkout() {
             <Text style={{ fontFamily: fonts.bodyBold }}>Stripe</Text>.
           </Text>
         </View>
+        </Content>
       </ScrollView>
       <View style={styles.sticky}>
+        <View style={styles.stickyInner}>
         <Button
           full
           label={loading ? "Opening Stripe…" : `Pay ${formatDollars(totals.totalCents)}`}
@@ -311,6 +315,7 @@ export default function Checkout() {
           onPress={pay}
           style={{ backgroundColor: colors.green }}
         />
+        </View>
       </View>
     </View>
   );
@@ -371,9 +376,7 @@ const rowStyles = StyleSheet.create({
 
 const styles = StyleSheet.create({
   scroll: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 32,
+    paddingBottom: 0,
   },
   card: {
     backgroundColor: "#fff",
@@ -606,10 +609,16 @@ const styles = StyleSheet.create({
     lineHeight: 17,
   },
   sticky: {
-    padding: 16,
+    paddingTop: 16,
     paddingBottom: 24,
     backgroundColor: colors.paper,
     borderTopWidth: 1,
     borderTopColor: colors.line2,
+  },
+  stickyInner: {
+    width: "100%",
+    maxWidth: CONTENT_MAX,
+    alignSelf: "center",
+    paddingHorizontal: CONTENT_PAD,
   },
 });

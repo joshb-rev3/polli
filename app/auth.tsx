@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
 import { NavBar } from "../components/NavBar";
+import { Content } from "../components/Content";
 import { useDemoWallet } from "../lib/demoWallet";
 import { useSession } from "../lib/session";
 import { supabase, supabaseConfigured } from "../lib/supabase";
@@ -54,6 +55,7 @@ export default function Auth() {
     <View style={{ flex: 1, backgroundColor: colors.paper }}>
       <NavBar back title="Back" variant="paper" onBack={() => router.back()} />
       <ScrollView contentContainerStyle={styles.scroll}>
+        <Content pad={24}>
         <View style={styles.card}>
           <Text style={styles.title}>Give kindness today.</Text>
           <Text style={styles.sub}>
@@ -102,6 +104,7 @@ export default function Auth() {
             By continuing, you agree to our Terms and acknowledge our Privacy Policy.
           </Text>
         </View>
+        </Content>
       </ScrollView>
     </View>
   );
@@ -140,7 +143,7 @@ function FacebookIcon() {
 
 const styles = StyleSheet.create({
   scroll: {
-    padding: 24,
+    paddingBottom: 24,
   },
   card: {
     backgroundColor: "#fff",

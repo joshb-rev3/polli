@@ -1,6 +1,6 @@
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { colors, fonts, shadows } from "../theme";
+import { colors, fonts, shadows, CONTENT_MAX, CONTENT_PAD } from "../theme";
 import { tap } from "../lib/haptics";
 import { IconHome, IconPlus, IconProfile } from "./Icon";
 
@@ -18,31 +18,33 @@ export function TabBar({ active, onGo }: Props) {
   };
   return (
     <View style={styles.bar}>
-      <Tab
-        icon={<IconHome color={active === "home" ? colors.green : colors.ink2} />}
-        label="Feed"
-        active={active === "home"}
-        onPress={() => go("home")}
-      />
-      <Pressable style={styles.center} onPress={() => go("give-start")}>
-        <View style={[styles.fab, shadows.fab]}>
-          <IconPlus size={28} color={colors.green} />
-        </View>
-        <Text
-          style={[styles.label, styles.centerLabel, { color: colors.green }]}
-          numberOfLines={1}
-          adjustsFontSizeToFit
-          minimumFontScale={0.85}
-        >
-          Start a Polli
-        </Text>
-      </Pressable>
-      <Tab
-        icon={<IconProfile color={active === "profile" ? colors.green : colors.ink2} />}
-        label="You"
-        active={active === "profile"}
-        onPress={() => go("profile")}
-      />
+      <View style={styles.inner}>
+        <Tab
+          icon={<IconHome color={active === "home" ? colors.green : colors.ink2} />}
+          label="Feed"
+          active={active === "home"}
+          onPress={() => go("home")}
+        />
+        <Pressable style={styles.center} onPress={() => go("give-start")}>
+          <View style={[styles.fab, shadows.fab]}>
+            <IconPlus size={28} color={colors.green} />
+          </View>
+          <Text
+            style={[styles.label, styles.centerLabel, { color: colors.green }]}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.85}
+          >
+            Start a Polli
+          </Text>
+        </Pressable>
+        <Tab
+          icon={<IconProfile color={active === "profile" ? colors.green : colors.ink2} />}
+          label="You"
+          active={active === "profile"}
+          onPress={() => go("profile")}
+        />
+      </View>
     </View>
   );
 }
@@ -69,12 +71,18 @@ function Tab({
 const styles = StyleSheet.create({
   bar: {
     height: 84,
-    paddingHorizontal: 18,
     paddingTop: 10,
     paddingBottom: 24,
     backgroundColor: "rgba(255,255,255,0.92)",
     borderTopWidth: 1,
     borderTopColor: colors.line,
+  },
+  inner: {
+    flex: 1,
+    width: "100%",
+    maxWidth: CONTENT_MAX,
+    alignSelf: "center",
+    paddingHorizontal: Math.max(CONTENT_PAD - 2, 18),
     flexDirection: "row",
     justifyContent: "space-between",
   },

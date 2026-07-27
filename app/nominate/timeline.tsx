@@ -2,6 +2,7 @@ import { useRouter } from "expo-router";
 import React from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { NavBar } from "../../components/NavBar";
+import { Content } from "../../components/Content";
 import { NominateFooter } from "../../components/NominateFooter";
 import { Stepper } from "../../components/Stepper";
 import { TIMELINES } from "../../lib/mockData";
@@ -15,7 +16,8 @@ export default function Timeline() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.paper }}>
       <NavBar back title="Back" variant="paper" onBack={() => router.back()} />
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 24 }}>
+      <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
+        <Content padTop={20}>
         <Stepper step={4} total={6} />
         <View style={styles.card}>
           <Text style={styles.title}>How long should it run?</Text>
@@ -44,6 +46,7 @@ export default function Timeline() {
             </Text>
           </View>
         </View>
+        </Content>
       </ScrollView>
       <NominateFooter label="Continue" onPress={() => router.push("/nominate/review")} />
     </View>

@@ -1,6 +1,6 @@
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { colors, fonts } from "../theme";
+import { colors, fonts, CONTENT_MAX, CONTENT_PAD } from "../theme";
 import { IconBack } from "./Icon";
 import { Logo } from "./Logo";
 
@@ -19,6 +19,7 @@ interface Props {
  * Polli wordmark on the left; optional actions on the right (space-between).
  * `green` = cream masthead with marigold pollen edge for garden screens.
  * Optional back control sits before the logo.
+ * Outer bar is full-bleed; inner row centers to CONTENT_MAX on desktop.
  */
 export function NavBar({ variant = "cream", back, title, onBack, onMenu, right }: Props) {
   const garden = variant === "green";
@@ -37,27 +38,29 @@ export function NavBar({ variant = "cream", back, title, onBack, onMenu, right }
 
   return (
     <View style={[styles.bar, { backgroundColor: bg }, garden && styles.gardenBar]}>
-      <View style={styles.left}>
-        {back ? (
-          <Pressable
-            onPress={onBack}
-            style={({ pressed }) => [
-              styles.back,
-              pressed && { backgroundColor: "rgba(0,0,0,0.05)" },
-            ]}
-            hitSlop={8}
-          >
-            <IconBack size={18} color={fg} />
-            {title ? (
-              <Text style={[styles.backLabel, { color: fg }]}>{title}</Text>
-            ) : null}
-          </Pressable>
-        ) : (
-          <Logo />
-        )}
-      </View>
+      <View style={styles.inner}>
+        <View style={styles.left}>
+          {back ? (
+            <Pressable
+              onPress={onBack}
+              style={({ pressed }) => [
+                styles.back,
+                pressed && { backgroundColor: "rgba(0,0,0,0.05)" },
+              ]}
+              hitSlop={8}
+            >
+              <IconBack size={18} color={fg} />
+              {title ? (
+                <Text style={[styles.backLabel, { color: fg }]}>{title}</Text>
+              ) : null}
+            </Pressable>
+          ) : (
+            <Logo />
+          )}
+        </View>
 
-      {rightNode ? <View style={styles.right}>{rightNode}</View> : null}
+        {rightNode ? <View style={styles.right}>{rightNode}</View> : null}
+      </View>
     </View>
   );
 }
@@ -65,12 +68,18 @@ export function NavBar({ variant = "cream", back, title, onBack, onMenu, right }
 const styles = StyleSheet.create({
   bar: {
     height: 64,
-    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(0,0,0,0.04)",
+  },
+  inner: {
+    flex: 1,
+    width: "100%",
+    maxWidth: CONTENT_MAX,
+    alignSelf: "center",
+    paddingHorizontal: Math.max(CONTENT_PAD - 8, 12),
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(0,0,0,0.04)",
   },
   gardenBar: {
     borderBottomWidth: 2,

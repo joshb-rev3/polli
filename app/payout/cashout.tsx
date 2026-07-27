@@ -2,6 +2,7 @@ import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Button } from "../../components/Button";
+import { Content } from "../../components/Content";
 import { IconArrow } from "../../components/Icon";
 import { NavBar } from "../../components/NavBar";
 import { formatCents, useDemoWallet } from "../../lib/demoWallet";
@@ -33,6 +34,7 @@ export default function PayoutCashout() {
     <View style={{ flex: 1, backgroundColor: colors.paper }}>
       <NavBar back title="Back" variant="paper" onBack={() => router.back()} />
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <Content pad={20} padBottom={40}>
         <View style={styles.card}>
           {step === "setup" ? (
             <>
@@ -77,6 +79,7 @@ export default function PayoutCashout() {
             </>
           )}
         </View>
+        </Content>
       </ScrollView>
     </View>
   );
@@ -84,8 +87,7 @@ export default function PayoutCashout() {
 
 const styles = StyleSheet.create({
   scroll: {
-    padding: 20,
-    paddingBottom: 40,
+    paddingBottom: 0,
   },
   card: {
     backgroundColor: "#fff",

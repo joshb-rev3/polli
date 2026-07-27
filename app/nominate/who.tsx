@@ -9,6 +9,7 @@ import {
   View,
 } from "react-native";
 import { NavBar } from "../../components/NavBar";
+import { Content } from "../../components/Content";
 import { NominateFooter } from "../../components/NominateFooter";
 import { Stepper } from "../../components/Stepper";
 import { useNomination } from "../../lib/nomination";
@@ -32,9 +33,10 @@ export default function Who() {
     <View style={{ flex: 1, backgroundColor: colors.paper }}>
       <NavBar back title="Back" variant="paper" onBack={() => router.back()} />
       <ScrollView
-        contentContainerStyle={{ padding: 20, paddingBottom: 24 }}
+        contentContainerStyle={{ paddingBottom: 24 }}
         keyboardShouldPersistTaps="handled"
       >
+        <Content padTop={20}>
         <Stepper step={0} total={6} />
         <View style={styles.card}>
           <Text style={styles.title}>Who deserves a little kindness today?</Text>
@@ -103,6 +105,7 @@ export default function Who() {
             </View>
           </View>
         </View>
+        </Content>
       </ScrollView>
       <NominateFooter
         label="Continue"

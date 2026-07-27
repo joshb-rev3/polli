@@ -21,7 +21,7 @@ import { Button } from "../components/Button";
 import { IconArrow } from "../components/Icon";
 import { Logo } from "../components/Logo";
 import { SiteHead } from "../components/SiteHead";
-import { colors, fonts } from "../theme";
+import { colors, fonts, DESKTOP_BP, SPLASH_MAX } from "../theme";
 
 const HERO_FLOWERS = [
   {
@@ -59,10 +59,13 @@ export default function Splash() {
   const beeArrivalA = useSharedValue(false);
   const beeArrivalB = useSharedValue(false);
   const beeArrivalC = useSharedValue(false);
-  const heroWidth = Math.max(Math.min(width - 24, 560), 280);
-  const compact = height < 720 || width < 380;
-  const headlineSize = width < 360 ? 34 : width < 400 ? 40 : 48;
-  const ledeSize = compact ? 15 : 17;
+  const isWide = width >= DESKTOP_BP;
+  const heroWidth = isWide
+    ? Math.min(520, Math.max(width * 0.42, 400))
+    : Math.max(Math.min(width - 24, 560), 280);
+  const compact = !isWide && (height < 720 || width < 380);
+  const headlineSize = isWide ? 56 : width < 360 ? 34 : width < 400 ? 40 : 48;
+  const ledeSize = isWide ? 18 : compact ? 15 : 17;
 
   useEffect(() => {
     const startedAt = Date.now();
@@ -238,227 +241,293 @@ export default function Splash() {
 
   const flowerStyles = [flowerStyle];
 
+  const logo = (
+    <View style={[styles.logoWrap, isWide && styles.logoWrapWide]}>
+      <Logo size={isWide ? 42 : 34} style={isWide ? styles.logoWide : undefined} />
+    </View>
+  );
+
+  const headlineBlock = (
+    <View>
+      <Text
+        style={[
+          styles.headline,
+          { fontSize: headlineSize, lineHeight: headlineSize + (isWide ? 4 : 2) },
+        ]}
+      >
+        Share $1 and{"\n"}
+        <Text style={styles.headlineItalic}>endless good…</Text>
+        {"\n"}
+        with everyone.
+      </Text>
+      <Text style={[styles.lede, { fontSize: ledeSize, lineHeight: ledeSize + 8 }]}>
+        Nominate a friend, teacher, neighbor, or anyone who deserves a little extra kindness.
+        Everyone chips in just $1 — small contributions pollinate into a meaningful gift and
+        message of support.
+      </Text>
+    </View>
+  );
+
+  const ctaBlock = (
+    <View style={[styles.ctaBlock, isWide && styles.ctaBlockWide]}>
+      <Button
+        label="Start a Polli"
+        full={!isWide}
+        iconRight={<IconArrow size={20} color={colors.green} />}
+        onPress={() => router.push("/auth")}
+        style={isWide ? styles.ctaButtonWide : undefined}
+      />
+      <View style={[styles.signInWrap, isWide && styles.signInWrapWide]}>
+        <Text style={styles.signInLine}>
+          Already here?{" "}
+          <Pressable onPress={() => router.push("/auth")}>
+            <Text style={styles.signInLink}>Sign in</Text>
+          </Pressable>
+        </Text>
+      </View>
+    </View>
+  );
+
+  const stepsBlock = (
+    <View style={[styles.steps, isWide && styles.stepsWide]}>
+      {[
+        "Nominate someone special",
+        "Share with friends, family, and your community — ask everyone to send only $1",
+        "Your nominee receives a meaningful gift and message",
+      ].map((txt, i) => (
+        <View key={i} style={[styles.step, isWide && styles.stepWide]}>
+          <View style={styles.stepNum}>
+            <Text style={styles.stepNumText}>{i + 1}</Text>
+          </View>
+          <Text style={[styles.stepText, isWide && styles.stepTextWide]}>{txt}</Text>
+        </View>
+      ))}
+    </View>
+  );
+
+  const useCasesBlock = (
+    <View style={[styles.useCases, isWide && styles.useCasesWide]}>
+      <Text style={styles.useCasesEyebrow}>Made for everyday kindness</Text>
+      <Text style={[styles.useCasesTitle, isWide && styles.useCasesTitleWide]}>
+        Start a Polli for
+      </Text>
+      <View style={styles.useCaseGrid}>
+        {[
+          { emoji: "🎂", label: "A birthday" },
+          { emoji: "🤍", label: "A little lift" },
+          { emoji: "🍎", label: "A teacher or coach" },
+          { emoji: "🩺", label: "A healthcare hero" },
+          { emoji: "🍼", label: "A new parent" },
+          { emoji: "🌼", label: "Just because" },
+        ].map((item) => (
+          <View key={item.label} style={styles.useCaseChip}>
+            <Text style={styles.useCaseEmoji}>{item.emoji}</Text>
+            <Text style={styles.useCaseLabel}>{item.label}</Text>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+
+  const flowerScene = (
+    <View
+      style={[
+        styles.hero,
+        isWide && styles.heroWide,
+        isWide && { width: heroWidth },
+      ]}
+    >
+      <Animated.View
+        style={[
+          styles.rippleRing,
+          styles.rippleOuter,
+          isWide && styles.rippleOuterWide,
+          rippleOuterStyle,
+        ]}
+      />
+      <Animated.View
+        style={[
+          styles.rippleRing,
+          styles.rippleInner,
+          isWide && styles.rippleInnerWide,
+          rippleInnerStyle,
+        ]}
+      />
+
+      <Animated.View style={[styles.heroArt, { width: heroWidth }, isWide && styles.heroArtWide]}>
+        <Svg width={heroWidth} height={HERO_SCENE_HEIGHT} viewBox={`0 0 ${heroWidth} ${HERO_SCENE_HEIGHT}`}>
+          <Defs>
+            <RadialGradient id="heroGlow" cx="50%" cy="42%" r="62%">
+              <Stop offset="0%" stopColor="rgba(255,185,0,0.42)" />
+              <Stop offset="60%" stopColor="rgba(255,185,0,0.16)" />
+              <Stop offset="100%" stopColor="rgba(255,185,0,0)" />
+            </RadialGradient>
+            <RadialGradient id="groundDirt" cx="50%" cy="30%" r="80%">
+              <Stop offset="0%" stopColor="#8B6F47" />
+              <Stop offset="50%" stopColor="#6B5344" />
+              <Stop offset="100%" stopColor="#4A3728" />
+            </RadialGradient>
+            <RadialGradient id="groundGrass" cx="50%" cy="40%" r="85%">
+              <Stop offset="0%" stopColor="#7BA465" />
+              <Stop offset="60%" stopColor="#5D8A48" />
+              <Stop offset="100%" stopColor="#4A6B38" />
+            </RadialGradient>
+          </Defs>
+          <Circle cx={heroWidth / 2} cy={128} r={Math.min(132, heroWidth * 0.42)} fill="url(#heroGlow)" />
+
+          {/* Ground dirt layer */}
+          <Ellipse
+            cx={heroWidth / 2}
+            cy={HERO_SCENE_HEIGHT - 12}
+            rx={Math.min(220, heroWidth * 0.47)}
+            ry={18}
+            fill="url(#groundDirt)"
+          />
+          {/* Ground grass layer */}
+          <Ellipse
+            cx={heroWidth / 2}
+            cy={HERO_SCENE_HEIGHT - 16}
+            rx={Math.min(210, heroWidth * 0.45)}
+            ry={10}
+            fill="url(#groundGrass)"
+            opacity={0.8}
+          />
+        </Svg>
+
+        {HERO_FLOWERS.map((f, i) => {
+          const m = flowerMetrics[i];
+          const stemTop = m.stemTipY - m.top;
+          const stemLength = Math.max(STEM_ROOT_Y - m.stemTipY, 0);
+          return (
+          <Animated.View
+            key={f.id}
+            style={[
+              styles.personFlower,
+              {
+                left: m.left,
+                top: m.top,
+              },
+              flowerStyles[i],
+            ]}
+            pointerEvents="none"
+          >
+            {/* Stem lives in the flower frame so sway/position can't drift apart */}
+            <View
+              style={[
+                styles.stem,
+                {
+                  top: stemTop,
+                  height: stemLength,
+                },
+              ]}
+            />
+            <View
+              style={[
+                styles.leaf,
+                styles.leafLeft,
+                {
+                  transform: [
+                    { scale: m.leafScale },
+                    { rotate: "-28deg" },
+                  ],
+                },
+              ]}
+            />
+            <View
+              style={[
+                styles.leaf,
+                styles.leafRight,
+                {
+                  transform: [
+                    { scale: m.leafScale },
+                    { rotate: "28deg" },
+                  ],
+                },
+              ]}
+            />
+
+            <View style={[styles.bloomWrap, { transform: [{ scale: m.bloomScale }] }]}>
+              {m.bloomScale < 0.45 ? (
+                <View style={styles.seed} />
+              ) : (
+                <>
+                  <View style={[styles.petal, styles.petalTop]} />
+                  <View style={[styles.petal, styles.petalBottom]} />
+                  <View style={[styles.petal, styles.petalLeft]} />
+                  <View style={[styles.petal, styles.petalRight]} />
+
+                  <View style={styles.flowerCore}>
+                    <View style={styles.flowerCoreRing} />
+                    <View style={styles.flowerCoreDot} />
+                  </View>
+
+                  <View style={styles.plusBud}>
+                    <Text style={styles.plusBudText}>{`+${flowerCounts[i]}`}</Text>
+                  </View>
+
+                  <Animated.View style={[styles.burstBubble, burstStyles[i]]}>
+                    <Text style={styles.burstBubbleText}>+1</Text>
+                  </Animated.View>
+                </>
+              )}
+            </View>
+          </Animated.View>
+          );
+        })}
+
+        <Animated.View style={[styles.pollinator, beeAStyle]} pointerEvents="none">
+          <Bzz size={24} pose="flying" />
+        </Animated.View>
+        <Animated.View style={[styles.pollinator, beeBStyle]} pointerEvents="none">
+          <Bzz size={22} pose="flying" />
+        </Animated.View>
+        <Animated.View style={[styles.pollinator, beeCStyle]} pointerEvents="none">
+          <Bzz size={20} pose="flying" />
+        </Animated.View>
+      </Animated.View>
+    </View>
+  );
+
   return (
     <View style={styles.screen}>
       <SiteHead path="/" />
       <ScrollView
-        contentContainerStyle={styles.scroll}
+        contentContainerStyle={[styles.scroll, isWide && styles.scrollWide]}
         showsVerticalScrollIndicator={false}
         bounces
       >
-      <View style={styles.logoWrap}>
-        <Logo size={34} />
-      </View>
-
-      <View style={styles.hero}>
-        <Animated.View style={[styles.rippleRing, styles.rippleOuter, rippleOuterStyle]} />
-        <Animated.View style={[styles.rippleRing, styles.rippleInner, rippleInnerStyle]} />
-
-        <Animated.View style={[styles.heroArt, { width: heroWidth }]}>
-          <Svg width={heroWidth} height={HERO_SCENE_HEIGHT} viewBox={`0 0 ${heroWidth} ${HERO_SCENE_HEIGHT}`}>
-            <Defs>
-              <RadialGradient id="heroGlow" cx="50%" cy="42%" r="62%">
-                <Stop offset="0%" stopColor="rgba(255,185,0,0.42)" />
-                <Stop offset="60%" stopColor="rgba(255,185,0,0.16)" />
-                <Stop offset="100%" stopColor="rgba(255,185,0,0)" />
-              </RadialGradient>
-              <RadialGradient id="groundDirt" cx="50%" cy="30%" r="80%">
-                <Stop offset="0%" stopColor="#8B6F47" />
-                <Stop offset="50%" stopColor="#6B5344" />
-                <Stop offset="100%" stopColor="#4A3728" />
-              </RadialGradient>
-              <RadialGradient id="groundGrass" cx="50%" cy="40%" r="85%">
-                <Stop offset="0%" stopColor="#7BA465" />
-                <Stop offset="60%" stopColor="#5D8A48" />
-                <Stop offset="100%" stopColor="#4A6B38" />
-              </RadialGradient>
-            </Defs>
-            <Circle cx={heroWidth / 2} cy={128} r={Math.min(132, heroWidth * 0.42)} fill="url(#heroGlow)" />
-
-            {/* Ground dirt layer */}
-            <Ellipse
-              cx={heroWidth / 2}
-              cy={HERO_SCENE_HEIGHT - 12}
-              rx={Math.min(220, heroWidth * 0.47)}
-              ry={18}
-              fill="url(#groundDirt)"
-            />
-            {/* Ground grass layer */}
-            <Ellipse
-              cx={heroWidth / 2}
-              cy={HERO_SCENE_HEIGHT - 16}
-              rx={Math.min(210, heroWidth * 0.45)}
-              ry={10}
-              fill="url(#groundGrass)"
-              opacity={0.8}
-            />
-          </Svg>
-
-          {HERO_FLOWERS.map((f, i) => {
-            const m = flowerMetrics[i];
-            const stemTop = m.stemTipY - m.top;
-            const stemLength = Math.max(STEM_ROOT_Y - m.stemTipY, 0);
-            return (
-            <Animated.View
-              key={f.id}
-              style={[
-                styles.personFlower,
-                {
-                  left: m.left,
-                  top: m.top,
-                },
-                flowerStyles[i],
-              ]}
-              pointerEvents="none"
-            >
-              {/* Stem lives in the flower frame so sway/position can't drift apart */}
-              <View
-                style={[
-                  styles.stem,
-                  {
-                    top: stemTop,
-                    height: stemLength,
-                  },
-                ]}
-              />
-              <View
-                style={[
-                  styles.leaf,
-                  styles.leafLeft,
-                  {
-                    transform: [
-                      { scale: m.leafScale },
-                      { rotate: "-28deg" },
-                    ],
-                  },
-                ]}
-              />
-              <View
-                style={[
-                  styles.leaf,
-                  styles.leafRight,
-                  {
-                    transform: [
-                      { scale: m.leafScale },
-                      { rotate: "28deg" },
-                    ],
-                  },
-                ]}
-              />
-
-              <View style={[styles.bloomWrap, { transform: [{ scale: m.bloomScale }] }]}> 
-                {m.bloomScale < 0.45 ? (
-                  <View style={styles.seed} />
-                ) : (
-                  <>
-                    <View style={[styles.petal, styles.petalTop]} />
-                    <View style={[styles.petal, styles.petalBottom]} />
-                    <View style={[styles.petal, styles.petalLeft]} />
-                    <View style={[styles.petal, styles.petalRight]} />
-
-                    <View style={styles.flowerCore}>
-                      <View style={styles.flowerCoreRing} />
-                      <View style={styles.flowerCoreDot} />
-                    </View>
-
-                    <View style={styles.plusBud}>
-                      <Text style={styles.plusBudText}>{`+${flowerCounts[i]}`}</Text>
-                    </View>
-
-                    <Animated.View style={[styles.burstBubble, burstStyles[i]]}>
-                      <Text style={styles.burstBubbleText}>+1</Text>
-                    </Animated.View>
-                  </>
-                )}
-              </View>
-            </Animated.View>
-            );
-          })}
-
-          <Animated.View style={[styles.pollinator, beeAStyle]} pointerEvents="none">
-            <Bzz size={24} pose="flying" />
-          </Animated.View>
-          <Animated.View style={[styles.pollinator, beeBStyle]} pointerEvents="none">
-            <Bzz size={22} pose="flying" />
-          </Animated.View>
-          <Animated.View style={[styles.pollinator, beeCStyle]} pointerEvents="none">
-            <Bzz size={20} pose="flying" />
-          </Animated.View>
-        </Animated.View>
-      </View>
-
-      <View style={[styles.content, compact && styles.contentCompact]}>
-        <View>
-          <Text
+        {isWide ? (
+          <View
             style={[
-              styles.headline,
-              { fontSize: headlineSize, lineHeight: headlineSize + 2 },
+              styles.desktopShell,
+              { width: Math.min(width, SPLASH_MAX + 96) },
             ]}
           >
-            Share $1 and{"\n"}
-            <Text style={styles.headlineItalic}>endless good…</Text>
-            {"\n"}
-            with everyone.
-          </Text>
-          <Text style={[styles.lede, { fontSize: ledeSize, lineHeight: ledeSize + 8 }]}>
-            Nominate a friend, teacher, neighbor, or anyone who deserves a little extra kindness.
-            Everyone chips in just $1 — small contributions pollinate into a meaningful gift and
-            message of support.
-          </Text>
-        </View>
-
-        <View style={styles.steps}>
-          {[
-            "Nominate someone special",
-            "Share with friends, family, and your community — ask everyone to send only $1",
-            "Your nominee receives a meaningful gift and message",
-          ].map((txt, i) => (
-            <View key={i} style={styles.step}>
-              <View style={styles.stepNum}>
-                <Text style={styles.stepNumText}>{i + 1}</Text>
+            <View style={styles.desktopHero}>
+              <View style={styles.desktopCopy}>
+                {logo}
+                {headlineBlock}
+                {ctaBlock}
               </View>
-              <Text style={styles.stepText}>{txt}</Text>
+              {flowerScene}
             </View>
-          ))}
-        </View>
-
-        <View style={styles.useCases}>
-          <Text style={styles.useCasesEyebrow}>Made for everyday kindness</Text>
-          <Text style={styles.useCasesTitle}>Start a Polli for</Text>
-          <View style={styles.useCaseGrid}>
-            {[
-              { emoji: "🎂", label: "A birthday" },
-              { emoji: "🤍", label: "A little lift" },
-              { emoji: "🍎", label: "A teacher or coach" },
-              { emoji: "🩺", label: "A healthcare hero" },
-              { emoji: "🍼", label: "A new parent" },
-              { emoji: "🌼", label: "Just because" },
-            ].map((item) => (
-              <View key={item.label} style={styles.useCaseChip}>
-                <Text style={styles.useCaseEmoji}>{item.emoji}</Text>
-                <Text style={styles.useCaseLabel}>{item.label}</Text>
-              </View>
-            ))}
+            <View style={styles.desktopSecondary}>
+              {stepsBlock}
+              {useCasesBlock}
+            </View>
           </View>
-        </View>
-
-        <View style={styles.ctaBlock}>
-          <Button
-            label="Start a Polli"
-            full
-            iconRight={<IconArrow size={20} color={colors.green} />}
-            onPress={() => router.push("/auth")}
-          />
-          <View style={styles.signInWrap}>
-            <Text style={styles.signInLine}>
-              Already here?{" "}
-              <Pressable onPress={() => router.push("/auth")}>
-                <Text style={styles.signInLink}>Sign in</Text>
-              </Pressable>
-            </Text>
-          </View>
-        </View>
-      </View>
+        ) : (
+          <>
+            {logo}
+            {flowerScene}
+            <View style={[styles.content, compact && styles.contentCompact]}>
+              {headlineBlock}
+              {stepsBlock}
+              {useCasesBlock}
+              {ctaBlock}
+            </View>
+          </>
+        )}
       </ScrollView>
     </View>
   );
@@ -473,9 +542,50 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingBottom: 24,
   },
+  scrollWide: {
+    paddingBottom: 64,
+  },
+  desktopShell: {
+    width: "100%",
+    maxWidth: SPLASH_MAX,
+    alignSelf: "center",
+    paddingHorizontal: 48,
+    paddingTop: 28,
+  },
+  desktopHero: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 40,
+    minHeight: 480,
+    paddingBottom: 24,
+  },
+  desktopCopy: {
+    flex: 1,
+    flexShrink: 1,
+    minWidth: 320,
+    maxWidth: 480,
+    gap: 28,
+    paddingRight: 8,
+  },
+  desktopSecondary: {
+    gap: 36,
+    paddingTop: 12,
+    paddingBottom: 40,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(27,77,62,0.1)",
+  },
   logoWrap: {
     paddingHorizontal: 24,
     paddingVertical: 8,
+  },
+  logoWrapWide: {
+    paddingHorizontal: 0,
+    paddingVertical: 0,
+    paddingBottom: 4,
+  },
+  logoWide: {
+    alignSelf: "flex-start",
   },
   hero: {
     height: HERO_SCENE_HEIGHT,
@@ -485,6 +595,10 @@ const styles = StyleSheet.create({
     position: "relative",
     overflow: "hidden",
   },
+  heroWide: {
+    flexShrink: 0,
+    overflow: "visible",
+  },
   heroArt: {
     position: "relative",
     height: HERO_SCENE_HEIGHT,
@@ -493,6 +607,9 @@ const styles = StyleSheet.create({
     alignItems: "stretch",
     justifyContent: "flex-start",
     overflow: "visible",
+  },
+  heroArtWide: {
+    maxWidth: 520,
   },
   rippleRing: {
     position: "absolute",
@@ -504,9 +621,17 @@ const styles = StyleSheet.create({
     width: 208,
     height: 208,
   },
+  rippleOuterWide: {
+    width: 260,
+    height: 260,
+  },
   rippleInner: {
     width: 168,
     height: 168,
+  },
+  rippleInnerWide: {
+    width: 210,
+    height: 210,
   },
   personFlower: {
     position: "absolute",
@@ -581,9 +706,9 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: colors.marigold2,
+    backgroundColor: "#8A5A2B",
     borderWidth: 1.5,
-    borderColor: "rgba(234,170,0,0.85)",
+    borderColor: "rgba(90, 50, 18, 0.85)",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -592,15 +717,15 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: "rgba(255,210,80,0.55)",
+    backgroundColor: "rgba(120, 72, 28, 0.55)",
   },
   flowerCoreDot: {
     width: 16,
     height: 16,
     borderRadius: 8,
-    backgroundColor: "#C47A1A",
+    backgroundColor: "#5C3818",
     borderWidth: 1,
-    borderColor: "rgba(110,60,10,0.35)",
+    borderColor: "rgba(50, 28, 8, 0.4)",
   },
   plusBud: {
     position: "absolute",
@@ -679,10 +804,22 @@ const styles = StyleSheet.create({
   steps: {
     gap: 10,
   },
+  stepsWide: {
+    flexDirection: "row",
+    gap: 20,
+    alignItems: "stretch",
+  },
   step: {
     flexDirection: "row",
     alignItems: "center",
     gap: 14,
+  },
+  stepWide: {
+    flex: 1,
+    flexDirection: "column",
+    alignItems: "flex-start",
+    gap: 12,
+    paddingVertical: 8,
   },
   stepNum: {
     width: 32,
@@ -703,6 +840,11 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     fontSize: 15,
     color: colors.ink,
+    flexShrink: 1,
+  },
+  stepTextWide: {
+    fontSize: 16,
+    lineHeight: 24,
   },
   useCases: {
     backgroundColor: "#fff",
@@ -711,6 +853,10 @@ const styles = StyleSheet.create({
     borderColor: "rgba(27,77,62,0.1)",
     padding: 18,
     gap: 12,
+  },
+  useCasesWide: {
+    padding: 28,
+    gap: 14,
   },
   useCasesEyebrow: {
     fontFamily: fonts.bodySemi,
@@ -725,6 +871,10 @@ const styles = StyleSheet.create({
     lineHeight: 28,
     color: colors.green,
     marginTop: -4,
+  },
+  useCasesTitleWide: {
+    fontSize: 28,
+    lineHeight: 32,
   },
   useCaseGrid: {
     flexDirection: "row",
@@ -754,8 +904,19 @@ const styles = StyleSheet.create({
   ctaBlock: {
     gap: 10,
   },
+  ctaBlockWide: {
+    gap: 12,
+    marginTop: 4,
+  },
+  ctaButtonWide: {
+    alignSelf: "flex-start",
+    minWidth: 220,
+  },
   signInWrap: {
     alignItems: "center",
+  },
+  signInWrapWide: {
+    alignItems: "flex-start",
   },
   signInLine: {
     fontFamily: fonts.body,

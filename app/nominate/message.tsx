@@ -9,6 +9,7 @@ import {
   View,
 } from "react-native";
 import { NavBar } from "../../components/NavBar";
+import { Content } from "../../components/Content";
 import { NominateFooter } from "../../components/NominateFooter";
 import { Stepper } from "../../components/Stepper";
 import { VoiceMessageComposer } from "../../components/voice/VoiceMessageComposer";
@@ -59,9 +60,10 @@ export default function Message() {
     <View style={{ flex: 1, backgroundColor: colors.paper }}>
       <NavBar back title="Back" variant="paper" onBack={() => router.back()} />
       <ScrollView
-        contentContainerStyle={{ padding: 20, paddingBottom: 24 }}
+        contentContainerStyle={{ paddingBottom: 24 }}
         keyboardShouldPersistTaps="handled"
       >
+        <Content padTop={20}>
         <Stepper step={3} total={TOTAL} />
         <View style={styles.card}>
           <Text style={styles.title}>A private note for {draft.first || "them"}</Text>
@@ -162,6 +164,7 @@ export default function Message() {
             </View>
           )}
         </View>
+        </Content>
       </ScrollView>
       <NominateFooter
         label="Continue"

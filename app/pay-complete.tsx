@@ -11,6 +11,7 @@ import Animated, {
 import { Bzz, BzzPath } from "../components/Bzz";
 import { Button } from "../components/Button";
 import { Confetti } from "../components/Confetti";
+import { Content } from "../components/Content";
 import { IconCheck, IconClose, IconShare } from "../components/Icon";
 import { NavBar } from "../components/NavBar";
 import { FEED } from "../lib/mockData";
@@ -97,6 +98,7 @@ export default function PayComplete() {
         showsVerticalScrollIndicator={false}
         bounces
       >
+        <Content pad={0} style={styles.contentShell}>
         <View style={styles.body}>
           <Animated.View style={[styles.checkCircle, checkStyle]}>
             <IconCheck size={48} color="#fff" />
@@ -147,6 +149,7 @@ export default function PayComplete() {
             <Text style={styles.secondaryText}>Back to feed</Text>
           </Pressable>
         </View>
+        </Content>
       </ScrollView>
     </View>
   );
@@ -156,6 +159,11 @@ const styles = StyleSheet.create({
   scroll: {
     flexGrow: 1,
     justifyContent: "space-between",
+  },
+  contentShell: {
+    flexGrow: 1,
+    justifyContent: "space-between",
+    paddingBottom: 24,
   },
   body: {
     flexGrow: 1,

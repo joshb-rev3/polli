@@ -3,6 +3,7 @@ import React, { useCallback, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { NavBar } from "../../components/NavBar";
+import { Content } from "../../components/Content";
 import { IconShare } from "../../components/Icon";
 import { formatCents, useDemoWallet } from "../../lib/demoWallet";
 import { ME, MY_GIVES, MY_NOMINATIONS } from "../../lib/mockData";
@@ -89,6 +90,7 @@ export default function Profile() {
         }
       />
       <ScrollView contentContainerStyle={styles.scroll}>
+        <Content padBottom={40} padTop={20}>
         <View style={styles.header}>
           <LinearGradient colors={[colors.marigold, colors.green]} style={styles.avatar}>
             <Text style={styles.avatarText}>{displayName.charAt(0).toUpperCase()}</Text>
@@ -238,6 +240,7 @@ export default function Profile() {
             ))}
           </View>
         )}
+        </Content>
       </ScrollView>
     </View>
   );
@@ -255,8 +258,7 @@ function Stat({ label, value, sub }: { label: string; value: string; sub: string
 
 const styles = StyleSheet.create({
   scroll: {
-    padding: 20,
-    paddingBottom: 40,
+    paddingBottom: 0,
   },
   header: {
     flexDirection: "row",

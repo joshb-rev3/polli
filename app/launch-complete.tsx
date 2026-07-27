@@ -14,6 +14,7 @@ import {
 import { Bzz, BzzPath } from "../components/Bzz";
 import { Button } from "../components/Button";
 import { Confetti } from "../components/Confetti";
+import { Content } from "../components/Content";
 import { IconClose, IconHeart, IconLink, IconMail, IconMsg, IconShare } from "../components/Icon";
 import { NavBar } from "../components/NavBar";
 import {
@@ -204,6 +205,7 @@ export default function LaunchComplete() {
         showsVerticalScrollIndicator={false}
         bounces
       >
+        <Content pad={0} padBottom={36} style={styles.contentShell}>
         <View style={styles.hero}>
           <View style={styles.checkCircle}>
             <IconHeart size={36} color="#fff" />
@@ -297,6 +299,7 @@ export default function LaunchComplete() {
             <Text style={styles.laterText}>I'll finish this later</Text>
           </Pressable>
         </View>
+        </Content>
       </ScrollView>
     </View>
   );
@@ -305,7 +308,9 @@ export default function LaunchComplete() {
 const styles = StyleSheet.create({
   scroll: {
     flexGrow: 1,
-    paddingBottom: 36,
+  },
+  contentShell: {
+    flexGrow: 1,
   },
   hero: {
     alignItems: "center",

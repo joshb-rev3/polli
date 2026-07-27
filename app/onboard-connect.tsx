@@ -6,6 +6,7 @@ import * as WebBrowser from "expo-web-browser";
 import React, { useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { Button } from "../components/Button";
+import { Content } from "../components/Content";
 import { IconArrow } from "../components/Icon";
 import { NavBar } from "../components/NavBar";
 import { getConnectOnboardingUrl } from "../lib/stripe";
@@ -43,6 +44,7 @@ export default function OnboardConnect() {
         showsVerticalScrollIndicator={false}
         bounces
       >
+        <Content pad={20} padBottom={32}>
         <View style={styles.card}>
           <Text style={styles.title}>Set up your payout</Text>
           <Text style={styles.sub}>
@@ -63,6 +65,7 @@ export default function OnboardConnect() {
             iconRight={<IconArrow size={18} color={colors.green} />}
           />
         </View>
+        </Content>
       </ScrollView>
     </View>
   );
@@ -71,8 +74,6 @@ export default function OnboardConnect() {
 const styles = StyleSheet.create({
   scroll: {
     flexGrow: 1,
-    padding: 20,
-    paddingBottom: 32,
   },
   card: {
     backgroundColor: "#fff",

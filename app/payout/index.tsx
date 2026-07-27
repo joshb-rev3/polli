@@ -2,6 +2,7 @@ import { useRouter } from "expo-router";
 import React from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { NavBar } from "../../components/NavBar";
+import { Content } from "../../components/Content";
 import {
   DEMO_NOMINATION_FROM,
   DEMO_NOMINATION_REASON,
@@ -27,6 +28,7 @@ export default function PayoutChoose() {
         }
       />
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <Content pad={24} padBottom={48} style={styles.content}>
         <Text style={styles.eyebrow}>YOUR NOMINATION CLOSED</Text>
         <Text style={styles.title}>
           Kindness{"\n"}
@@ -76,6 +78,7 @@ export default function PayoutChoose() {
         <Text style={styles.fine}>
           This is a simulated payout experience for Apple Sign In. You can finish later from Profile.
         </Text>
+        </Content>
       </ScrollView>
     </View>
   );
@@ -83,8 +86,9 @@ export default function PayoutChoose() {
 
 const styles = StyleSheet.create({
   scroll: {
-    padding: 24,
-    paddingBottom: 48,
+    paddingBottom: 0,
+  },
+  content: {
     gap: 14,
   },
   later: {

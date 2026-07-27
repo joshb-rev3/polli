@@ -2,6 +2,7 @@ import { useRouter } from "expo-router";
 import React from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { BzzPath } from "../../components/Bzz";
+import { Content } from "../../components/Content";
 import { FeedCard } from "../../components/FeedCard";
 import { IconPlus } from "../../components/Icon";
 import { NavBar } from "../../components/NavBar";
@@ -36,6 +37,7 @@ export default function Feed() {
         }
       />
       <ScrollView contentContainerStyle={styles.list}>
+        <Content pad={12}>
         <View style={styles.intro}>
           <Text style={styles.introTitle}>Your garden</Text>
           <Text style={styles.introSub}>
@@ -63,6 +65,7 @@ export default function Feed() {
         </View>
 
         <Text style={styles.endCap}>— {copy.feed_empty} —</Text>
+        </Content>
       </ScrollView>
     </View>
   );
@@ -85,7 +88,6 @@ const styles = StyleSheet.create({
     color: colors.green,
   },
   list: {
-    paddingHorizontal: 12,
     paddingBottom: 40,
     backgroundColor: colors.paper,
     minHeight: "100%",

@@ -10,6 +10,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { Button } from "../../components/Button";
 import { Confetti } from "../../components/Confetti";
+import { Content } from "../../components/Content";
 import { IconCheck, IconClose } from "../../components/Icon";
 import { NavBar } from "../../components/NavBar";
 import { formatCents, useDemoWallet } from "../../lib/demoWallet";
@@ -51,6 +52,7 @@ export default function PayoutComplete() {
       />
       <Confetti count={20} />
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <Content pad={28} padTop={40} style={styles.content}>
         <Animated.View style={[styles.checkCircle, checkStyle]}>
           <IconCheck size={44} color="#fff" />
         </Animated.View>
@@ -71,6 +73,7 @@ export default function PayoutComplete() {
         </View>
 
         <Button full label="Back to profile" variant="marigold" onPress={done} />
+        </Content>
       </ScrollView>
     </View>
   );
@@ -78,8 +81,9 @@ export default function PayoutComplete() {
 
 const styles = StyleSheet.create({
   scroll: {
-    padding: 28,
-    paddingTop: 40,
+    paddingBottom: 0,
+  },
+  content: {
     alignItems: "center",
     gap: 16,
   },

@@ -2,6 +2,7 @@ import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Button } from "../../components/Button";
+import { Content } from "../../components/Content";
 import { NavBar } from "../../components/NavBar";
 import { formatCents, GIFT_CARD_BRANDS, useDemoWallet } from "../../lib/demoWallet";
 import { colors, fonts, shadows } from "../../theme";
@@ -29,6 +30,7 @@ export default function PayoutGiftCard() {
     <View style={{ flex: 1, backgroundColor: colors.paper }}>
       <NavBar back title="Back" variant="paper" onBack={() => router.back()} />
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <Content pad={24} padBottom={48} style={styles.content}>
         <Text style={styles.title}>Pick a gift card</Text>
         <Text style={styles.sub}>
           Spend {formatCents(balanceCents)} at a place you love. Digital card lands in your account — simulated for
@@ -68,6 +70,7 @@ export default function PayoutGiftCard() {
           disabled={busy || balanceCents < 100}
           icon={busy ? <ActivityIndicator color={colors.green} /> : undefined}
         />
+        </Content>
       </ScrollView>
     </View>
   );
@@ -75,8 +78,9 @@ export default function PayoutGiftCard() {
 
 const styles = StyleSheet.create({
   scroll: {
-    padding: 24,
-    paddingBottom: 48,
+    paddingBottom: 0,
+  },
+  content: {
     gap: 14,
   },
   title: {

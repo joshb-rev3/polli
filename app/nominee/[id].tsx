@@ -2,12 +2,13 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import React from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Button } from "../../components/Button";
+import { Content } from "../../components/Content";
 import { IconHeart, IconShare } from "../../components/Icon";
 import { NavBar } from "../../components/NavBar";
 import { SiteHead } from "../../components/SiteHead";
 import { FEED, hasDonatedTo, myNoteFor } from "../../lib/mockData";
 import { useShare } from "../../lib/share";
-import { colors, fonts } from "../../theme";
+import { colors, fonts, CONTENT_MAX, CONTENT_PAD } from "../../theme";
 
 export function generateStaticParams(): { id: string }[] {
   return FEED.map((f) => ({ id: f.id }));
@@ -62,6 +63,7 @@ export default function Nominee() {
         }
       />
       <ScrollView contentContainerStyle={styles.scroll}>
+        <Content pad={16} padBottom={32}>
         <View style={styles.headerCard}>
           <View style={styles.headerText}>
             <Text style={styles.headerName}>{n.name}</Text>
@@ -151,9 +153,11 @@ export default function Nominee() {
           Give once and you'll be eligible to be nominated for 12 months.
         </Text>
         <View style={{ height: 100 }} />
+        </Content>
       </ScrollView>
 
       <View style={[styles.sticky, viewerHasDonated && styles.stickyThanks]}>
+        <View style={styles.stickyInner}>
         {viewerHasDonated ? (
           <View style={styles.thanksBox}>
             <IconHeart size={18} color={colors.green} />
@@ -173,6 +177,7 @@ export default function Nominee() {
             onPress={() => router.push({ pathname: "/checkout", params: { id: n.id } })}
           />
         )}
+        </View>
       </View>
     </View>
   );
@@ -180,8 +185,7 @@ export default function Nominee() {
 
 const styles = StyleSheet.create({
   scroll: {
-    padding: 16,
-    paddingBottom: 32,
+    paddingBottom: 0,
   },
   headerCard: {
     marginTop: 0,
@@ -350,11 +354,17 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   sticky: {
-    padding: 14,
+    paddingTop: 14,
     paddingBottom: 20,
     backgroundColor: colors.paper,
     borderTopWidth: 1,
     borderTopColor: colors.line,
+  },
+  stickyInner: {
+    width: "100%",
+    maxWidth: CONTENT_MAX,
+    alignSelf: "center",
+    paddingHorizontal: CONTENT_PAD,
   },
   stickyThanks: {
     backgroundColor: "rgba(83,162,104,0.08)",
