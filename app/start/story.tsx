@@ -5,13 +5,13 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import { NavBar } from "../../components/NavBar";
 import { Content } from "../../components/Content";
 import { StartFooter } from "../../components/StartFooter";
 import { Stepper } from "../../components/Stepper";
+import { TextInput } from "../../components/TextInput";
 import { CATEGORIES, OVERVIEW_INSPO } from "../../lib/mockData";
 import { usePolliDraft } from "../../lib/polliDraft";
 import { colors, fonts, shadows } from "../../theme";
@@ -27,7 +27,7 @@ export default function Story() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.paper }}>
-      <NavBar back title="Back" variant="paper" onBack={() => router.back()} />
+      <NavBar back centerLogo variant="paper" onBack={() => router.back()} />
       <ScrollView
         contentContainerStyle={{ paddingBottom: 24 }}
         keyboardShouldPersistTaps="handled"
@@ -99,8 +99,7 @@ export default function Story() {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: "#fff",
-    borderRadius: 32,
-    borderTopLeftRadius: 8,
+    borderRadius: 24,
     padding: 22,
     borderWidth: 1,
     borderColor: colors.line2,

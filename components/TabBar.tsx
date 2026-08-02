@@ -110,12 +110,13 @@ const styles = StyleSheet.create({
   },
   label: {
     fontFamily: fonts.bodySemi,
-    fontSize: 10.5,
-    letterSpacing: 0.2,
+    fontSize: 13,
+    letterSpacing: 0.15,
     color: colors.ink2,
   },
   centerLabel: {
     marginTop: 4,
+    fontSize: 13,
     textAlign: "center",
     paddingHorizontal: 2,
   },

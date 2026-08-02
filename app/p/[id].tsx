@@ -24,7 +24,7 @@ export default function PolliPage() {
     return (
       <View style={{ flex: 1, backgroundColor: colors.paper }}>
         <SiteHead title="Not found" path={`/p/${id || ""}`} noIndex />
-        <NavBar back title="Back" variant="paper" onBack={() => router.back()} />
+        <NavBar back centerLogo variant="paper" onBack={() => router.back()} />
         <View style={{ padding: 24 }}>
           <Text style={{ fontFamily: fonts.body, color: colors.ink2 }}>Polli not found.</Text>
         </View>
@@ -52,7 +52,7 @@ export default function PolliPage() {
       />
       <NavBar
         back
-        title="Back"
+        centerLogo
         variant="paper"
         onBack={() => router.back()}
         right={
@@ -66,7 +66,7 @@ export default function PolliPage() {
         }
       />
       <ScrollView contentContainerStyle={styles.scroll}>
-        <Content pad={16} padBottom={32}>
+        <Content pad={16} padTop={20} padBottom={32}>
         <View style={styles.headerCard}>
           <View style={styles.headerText}>
             <Text style={styles.headerName}>{n.name}</Text>

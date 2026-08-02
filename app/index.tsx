@@ -263,9 +263,60 @@ export default function Splash() {
 
   const flowerStyles = [flowerStyle];
 
-  const logo = (
-    <View style={[styles.logoWrap, isWide && styles.logoWrapWide]}>
-      <Logo size={isWide ? 42 : 34} style={isWide ? styles.logoWide : undefined} />
+  const topNav = (
+    <View style={[styles.topNav, isWide && styles.topNavWide]}>
+      <View
+        style={[
+          styles.topNavInner,
+          isWide && { width: Math.min(width, SPLASH_MAX + 96) },
+        ]}
+      >
+        <Logo size={isWide ? 36 : 32} />
+        {userId ? (
+          <Pressable
+            onPress={() => router.push("/(tabs)/feed")}
+            style={({ pressed }) => [styles.navLink, pressed && styles.navLinkPressed]}
+            accessibilityRole="button"
+            accessibilityLabel="Open feed"
+          >
+            <Text style={styles.navLinkText}>Feed</Text>
+          </Pressable>
+        ) : (
+          <Pressable
+            onPress={() => router.push({ pathname: "/auth", params: { next: "feed" } })}
+            style={({ pressed }) => [styles.navLink, pressed && styles.navLinkPressed]}
+            accessibilityRole="button"
+            accessibilityLabel="Sign in"
+          >
+            <Text style={styles.navLinkText}>Sign in</Text>
+          </Pressable>
+        )}
+      </View>
+    </View>
+  );
+
+  const siteFooter = (
+    <View style={[styles.siteFooter, isWide && styles.siteFooterWide]}>
+      <View style={styles.footerLinks}>
+        <Pressable
+          onPress={() => router.push("/terms")}
+          style={({ pressed }) => pressed && styles.footerLinkPressed}
+          accessibilityRole="link"
+          accessibilityLabel="Terms of Service"
+        >
+          <Text style={styles.footerLink}>Terms</Text>
+        </Pressable>
+        <Text style={styles.footerDot}>·</Text>
+        <Pressable
+          onPress={() => router.push("/privacy")}
+          style={({ pressed }) => pressed && styles.footerLinkPressed}
+          accessibilityRole="link"
+          accessibilityLabel="Privacy Policy"
+        >
+          <Text style={styles.footerLink}>Privacy</Text>
+        </Pressable>
+      </View>
+      <Text style={styles.footerMeta}>© {new Date().getFullYear()} Polli</Text>
     </View>
   );
 
@@ -308,42 +359,73 @@ export default function Splash() {
     </View>
   );
 
-  const stepsBlock = (
-    <View style={[styles.steps, isWide && styles.stepsWide]}>
-      {[
-        "Start a Polli for someone you appreciate",
-        "Share with friends, family, and your community — ask everyone to send only $1",
-        "Your recipient receives a meaningful gift and messages once all Pollis have been collected. He or she can deposit the money into their bank account or select a digital gift card of their choice.",
-      ].map((txt, i) => (
-        <View key={i} style={[styles.step, isWide && styles.stepWide]}>
-          <View style={styles.stepNum}>
-            <Text style={styles.stepNumText}>{i + 1}</Text>
-          </View>
-          <Text style={[styles.stepText, isWide && styles.stepTextWide]}>{txt}</Text>
-        </View>
-      ))}
-    </View>
-  );
+  const howItWorksBand = (
+    <View
+      style={[
+        styles.storyBand,
+        compact && styles.storyBandCompact,
+        isWide && styles.storyBandWide,
+      ]}
+    >
+      <View style={[styles.stepsBlock, isWide && styles.stepsBlockWide]}>
+        <Text style={styles.stepsEyebrow}>How Polli works</Text>
+        <Text style={[styles.stepsTitle, isWide && styles.stepsTitleWide]}>
+          Three small steps.{"\n"}
+          <Text style={styles.stepsTitleItalic}>One meaningful gift.</Text>
+        </Text>
 
-  const useCasesBlock = (
-    <View style={[styles.useCases, isWide && styles.useCasesWide]}>
-      <Text style={styles.useCasesEyebrow}>Made for everyday kindness</Text>
-      <Text style={[styles.useCasesTitle, isWide && styles.useCasesTitleWide]}>
-        Start a Polli for
-      </Text>
-      <View style={styles.useCaseGrid}>
-        {HOME_USE_CASES.map((item) => (
-          <Pressable
-            key={item.label}
-            style={({ pressed }) => [styles.useCaseChip, pressed && styles.useCaseChipPressed]}
-            onPress={() => startPolli(item.catId)}
-            accessibilityRole="button"
-            accessibilityLabel={`Start a Polli for ${item.label}`}
-          >
-            <Text style={styles.useCaseEmoji}>{item.emoji}</Text>
-            <Text style={styles.useCaseLabel}>{item.label}</Text>
-          </Pressable>
-        ))}
+        <View style={styles.steps}>
+          {[
+            "Start a Polli for someone you appreciate",
+            "Share with friends, family, and your community — ask everyone to send only $1",
+            "Your recipient receives a meaningful gift and messages once all Pollis have been collected. They can deposit the money into their bank account or select a digital gift card of their choice.",
+          ].map((txt, i, arr) => (
+            <View key={i} style={styles.step}>
+              <View style={styles.stepRail}>
+                <View style={styles.stepNum}>
+                  <Text style={styles.stepNumText}>{i + 1}</Text>
+                </View>
+                {i < arr.length - 1 ? <View style={styles.stepConnector} /> : null}
+              </View>
+              <View style={[styles.stepCopy, i === arr.length - 1 && styles.stepCopyLast]}>
+                <Text style={[styles.stepText, isWide && styles.stepTextWide]}>{txt}</Text>
+              </View>
+            </View>
+          ))}
+        </View>
+      </View>
+
+      <View style={styles.bandBridge} />
+
+      <View style={[styles.useCases, isWide && styles.useCasesWide]}>
+        <Text style={styles.useCasesEyebrow}>Made for everyday kindness</Text>
+        <Text style={[styles.useCasesTitle, isWide && styles.useCasesTitleWide]}>
+          Start a Polli for
+        </Text>
+        <View style={styles.useCaseGrid}>
+          {HOME_USE_CASES.map((item) => (
+            <Pressable
+              key={item.label}
+              style={({ pressed }) => [styles.useCaseChip, pressed && styles.useCaseChipPressed]}
+              onPress={() => startPolli(item.catId)}
+              accessibilityRole="button"
+              accessibilityLabel={`Start a Polli for ${item.label}`}
+            >
+              <Text style={styles.useCaseEmoji}>{item.emoji}</Text>
+              <Text style={styles.useCaseLabel}>{item.label}</Text>
+            </Pressable>
+          ))}
+        </View>
+        {isWide ? (
+          <View style={styles.useCasesCta}>
+            <Button
+              label="Start a Polli"
+              iconRight={<IconArrow size={20} color={colors.green} />}
+              onPress={() => startPolli()}
+              style={styles.useCasesCtaButton}
+            />
+          </View>
+        ) : null}
       </View>
     </View>
   );
@@ -510,6 +592,7 @@ export default function Splash() {
   return (
     <View style={styles.screen}>
       <SiteHead path="/" />
+      {topNav}
       <ScrollView
         contentContainerStyle={[styles.scroll, isWide && styles.scrollWide]}
         showsVerticalScrollIndicator={false}
@@ -524,26 +607,24 @@ export default function Splash() {
           >
             <View style={styles.desktopHero}>
               <View style={styles.desktopCopy}>
-                {logo}
                 {headlineBlock}
                 {ctaBlock}
               </View>
               {flowerScene}
             </View>
             <View style={styles.desktopSecondary}>
-              {stepsBlock}
-              {useCasesBlock}
+              {howItWorksBand}
             </View>
+            {siteFooter}
           </View>
         ) : (
           <>
-            {logo}
             {flowerScene}
             <View style={[styles.content, compact && styles.contentCompact]}>
               {headlineBlock}
-              {stepsBlock}
-              {useCasesBlock}
+              {howItWorksBand}
               {ctaBlock}
+              {siteFooter}
             </View>
           </>
         )}
@@ -557,19 +638,51 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.cream,
   },
+  topNav: {
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(27,77,62,0.08)",
+    backgroundColor: colors.cream,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+  },
+  topNavWide: {
+    paddingHorizontal: 48,
+    paddingVertical: 14,
+  },
+  topNavInner: {
+    width: "100%",
+    maxWidth: SPLASH_MAX,
+    alignSelf: "center",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  navLink: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+  },
+  navLinkPressed: {
+    backgroundColor: "rgba(27,77,62,0.06)",
+  },
+  navLinkText: {
+    fontFamily: fonts.bodySemi,
+    fontSize: 14,
+    color: colors.green,
+  },
   scroll: {
     flexGrow: 1,
     paddingBottom: 24,
   },
   scrollWide: {
-    paddingBottom: 64,
+    paddingBottom: 48,
   },
   desktopShell: {
     width: "100%",
     maxWidth: SPLASH_MAX,
     alignSelf: "center",
     paddingHorizontal: 48,
-    paddingTop: 28,
+    paddingTop: 20,
   },
   desktopHero: {
     flexDirection: "row",
@@ -588,23 +701,8 @@ const styles = StyleSheet.create({
     paddingRight: 8,
   },
   desktopSecondary: {
-    gap: 36,
     paddingTop: 12,
-    paddingBottom: 40,
-    borderTopWidth: 1,
-    borderTopColor: "rgba(27,77,62,0.1)",
-  },
-  logoWrap: {
-    paddingHorizontal: 24,
-    paddingVertical: 8,
-  },
-  logoWrapWide: {
-    paddingHorizontal: 0,
-    paddingVertical: 0,
-    paddingBottom: 4,
-  },
-  logoWide: {
-    alignSelf: "flex-start",
+    paddingBottom: 8,
   },
   hero: {
     height: HERO_SCENE_HEIGHT,
@@ -820,61 +918,126 @@ const styles = StyleSheet.create({
     color: colors.ink2,
     marginTop: 14,
   },
-  steps: {
-    gap: 10,
+  storyBand: {
+    marginHorizontal: -28,
+    paddingHorizontal: 28,
+    paddingTop: 28,
+    paddingBottom: 28,
+    backgroundColor: "#E7F0E8",
+    gap: 0,
   },
-  stepsWide: {
-    flexDirection: "row",
-    gap: 20,
-    alignItems: "stretch",
+  storyBandCompact: {
+    marginHorizontal: -20,
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    paddingBottom: 24,
+  },
+  storyBandWide: {
+    marginHorizontal: 0,
+    paddingHorizontal: 36,
+    paddingTop: 40,
+    paddingBottom: 40,
+    borderRadius: 28,
+  },
+  stepsBlock: {
+    gap: 18,
+  },
+  stepsBlockWide: {
+    gap: 22,
+    maxWidth: 560,
+  },
+  stepsEyebrow: {
+    fontFamily: fonts.bodySemi,
+    fontSize: 11,
+    letterSpacing: 0.9,
+    textTransform: "uppercase",
+    color: colors.ink2,
+  },
+  stepsTitle: {
+    fontFamily: fonts.serif,
+    fontSize: 28,
+    lineHeight: 34,
+    letterSpacing: -0.3,
+    color: colors.green,
+    marginTop: -4,
+  },
+  stepsTitleWide: {
+    fontSize: 36,
+    lineHeight: 42,
+  },
+  stepsTitleItalic: {
+    fontFamily: fonts.serifItalic,
+  },
+  steps: {
+    gap: 0,
+    marginTop: 8,
   },
   step: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
+    alignItems: "stretch",
+    gap: 16,
   },
-  stepWide: {
-    flex: 1,
-    flexDirection: "column",
-    alignItems: "flex-start",
-    gap: 12,
-    paddingVertical: 8,
+  stepRail: {
+    width: 40,
+    alignItems: "center",
   },
   stepNum: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: colors.cream,
-    borderWidth: 1.5,
-    borderColor: colors.green,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.green,
     alignItems: "center",
     justifyContent: "center",
+    shadowColor: colors.green,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    elevation: 2,
   },
   stepNumText: {
-    color: colors.green,
-    fontFamily: fonts.bodyBold,
-    fontSize: 13,
+    color: colors.marigold,
+    fontFamily: fonts.serifBold,
+    fontSize: 18,
+    marginTop: 1,
+  },
+  stepConnector: {
+    flex: 1,
+    width: 2,
+    minHeight: 20,
+    marginTop: 6,
+    marginBottom: 6,
+    borderRadius: 1,
+    backgroundColor: "rgba(27,77,62,0.18)",
+  },
+  stepCopy: {
+    flex: 1,
+    paddingBottom: 28,
+    paddingTop: 8,
+    justifyContent: "flex-start",
+  },
+  stepCopyLast: {
+    paddingBottom: 8,
   },
   stepText: {
     fontFamily: fonts.body,
     fontSize: 15,
+    lineHeight: 22,
     color: colors.ink,
-    flexShrink: 1,
   },
   stepTextWide: {
     fontSize: 16,
     lineHeight: 24,
   },
+  bandBridge: {
+    height: 1,
+    backgroundColor: "rgba(27,77,62,0.12)",
+    marginTop: 20,
+    marginBottom: 28,
+  },
   useCases: {
-    backgroundColor: "#fff",
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "rgba(27,77,62,0.1)",
-    padding: 18,
     gap: 12,
   },
   useCasesWide: {
-    padding: 28,
     gap: 14,
   },
   useCasesEyebrow: {
@@ -908,13 +1071,13 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderRadius: 999,
-    backgroundColor: colors.cream,
+    backgroundColor: "rgba(255,246,232,0.92)",
     borderWidth: 1,
-    borderColor: "rgba(27,77,62,0.08)",
+    borderColor: "rgba(27,77,62,0.1)",
   },
   useCaseChipPressed: {
-    backgroundColor: colors.sageSoft,
-    borderColor: "rgba(27,77,62,0.18)",
+    backgroundColor: colors.cream,
+    borderColor: "rgba(27,77,62,0.2)",
   },
   useCaseEmoji: {
     fontSize: 16,
@@ -923,6 +1086,13 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bodySemi,
     fontSize: 13,
     color: colors.ink,
+  },
+  useCasesCta: {
+    marginTop: 10,
+  },
+  useCasesCtaButton: {
+    alignSelf: "flex-start",
+    minWidth: 220,
   },
   ctaBlock: {
     gap: 10,
@@ -949,5 +1119,42 @@ const styles = StyleSheet.create({
   signInLink: {
     color: colors.green,
     fontFamily: fonts.bodyBold,
+  },
+  siteFooter: {
+    marginTop: 28,
+    paddingTop: 22,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(27,77,62,0.1)",
+    gap: 8,
+    alignItems: "center",
+  },
+  siteFooterWide: {
+    marginTop: 40,
+    paddingTop: 28,
+  },
+  footerLinks: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  footerLink: {
+    fontFamily: fonts.bodySemi,
+    fontSize: 13,
+    color: colors.green,
+  },
+  footerLinkPressed: {
+    opacity: 0.7,
+  },
+  footerDot: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    color: colors.ink2,
+    opacity: 0.45,
+  },
+  footerMeta: {
+    fontFamily: fonts.body,
+    fontSize: 12,
+    color: colors.ink2,
+    opacity: 0.55,
   },
 });

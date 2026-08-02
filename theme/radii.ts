@@ -4,8 +4,11 @@ export const radii = {
   md: 12,
   lg: 14,
   xl: 18,
+  /** Large content panels / auth cards — equal on all corners */
+  card: 24,
   round: 999,
   pill: 999,
 } as const;
 
-export const cardRadius = { topLeft: 8, topRight: 32, bottomLeft: 32, bottomRight: 32 } as const;
+/** @deprecated Use `radii.card` — kept as a uniform alias for older imports. */
+export const cardRadius = radii.card;

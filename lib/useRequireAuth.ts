@@ -10,12 +10,12 @@ export function useRequireAuth(
   next: string,
   opts?: { id?: string },
 ): { ready: boolean; loading: boolean } {
-  const { userId, loading } = useSession();
+  const { userId, loading, signingOut } = useSession();
   const router = useRouter();
   const id = opts?.id;
 
   useEffect(() => {
-    if (loading) return;
+    if (loading || signingOut) return;
     if (userId) return;
     router.replace({
       pathname: "/auth",
@@ -24,7 +24,7 @@ export function useRequireAuth(
         ...(id ? { id } : {}),
       },
     });
-  }, [loading, userId, next, id, router]);
+  }, [loading, signingOut, userId, next, id, router]);
 
   return { ready: !loading && Boolean(userId), loading };
 }

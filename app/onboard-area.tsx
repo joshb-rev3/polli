@@ -5,11 +5,11 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import { NavBar } from "../components/NavBar";
 import { Content } from "../components/Content";
+import { TextInput } from "../components/TextInput";
 import { saveHomeArea, skipHomeArea } from "../lib/homeArea";
 import { useSession } from "../lib/session";
 import { colors, fonts, shadows } from "../theme";
@@ -171,8 +171,7 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: "#fff",
-    borderRadius: 32,
-    borderTopLeftRadius: 8,
+    borderRadius: 24,
     padding: 28,
     borderWidth: 1,
     borderColor: colors.line2,

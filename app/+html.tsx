@@ -1,5 +1,6 @@
 import { ScrollViewStyleReset } from "expo-router/html";
 import type { PropsWithChildren } from "react";
+import { WEB_FOCUS_CSS } from "../lib/webFocusCss";
 
 /**
  * Root HTML shell for web (static render / export).
@@ -61,7 +62,7 @@ export default function Root({ children }: PropsWithChildren) {
 
         <style
           dangerouslySetInnerHTML={{
-            __html: `html,body{background-color:#FFFBF5;}`,
+            __html: `html,body{background-color:#FFFBF5;}${WEB_FOCUS_CSS}`,
           }}
         />
       </head>

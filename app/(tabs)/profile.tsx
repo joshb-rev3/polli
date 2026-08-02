@@ -22,12 +22,13 @@ export default function Profile() {
   const router = useRouter();
   const { ready, loading: authLoading } = useRequireAuth("profile");
   const { openShare } = useShare();
-  const { userId, name, authProvider } = useSession();
+  const { userId, name, authProvider, signOut } = useSession();
   const demoWallet = useDemoWallet();
   const [tab, setTab] = useState<"noms" | "giving">("noms");
   const [wallet, setWallet] = useState<WalletSummary | null>(null);
   const [cashoutBusy, setCashoutBusy] = useState(false);
   const [cashoutMsg, setCashoutMsg] = useState<string | null>(null);
+  const [signOutBusy, setSignOutBusy] = useState(false);
 
   const isAppleDemo = authProvider === "apple" && (!supabaseConfigured || userId === "local-demo-apple");
 
@@ -75,6 +76,20 @@ export default function Profile() {
       }
     } finally {
       setCashoutBusy(false);
+    }
+  };
+
+  const onSignOut = async () => {
+    if (signOutBusy) return;
+    setSignOutBusy(true);
+    try {
+      demoWallet.reset();
+      // Leave the authed tabs first so useRequireAuth can't bounce us to /auth.
+      router.replace("/");
+      await signOut();
+    } catch (e: any) {
+      setCashoutMsg(e?.message ?? "Couldn’t sign out");
+      setSignOutBusy(false);
     }
   };
 
@@ -263,6 +278,20 @@ export default function Profile() {
             ))}
           </View>
         )}
+
+        <Pressable
+          style={({ pressed }) => [styles.signOutBtn, pressed && styles.signOutBtnPressed]}
+          onPress={onSignOut}
+          disabled={signOutBusy}
+          accessibilityRole="button"
+          accessibilityLabel="Sign out"
+        >
+          {signOutBusy ? (
+            <ActivityIndicator color={colors.cream} />
+          ) : (
+            <Text style={styles.signOutText}>Sign out</Text>
+          )}
+        </Pressable>
         </Content>
       </ScrollView>
     </View>
@@ -532,5 +561,24 @@ const styles = StyleSheet.create({
     fontFamily: fonts.serifBold,
     color: colors.marigold,
     fontSize: 15,
+  },
+  signOutBtn: {
+    marginTop: 28,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "rgba(248,249,244,0.22)",
+    backgroundColor: "rgba(248,249,244,0.06)",
+    minHeight: 48,
+  },
+  signOutBtnPressed: {
+    opacity: 0.75,
+  },
+  signOutText: {
+    fontFamily: fonts.bodySemi,
+    fontSize: 15,
+    color: colors.cream,
   },
 });

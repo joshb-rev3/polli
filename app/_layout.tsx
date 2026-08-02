@@ -24,6 +24,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { SiteHead } from "../components/SiteHead";
 import { StripeProviderShim } from "../components/StripeProviderShim";
+import { WebFocusStyles } from "../components/WebFocusStyles";
 import { DemoWalletProvider } from "../lib/demoWallet";
 import { PolliDraftProvider } from "../lib/polliDraft";
 import { SessionProvider } from "../lib/session";
@@ -59,6 +60,7 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
+      <WebFocusStyles />
       <SiteHead />
       <SafeAreaProvider>
         <StripeProviderShim publishableKey={STRIPE_PK}>

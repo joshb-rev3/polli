@@ -6,13 +6,14 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import { NavBar } from "../../components/NavBar";
 import { Content } from "../../components/Content";
+import { Field } from "../../components/Field";
 import { StartFooter } from "../../components/StartFooter";
 import { Stepper } from "../../components/Stepper";
+import { TextInput } from "../../components/TextInput";
 import { usePolliDraft } from "../../lib/polliDraft";
 import { formatPhoneInput } from "../../lib/phone";
 import { useRequireAuth } from "../../lib/useRequireAuth";
@@ -42,7 +43,7 @@ export default function Who() {
   }
   return (
     <View style={{ flex: 1, backgroundColor: colors.paper }}>
-      <NavBar back title="Back" variant="paper" onBack={() => router.back()} />
+      <NavBar back centerLogo variant="paper" onBack={() => router.back()} />
       <ScrollView
         contentContainerStyle={{ paddingBottom: 24 }}
         keyboardShouldPersistTaps="handled"
@@ -138,20 +139,10 @@ export default function Who() {
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <View>
-      <Text style={styles.fieldLabel}>{label}</Text>
-      <View style={styles.fieldBox}>{children}</View>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   card: {
     backgroundColor: "#fff",
-    borderRadius: 32,
-    borderTopLeftRadius: 8,
+    borderRadius: 24,
     padding: 22,
     borderWidth: 1,
     borderColor: colors.line2,
@@ -170,23 +161,6 @@ const styles = StyleSheet.create({
     color: colors.ink2,
     marginTop: 8,
     lineHeight: 22,
-  },
-  fieldLabel: {
-    fontFamily: fonts.bodySemi,
-    fontSize: 12,
-    color: colors.ink2,
-    letterSpacing: 0.72,
-    textTransform: "uppercase",
-    marginBottom: 6,
-  },
-  fieldBox: {
-    backgroundColor: colors.paper,
-    borderWidth: 1,
-    borderColor: colors.line2,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    minHeight: 54,
-    justifyContent: "center",
   },
   input: {
     fontFamily: fonts.body,

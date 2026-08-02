@@ -7,13 +7,13 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import { Button } from "../components/Button";
 import { Content } from "../components/Content";
 import { IconCheck } from "../components/Icon";
 import { NavBar } from "../components/NavBar";
+import { TextInput } from "../components/TextInput";
 import { VoiceMessageComposer } from "../components/voice/VoiceMessageComposer";
 import { FEE_COVER_CENTS, formatDollars, giftTotals } from "../lib/fees";
 import { success } from "../lib/haptics";
@@ -391,8 +391,7 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: "#fff",
-    borderRadius: 32,
-    borderTopLeftRadius: 8,
+    borderRadius: 24,
     padding: 22,
     borderWidth: 1,
     borderColor: colors.line2,

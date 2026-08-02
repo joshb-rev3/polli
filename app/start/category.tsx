@@ -15,7 +15,7 @@ export default function Category() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.paper }}>
-      <NavBar back title="Back" variant="paper" onBack={() => router.back()} />
+      <NavBar back centerLogo variant="paper" onBack={() => router.back()} />
       <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
         <Content padTop={20}>
         <Stepper step={1} total={6} />
@@ -62,8 +62,7 @@ export default function Category() {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: "#fff",
-    borderRadius: 32,
-    borderTopLeftRadius: 8,
+    borderRadius: 24,
     padding: 22,
     borderWidth: 1,
     borderColor: colors.line2,

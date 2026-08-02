@@ -15,6 +15,8 @@ interface Session {
   authProvider: AuthProvider;
   eligible: boolean;
   loading: boolean;
+  /** True while signing out — auth gates should not redirect to /auth. */
+  signingOut: boolean;
   signInWithApple: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signInWithFacebook: () => Promise<void>;
@@ -29,6 +31,7 @@ const SessionContext = createContext<Session>({
   authProvider: null,
   eligible: false,
   loading: true,
+  signingOut: false,
   signInWithApple: async () => {},
   signInWithGoogle: async () => {},
   signInWithFacebook: async () => {},
@@ -43,6 +46,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [name, setName] = useState<string | null>(null);
   const [authProvider, setAuthProvider] = useState<AuthProvider>(null);
   const [loading, setLoading] = useState(true);
+  const [signingOut, setSigningOut] = useState(false);
 
   useEffect(() => {
     if (!supabaseConfigured) {
@@ -157,10 +161,16 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
-    if (supabaseConfigured) await supabase.auth.signOut();
-    setUserId(null);
-    setName(null);
-    setAuthProvider(null);
+    setSigningOut(true);
+    try {
+      if (supabaseConfigured) await supabase.auth.signOut();
+      setUserId(null);
+      setName(null);
+      setAuthProvider(null);
+    } finally {
+      // Keep signingOut true briefly so auth gates don't race to /auth.
+      setTimeout(() => setSigningOut(false), 500);
+    }
   };
 
   return (
@@ -171,6 +181,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         authProvider,
         eligible: Boolean(userId),
         loading,
+        signingOut,
         signInWithApple,
         signInWithGoogle: () => signInWithOAuth("google"),
         signInWithFacebook: () => signInWithOAuth("facebook"),

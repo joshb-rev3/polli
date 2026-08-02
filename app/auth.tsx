@@ -93,9 +93,9 @@ export default function Auth() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.paper }}>
-      <NavBar back title="Back" variant="paper" onBack={() => router.back()} />
+      <NavBar back variant="paper" onBack={() => router.back()} />
       <ScrollView contentContainerStyle={styles.scroll}>
-        <Content pad={24}>
+        <Content pad={24} padTop={20}>
         <View style={styles.card}>
           <Text style={styles.title}>
             {next === "feed"
@@ -195,8 +195,7 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: "#fff",
-    borderRadius: 32,
-    borderTopLeftRadius: 8,
+    borderRadius: 24,
     padding: 28,
     borderWidth: 1,
     borderColor: colors.line2,
