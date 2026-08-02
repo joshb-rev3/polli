@@ -6,7 +6,7 @@ import { Content } from "../../components/Content";
 import { IconHeart, IconShare } from "../../components/Icon";
 import { NavBar } from "../../components/NavBar";
 import { SiteHead } from "../../components/SiteHead";
-import { FEED, hasDonatedTo, myNoteFor } from "../../lib/mockData";
+import { FEED, NOTES, hasDonatedTo, hasStartedPolli, myNoteFor } from "../../lib/mockData";
 import { useShare } from "../../lib/share";
 import { colors, fonts, CONTENT_MAX, CONTENT_PAD } from "../../theme";
 
@@ -33,6 +33,9 @@ export default function PolliPage() {
   }
 
   const viewerHasDonated = hasDonatedTo(n.id);
+  const viewerStarted = hasStartedPolli(n.id);
+  const canSeeMessages = viewerHasDonated || viewerStarted;
+  const notes = NOTES[n.id] ?? [];
   const myNote = myNoteFor(n.id);
   const first = n.name.split(" ")[0];
   const shareDescription = n.story?.trim()
@@ -68,7 +71,12 @@ export default function PolliPage() {
           <View style={styles.headerText}>
             <Text style={styles.headerName}>{n.name}</Text>
             <Text style={styles.headerType}>{n.cat.title}</Text>
-            {viewerHasDonated ? (
+            {viewerStarted ? (
+              <Text style={styles.headerSub}>
+                You started this Polli — {n.backers} friends have spread the love
+                {n.live ? "" : " · closed"}.
+              </Text>
+            ) : viewerHasDonated ? (
               <Text style={styles.headerSub}>
                 Thank you — you're part of {first}'s Polli with {n.backers} others.
               </Text>
@@ -84,11 +92,15 @@ export default function PolliPage() {
         </View>
 
         <View style={styles.metaRow}>
-          <View style={styles.liveDot} />
+          <View style={[styles.liveDot, !n.live && styles.closedDot]} />
           <Text style={styles.metaText}>
-            {viewerHasDonated
-              ? `Live · ${n.daysLeft}d left · ${n.backers} chipping in`
-              : `Live · ${n.daysLeft}d left`}
+            {n.live
+              ? canSeeMessages
+                ? `Live · ${n.daysLeft}d left · ${n.backers} chipping in`
+                : `Live · ${n.daysLeft}d left`
+              : canSeeMessages
+                ? `Complete · ${n.backers} friends gave`
+                : "Complete"}
           </Text>
         </View>
 
@@ -114,7 +126,7 @@ export default function PolliPage() {
           </View>
         ) : null}
 
-        {viewerHasDonated ? (
+        {canSeeMessages ? (
           <View style={styles.section}>
             <Text style={styles.eyebrow}>RECENT GIVERS</Text>
             <View style={{ flexDirection: "row", alignItems: "center", marginTop: 8 }}>
@@ -143,6 +155,35 @@ export default function PolliPage() {
           </View>
         ) : null}
 
+        {canSeeMessages && notes.length > 0 ? (
+          <View style={styles.section}>
+            <Text style={styles.eyebrow}>
+              {viewerStarted ? `MESSAGES FOR ${first.toUpperCase()}` : "NICE MESSAGES"}
+            </Text>
+            <View style={styles.notesList}>
+              {notes.map((note, i) => (
+                <View key={`${note.from}-${i}`} style={styles.noteCard}>
+                  <View style={styles.noteHeader}>
+                    <View
+                      style={[
+                        styles.noteAv,
+                        note.anon && { backgroundColor: colors.sage },
+                      ]}
+                    >
+                      <Text style={styles.noteAvText}>{note.av}</Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.noteFrom}>{note.from}</Text>
+                      <Text style={styles.noteWhen}>{note.when}</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.noteText}>"{note.text}"</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        ) : null}
+
         <View style={styles.sageBox}>
           <Text style={styles.sageText}>
             💚 <Text style={{ fontFamily: fonts.bodyBold }}>Every $1 goes to {first}.</Text>
@@ -156,15 +197,35 @@ export default function PolliPage() {
         </Content>
       </ScrollView>
 
-      <View style={[styles.sticky, viewerHasDonated && styles.stickyThanks]}>
+      <View style={[styles.sticky, (viewerHasDonated || viewerStarted || !n.live) && styles.stickyThanks]}>
         <View style={styles.stickyInner}>
-        {viewerHasDonated ? (
+        {viewerStarted ? (
           <View style={styles.thanksBox}>
             <IconHeart size={18} color={colors.green} />
             <View style={{ flex: 1 }}>
-              <Text style={styles.thanksTitle}>Thank you for showing up for {first}</Text>
+              <Text style={styles.thanksTitle}>
+                {n.live ? `You started ${first}'s Polli` : `${first}'s Polli is complete`}
+              </Text>
               <Text style={styles.thanksSub}>
-                Your $1 is already part of their Polli. Pass the link along if you want.
+                {n.live
+                  ? "Share the link so more friends can leave a dollar and a note."
+                  : "Every message above is yours to revisit anytime."}
+              </Text>
+            </View>
+          </View>
+        ) : viewerHasDonated || !n.live ? (
+          <View style={styles.thanksBox}>
+            <IconHeart size={18} color={colors.green} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.thanksTitle}>
+                {viewerHasDonated
+                  ? `Thank you for showing up for ${first}`
+                  : `${first}'s Polli is complete`}
+              </Text>
+              <Text style={styles.thanksSub}>
+                {viewerHasDonated
+                  ? "Your $1 is already part of their Polli. Pass the link along if you want."
+                  : "This one has closed — thanks for stopping by."}
               </Text>
             </View>
           </View>
@@ -247,6 +308,10 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: colors.sage,
   },
+  closedDot: {
+    backgroundColor: colors.ink2,
+    opacity: 0.45,
+  },
   metaText: {
     fontFamily: fonts.body,
     fontSize: 13,
@@ -261,6 +326,53 @@ const styles = StyleSheet.create({
     color: colors.ink2,
     letterSpacing: 0.88,
     marginBottom: 6,
+  },
+  notesList: {
+    gap: 10,
+    marginTop: 4,
+  },
+  noteCard: {
+    padding: 14,
+    borderRadius: 14,
+    backgroundColor: colors.cream,
+    borderWidth: 1,
+    borderColor: colors.line2,
+  },
+  noteHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 8,
+  },
+  noteAv: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: colors.marigold,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  noteAvText: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 13,
+    color: "#fff",
+  },
+  noteFrom: {
+    fontFamily: fonts.bodySemi,
+    fontSize: 14,
+    color: colors.ink,
+  },
+  noteWhen: {
+    fontFamily: fonts.body,
+    fontSize: 11,
+    color: colors.ink2,
+    marginTop: 1,
+  },
+  noteText: {
+    fontFamily: fonts.serif,
+    fontSize: 16,
+    lineHeight: 24,
+    color: colors.ink,
   },
   starter: {
     flexDirection: "row",

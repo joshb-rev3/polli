@@ -126,6 +126,36 @@ export const FEED: FeedItem[] = [
     daysLeft: 2,
     live: true,
   },
+  {
+    id: "n5",
+    name: "Uncle Dev",
+    role: "Hard Time",
+    cat: CATEGORIES[2],
+    starter: "You",
+    starterAv: "Y",
+    story:
+      "Uncle Dev has been carrying more than anyone should this month. A few quiet dollars from the people who love him — no speech required, just proof he's not alone.",
+    photo: ["#E8D5B7", "#C4A882"],
+    raised: 28,
+    backers: 28,
+    daysLeft: 4,
+    live: true,
+  },
+  {
+    id: "n6",
+    name: "Ms. Hana Lee",
+    role: "Amazing Teacher",
+    cat: CATEGORIES[3],
+    starter: "You",
+    starterAv: "Y",
+    story:
+      "Ms. Lee turned a hard year into something her students still talk about. The Polli is closed — open it anytime to read every note they left.",
+    photo: ["#FFC56E", "#E8A87C"],
+    raised: 104,
+    backers: 104,
+    daysLeft: 0,
+    live: false,
+  },
 ];
 
 export const ME = {
@@ -167,21 +197,10 @@ export const MY_GIVES: Array<{
   },
 ];
 
-/** True once the viewer has contributed — unlocks giver counts on feed & shared pages. */
-export function hasDonatedTo(polliId: string): boolean {
-  return MY_GIVES.some((g) => g.polliId === polliId);
-}
-
-/** Viewer's private note for a Polli, if they donated and left one. */
-export function myNoteFor(polliId: string): string | null {
-  const gift = MY_GIVES.find((g) => g.polliId === polliId);
-  const note = gift?.note?.trim();
-  return note ? note : null;
-}
-
+/** Pollis the signed-in user started (ids match FEED). */
 export const MY_POLLIS = [
   {
-    id: "m1",
+    id: "n5",
     name: "Uncle Dev",
     role: "Hard Time",
     raised: 28,
@@ -191,7 +210,7 @@ export const MY_POLLIS = [
     cat: CATEGORIES[2],
   },
   {
-    id: "m2",
+    id: "n6",
     name: "Ms. Hana Lee",
     role: "Amazing Teacher",
     raised: 104,
@@ -202,6 +221,23 @@ export const MY_POLLIS = [
     complete: true,
   },
 ];
+
+/** True once the viewer has contributed — unlocks giver counts on feed & shared pages. */
+export function hasDonatedTo(polliId: string): boolean {
+  return MY_GIVES.some((g) => g.polliId === polliId);
+}
+
+/** True if the viewer started this Polli (profile → detail review path). */
+export function hasStartedPolli(polliId: string): boolean {
+  return MY_POLLIS.some((p) => p.id === polliId);
+}
+
+/** Viewer's private note for a Polli, if they donated and left one. */
+export function myNoteFor(polliId: string): string | null {
+  const gift = MY_GIVES.find((g) => g.polliId === polliId);
+  const note = gift?.note?.trim();
+  return note ? note : null;
+}
 
 export const NOTES: Record<string, Note[]> = {
   n1: [
@@ -227,6 +263,20 @@ export const NOTES: Record<string, Note[]> = {
     { from: "Devon", av: "D", text: "Pass it along — we got you, coach", when: "1d" },
     { from: "Sara", av: "S", text: "A+ dad, A+ coach.", when: "2d" },
     { from: "anonymous bee", av: "🐝", text: "The tiniest, loudest thank-you.", when: "2d", anon: true },
+  ],
+  n5: [
+    { from: "Priya", av: "P", text: "Thinking of you every day. You're not alone in this.", when: "1h" },
+    { from: "anonymous bee", av: "🐝", text: "A quiet dollar and a louder hug.", when: "3h", anon: true },
+    { from: "Sam", av: "S", text: "We've got you, Uncle Dev. One step at a time.", when: "5h" },
+    { from: "Maya", av: "M", text: "Sending love from the whole crew.", when: "1d" },
+  ],
+  n6: [
+    { from: "Jordan", av: "J", text: "Best teacher I ever had. Full stop.", when: "2h" },
+    { from: "anonymous bee", av: "🐝", text: "You believed in my kid before anyone else did.", when: "4h", anon: true },
+    { from: "Riley", av: "R", text: "Your classroom felt like home. Thank you forever.", when: "6h" },
+    { from: "Alex", av: "A", text: "A+ in everything — including changing lives.", when: "1d" },
+    { from: "Casey", av: "C", text: "Still using the habits you taught us.", when: "2d" },
+    { from: "anonymous bee", av: "🐝", text: "One petal, with so much love.", when: "3d", anon: true },
   ],
 };
 

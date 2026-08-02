@@ -203,9 +203,15 @@ export default function Profile() {
         {tab === "noms" ? (
           <View style={{ gap: 10 }}>
             {MY_POLLIS.map((m) => (
-              <View key={m.id} style={styles.nomCard}>
+              <Pressable
+                key={m.id}
+                style={({ pressed }) => [styles.nomCard, pressed && styles.cardPressed]}
+                onPress={() => router.push({ pathname: "/p/[id]", params: { id: m.id } })}
+                accessibilityRole="button"
+                accessibilityLabel={`Open ${m.name}'s Polli`}
+              >
                 <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
-                  <View>
+                  <View style={{ flex: 1, paddingRight: 8 }}>
                     <Text style={styles.nomName}>
                       {m.cat.emoji} {m.name}
                     </Text>
@@ -229,13 +235,20 @@ export default function Profile() {
                   </Text>
                   <Text style={styles.raisedSmall}>${m.raised} so far</Text>
                 </View>
-              </View>
+                <Text style={styles.openHint}>Tap to read the messages →</Text>
+              </Pressable>
             ))}
           </View>
         ) : (
           <View>
             {MY_GIVES.map((g) => (
-              <View key={g.id} style={styles.giveRow}>
+              <Pressable
+                key={g.id}
+                style={({ pressed }) => [styles.giveRow, pressed && styles.cardPressed]}
+                onPress={() => router.push({ pathname: "/p/[id]", params: { id: g.polliId } })}
+                accessibilityRole="button"
+                accessibilityLabel={`Open ${g.name}'s Polli`}
+              >
                 <View style={styles.giveEmo}>
                   <Text style={{ fontSize: 16 }}>{g.cat.emoji}</Text>
                 </View>
@@ -246,7 +259,7 @@ export default function Profile() {
                   </Text>
                 </View>
                 <Text style={styles.giveAmount}>${g.amount.toFixed(2)}</Text>
-              </View>
+              </Pressable>
             ))}
           </View>
         )}
@@ -425,12 +438,22 @@ const styles = StyleSheet.create({
     color: colors.cream,
     opacity: 0.6,
   },
+  cardPressed: {
+    opacity: 0.82,
+  },
   nomCard: {
     padding: 14,
     backgroundColor: "rgba(248,249,244,0.06)",
     borderRadius: 14,
     borderWidth: 1,
     borderColor: "rgba(248,249,244,0.1)",
+  },
+  openHint: {
+    marginTop: 10,
+    fontFamily: fonts.bodySemi,
+    fontSize: 12,
+    color: colors.marigold,
+    opacity: 0.9,
   },
   nomName: {
     fontFamily: fonts.serifBold,
