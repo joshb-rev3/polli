@@ -1,24 +1,35 @@
 import { useRouter } from "expo-router";
 import React from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { BzzPath } from "../../components/Bzz";
 import { Content } from "../../components/Content";
 import { FeedCard } from "../../components/FeedCard";
 import { IconPlus } from "../../components/Icon";
 import { NavBar } from "../../components/NavBar";
 import { FEED, FeedItem, hasDonatedTo } from "../../lib/mockData";
+import { useRequireAuth } from "../../lib/useRequireAuth";
 import { useShare } from "../../lib/share";
 import { useTone } from "../../lib/tone";
 import { colors, fonts } from "../../theme";
 
 export default function Feed() {
   const router = useRouter();
+  const { ready, loading } = useRequireAuth("feed");
   const { copy } = useTone();
   const { openShare } = useShare();
 
   const onGive = (n: FeedItem) => router.push({ pathname: "/checkout", params: { id: n.id } });
-  const onOpen = (n: FeedItem) => router.push({ pathname: "/nominee/[id]", params: { id: n.id } });
+  const onOpen = (n: FeedItem) => router.push({ pathname: "/p/[id]", params: { id: n.id } });
   const onShare = (n: FeedItem) => openShare({ name: n.name });
+
+  if (loading || !ready) {
+    return (
+      <View style={styles.gate}>
+        <ActivityIndicator color={colors.green} />
+        <Text style={styles.gateText}>Signing you in to browse…</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.paper }}>
@@ -26,13 +37,13 @@ export default function Feed() {
         variant="paper"
         right={
           <Pressable
-            style={styles.nominateBtn}
-            onPress={() => router.push("/nominate/who")}
+            style={styles.startBtn}
+            onPress={() => router.push("/start/who")}
             accessibilityRole="button"
             accessibilityLabel="Start a Polli"
           >
             <IconPlus size={16} color={colors.green} />
-            <Text style={styles.nominateBtnText}>Start a Polli</Text>
+            <Text style={styles.startBtnText}>Start a Polli</Text>
           </Pressable>
         }
       />
@@ -72,7 +83,20 @@ export default function Feed() {
 }
 
 const styles = StyleSheet.create({
-  nominateBtn: {
+  gate: {
+    flex: 1,
+    backgroundColor: colors.paper,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+    padding: 24,
+  },
+  gateText: {
+    fontFamily: fonts.body,
+    fontSize: 14,
+    color: colors.ink2,
+  },
+  startBtn: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
@@ -82,7 +106,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     zIndex: 1,
   },
-  nominateBtnText: {
+  startBtnText: {
     fontFamily: fonts.bodySemi,
     fontSize: 13,
     color: colors.green,

@@ -10,10 +10,10 @@ import {
 } from "react-native";
 import { NavBar } from "../../components/NavBar";
 import { Content } from "../../components/Content";
-import { NominateFooter } from "../../components/NominateFooter";
+import { StartFooter } from "../../components/StartFooter";
 import { Stepper } from "../../components/Stepper";
 import { VoiceMessagePlayer } from "../../components/voice/VoiceMessageComposer";
-import { createLiveNomination } from "../../lib/createNomination";
+import { createLivePolli } from "../../lib/createPolli";
 import { FEE_COVER_CENTS, formatDollars, giftTotals } from "../../lib/fees";
 import { success } from "../../lib/haptics";
 import { saveLaunchComplete } from "../../lib/launchComplete";
@@ -22,8 +22,8 @@ import {
   hasVoiceKeepsake,
   launchChargeDollars,
   launchProductDollars,
-  useNomination,
-} from "../../lib/nomination";
+  usePolliDraft,
+} from "../../lib/polliDraft";
 import { payWithStripe } from "../../lib/paymentSheet";
 import { useSession } from "../../lib/session";
 import { stripeConfigured, supabaseConfigured } from "../../lib/supabase";
@@ -31,7 +31,7 @@ import { colors, fonts, shadows } from "../../theme";
 
 export default function Review() {
   const router = useRouter();
-  const { draft } = useNomination();
+  const { draft } = usePolliDraft();
   const { userId } = useSession();
   const cat = CATEGORIES.find((c) => c.id === draft.catId);
   const timeline = TIMELINES.find((t) => t.id === draft.timeline);
@@ -49,7 +49,7 @@ export default function Review() {
     first?: string;
     last?: string;
     slug?: string;
-    nominationId?: string;
+    polliId?: string;
   }) => {
     const first = (opts?.first ?? draft.first).trim();
     const last = (opts?.last ?? draft.last).trim();
@@ -57,7 +57,7 @@ export default function Review() {
       first,
       last,
       slug: opts?.slug,
-      nominationId: opts?.nominationId,
+      polliId: opts?.polliId,
       keepsake,
       email: draft.email.trim() || undefined,
       phone: draft.phone.trim() || undefined,
@@ -70,7 +70,7 @@ export default function Review() {
         first,
         last,
         ...(opts?.slug ? { slug: opts.slug } : {}),
-        ...(opts?.nominationId ? { nominationId: opts.nominationId } : {}),
+        ...(opts?.polliId ? { polliId: opts.polliId } : {}),
         ...(keepsake ? { keepsake: "1" } : {}),
       },
     });
@@ -81,7 +81,7 @@ export default function Review() {
     setLoading(true);
     try {
       if (!supabaseConfigured) {
-        console.warn("[nominate] simulating — supabase not configured");
+        console.warn("[start] simulating — supabase not configured");
         setTimeout(() => {
           setLoading(false);
           finish();
@@ -107,36 +107,37 @@ export default function Review() {
         return;
       }
 
-      const { nominationId, slug } = await createLiveNomination(draft);
+      const { polliId, slug } = await createLivePolli(draft);
       const first = draft.first.trim();
       const last = draft.last.trim();
       await saveLaunchComplete({
         first,
         last,
         slug,
-        nominationId,
+        polliId,
         keepsake,
         email: draft.email.trim() || undefined,
         phone: draft.phone.trim() || undefined,
         notify: draft.notify,
       });
       const result = await payWithStripe({
-        nominationId,
+        polliId,
         note: draft.note.trim() || undefined,
         voiceKeepsake: keepsake,
+        intent: "kickoff",
         successPath: "launch-complete",
-        cancelPath: "nominate/review",
+        cancelPath: "start/review",
         successQuery: {
           first,
           last,
           slug,
-          nominationId,
+          polliId,
           ...(keepsake ? { keepsake: "1" } : {}),
         },
       });
       setLoading(false);
       if (result === "succeeded" && Platform.OS !== "web") {
-        await finish({ first, last, slug, nominationId });
+        await finish({ first, last, slug, polliId });
       }
     } catch (e: any) {
       setLoading(false);
@@ -200,7 +201,7 @@ export default function Review() {
           <View style={styles.lineItems}>
             <Row label="Kick off their Polli" value="$1.00" />
             {keepsake ? <Row label="Voice keepsake" value="$1.00" /> : null}
-            <Row label="Processing & platform" value={formatDollars(FEE_COVER_CENTS)} />
+            <Row label="Processing fees & platform operations" value={formatDollars(FEE_COVER_CENTS)} />
             <View style={styles.lineDivider} />
             <Row label="Total charged to you" value={formatDollars(totals.totalCents)} bold />
             <Row
@@ -220,13 +221,13 @@ export default function Review() {
               <Text style={{ fontFamily: fonts.bodyBold }}>
                 You'll start with ${charge.toFixed(2)}.
               </Text>{" "}
-              Then share the link so friends can pile on.
+              Then share the link so friends can spread the love.
             </Text>
           </View>
         </View>
         </Content>
       </ScrollView>
-      <NominateFooter
+      <StartFooter
         label={loading ? "Opening Stripe…" : `Pay $${charge.toFixed(2)} & launch`}
         disabled={loading}
         onPress={launch}

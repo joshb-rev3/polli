@@ -19,7 +19,7 @@ type Props = {
   path?: string;
   /** Override share image (absolute URL preferred). */
   image?: string;
-  /** Optional og:type — default website; use profile for nominee pages. */
+  /** Optional og:type — default website; use profile for Polli pages. */
   type?: "website" | "profile" | "article";
   noIndex?: boolean;
 };

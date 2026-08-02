@@ -19,24 +19,24 @@ async function edgeErrorMessage(error: unknown, data: unknown): Promise<string> 
     }
   }
   if (error instanceof Error && error.message) return error.message;
-  return "Could not prepare nomination for checkout";
+  return "Could not prepare this Polli for checkout";
 }
 
 /**
- * Resolves a feed item to a live nomination UUID Stripe can charge against.
- * Mock feed keys are upserted via the sandbox-ensure-nomination edge function.
+ * Resolves a feed item to a live Polli UUID Stripe can charge against.
+ * Mock feed keys are upserted via the sandbox-ensure-polli edge function.
  */
-export async function ensureSandboxNomination(n: FeedItem): Promise<string> {
+export async function ensureSandboxPolli(n: FeedItem): Promise<string> {
   if (!supabaseConfigured) return n.id;
 
   // Already a UUID from a live row
   if (/^[0-9a-f-]{36}$/i.test(n.id)) return n.id;
 
-  const { data, error } = await supabase.functions.invoke("sandbox-ensure-nomination", {
+  const { data, error } = await supabase.functions.invoke("sandbox-ensure-polli", {
     body: {
       feedKey: n.id,
-      nomineeFirst: n.name.split(" ")[0] || n.name,
-      nomineeLast: n.name.split(" ").slice(1).join(" ") || "Friend",
+      recipientFirst: n.name.split(" ")[0] || n.name,
+      recipientLast: n.name.split(" ").slice(1).join(" ") || "Friend",
       catId: n.cat.id,
       story: n.story,
       timelineDays: Math.max(7, n.daysLeft || 7),
@@ -45,6 +45,6 @@ export async function ensureSandboxNomination(n: FeedItem): Promise<string> {
 
   if (error) throw new Error(await edgeErrorMessage(error, data));
   if (data?.error) throw new Error(String(data.error));
-  if (!data?.nominationId) throw new Error("sandbox nomination missing id");
-  return data.nominationId as string;
+  if (!data?.polliId) throw new Error("Could not prepare this Polli for checkout");
+  return data.polliId as string;
 }

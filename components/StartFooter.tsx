@@ -11,8 +11,8 @@ interface Props {
   disabled?: boolean;
 }
 
-/** Sticky bottom action bar for the nominate wizard. */
-export function NominateFooter({ label, onPress, disabled }: Props) {
+/** Sticky bottom action bar for the start-a-Polli wizard. */
+export function StartFooter({ label, onPress, disabled }: Props) {
   const insets = useSafeAreaInsets();
 
   return (

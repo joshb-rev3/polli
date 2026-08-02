@@ -4,8 +4,8 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { NavBar } from "../../components/NavBar";
 import { Content } from "../../components/Content";
 import {
-  DEMO_NOMINATION_FROM,
-  DEMO_NOMINATION_REASON,
+  DEMO_POLLI_FROM,
+  DEMO_POLLI_REASON,
   formatCents,
   useDemoWallet,
 } from "../../lib/demoWallet";
@@ -29,13 +29,13 @@ export default function PayoutChoose() {
       />
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <Content pad={24} padBottom={48} style={styles.content}>
-        <Text style={styles.eyebrow}>YOUR NOMINATION CLOSED</Text>
+        <Text style={styles.eyebrow}>YOUR POLLI CLOSED</Text>
         <Text style={styles.title}>
           Kindness{"\n"}
           <Text style={{ color: colors.green }}>found you.</Text>
         </Text>
         <Text style={styles.sub}>
-          {DEMO_NOMINATION_FROM} nominated you for {DEMO_NOMINATION_REASON}. Friends piled on — here's what's
+          {DEMO_POLLI_FROM} started a Polli for you for {DEMO_POLLI_REASON}. Friends spread the love — here's what's
           yours to use.
         </Text>
 

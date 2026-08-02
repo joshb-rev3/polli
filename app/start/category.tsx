@@ -3,15 +3,15 @@ import React from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { NavBar } from "../../components/NavBar";
 import { Content } from "../../components/Content";
-import { NominateFooter } from "../../components/NominateFooter";
+import { StartFooter } from "../../components/StartFooter";
 import { Stepper } from "../../components/Stepper";
 import { CATEGORIES } from "../../lib/mockData";
-import { useNomination } from "../../lib/nomination";
+import { usePolliDraft } from "../../lib/polliDraft";
 import { colors, fonts, shadows } from "../../theme";
 
 export default function Category() {
   const router = useRouter();
-  const { draft, set } = useNomination();
+  const { draft, set } = usePolliDraft();
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.paper }}>
@@ -21,7 +21,7 @@ export default function Category() {
         <Stepper step={1} total={6} />
         <View style={styles.card}>
           <Text style={styles.title}>What is the reason for this Polli?</Text>
-          <Text style={styles.sub}>Why are you nominating {draft.first || "them"}?</Text>
+          <Text style={styles.sub}>Why are you starting a Polli for {draft.first || "them"}?</Text>
           <View style={styles.chips}>
             {CATEGORIES.map((c) => {
               const active = draft.catId === c.id;
@@ -50,10 +50,10 @@ export default function Category() {
         </View>
         </Content>
       </ScrollView>
-      <NominateFooter
+      <StartFooter
         label="Continue"
         disabled={!draft.catId}
-        onPress={() => router.push("/nominate/story")}
+        onPress={() => router.push("/start/story")}
       />
     </View>
   );

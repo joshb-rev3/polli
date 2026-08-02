@@ -14,15 +14,17 @@ function webUrl(origin: string, path: string, query?: Record<string, string>) {
 
 /**
  * Opens Stripe-hosted Checkout (test or live). Payment method choice happens on Stripe's page.
- * Same path used by nominate kickoff and pile-on checkout.
+ * Same path used by start kickoff and pile-on checkout.
  */
 export async function payWithStripe(opts: {
-  nominationId: string;
+  polliId: string;
   note?: string;
   anonymous?: boolean;
-  /** Optional $1 voice keepsake line item (Speak mode on nominate or checkout). */
+  /** Optional $1 voice keepsake line item (Speak mode on start or checkout). */
   voiceKeepsake?: boolean;
-  /** Feed / mock id used in return URLs (pile-on flow). */
+  /** kickoff = starting a Polli; gift = chipping in on someone's Polli */
+  intent?: "kickoff" | "gift";
+  /** Feed / mock id used in return URLs (gift flow). */
   returnId?: string;
   /** Extra query params on the success return URL (survive Stripe redirect). */
   successQuery?: Record<string, string>;
@@ -76,10 +78,11 @@ export async function payWithStripe(opts: {
         );
 
   const { url } = await createCheckoutSession({
-    nominationId: opts.nominationId,
+    polliId: opts.polliId,
     note: opts.note,
     anonymous: opts.anonymous,
     voiceKeepsake: opts.voiceKeepsake,
+    intent: opts.intent,
     successUrl,
     cancelUrl,
   });

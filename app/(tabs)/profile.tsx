@@ -6,7 +6,8 @@ import { NavBar } from "../../components/NavBar";
 import { Content } from "../../components/Content";
 import { IconShare } from "../../components/Icon";
 import { formatCents, useDemoWallet } from "../../lib/demoWallet";
-import { ME, MY_GIVES, MY_NOMINATIONS } from "../../lib/mockData";
+import { ME, MY_GIVES, MY_POLLIS } from "../../lib/mockData";
+import { useRequireAuth } from "../../lib/useRequireAuth";
 import { useSession } from "../../lib/session";
 import { useShare } from "../../lib/share";
 import { supabaseConfigured } from "../../lib/supabase";
@@ -19,6 +20,7 @@ function formatDollars(cents: number) {
 
 export default function Profile() {
   const router = useRouter();
+  const { ready, loading: authLoading } = useRequireAuth("profile");
   const { openShare } = useShare();
   const { userId, name, authProvider } = useSession();
   const demoWallet = useDemoWallet();
@@ -43,6 +45,14 @@ export default function Profile() {
       refreshWallet();
     }, [refreshWallet]),
   );
+
+  if (authLoading || !ready) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.green, alignItems: "center", justifyContent: "center" }}>
+        <ActivityIndicator color="#fff" />
+      </View>
+    );
+  }
 
   const onCashout = async () => {
     if (!wallet || wallet.balanceCents < 100) return;
@@ -100,7 +110,7 @@ export default function Profile() {
             <Text style={styles.memberSince}>member since today</Text>
             {ME.eligible && (
               <View style={styles.eligiblePill}>
-                <Text style={styles.eligibleText}>✨ ELIGIBLE TO BE NOMINATED</Text>
+                <Text style={styles.eligibleText}>✨ ELIGIBLE TO RECEIVE A POLLI</Text>
               </View>
             )}
           </View>
@@ -171,7 +181,7 @@ export default function Profile() {
 
         <View style={styles.stats}>
           <Stat label="Given" value={`$${ME.given}`} sub="this year" />
-          <Stat label="Nominated" value={`${ME.nominated}`} sub="people" />
+          <Stat label="Started" value={`${ME.started}`} sub="Pollis" />
           <Stat label="Received" value={receivedDisplay} sub="so far" />
         </View>
 
@@ -180,7 +190,7 @@ export default function Profile() {
             style={[styles.tabBtn, tab === "noms" && styles.tabBtnActive]}
             onPress={() => setTab("noms")}
           >
-            <Text style={[styles.tabBtnText, tab === "noms" && { opacity: 1 }]}>Your nominations</Text>
+            <Text style={[styles.tabBtnText, tab === "noms" && { opacity: 1 }]}>Your Pollis</Text>
           </Pressable>
           <Pressable
             style={[styles.tabBtn, tab === "giving" && styles.tabBtnActive]}
@@ -192,7 +202,7 @@ export default function Profile() {
 
         {tab === "noms" ? (
           <View style={{ gap: 10 }}>
-            {MY_NOMINATIONS.map((m) => (
+            {MY_POLLIS.map((m) => (
               <View key={m.id} style={styles.nomCard}>
                 <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
                   <View>
@@ -215,7 +225,7 @@ export default function Profile() {
                 <View style={{ marginTop: 12, flexDirection: "row", alignItems: "baseline", justifyContent: "space-between" }}>
                   <Text style={styles.backersBig}>
                     {m.backers}
-                    <Text style={styles.backersLbl}> friends piled on</Text>
+                    <Text style={styles.backersLbl}> friends spread the love</Text>
                   </Text>
                   <Text style={styles.raisedSmall}>${m.raised} so far</Text>
                 </View>

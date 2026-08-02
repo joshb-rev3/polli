@@ -6,7 +6,7 @@ Pay it forward — one dollar at a time. Native iOS + Android app with Stripe Co
 
 - **Expo SDK 54** + React Native + TypeScript + Expo Router (file-based routes)
 - **Supabase** — Postgres, Row-Level Security, Auth (Apple/Google/Facebook), Edge Functions (Deno)
-- **Stripe** — PaymentSheet (Apple Pay / Google Pay / cards) + Connect Express for nominee payouts
+- **Stripe** — PaymentSheet (Apple Pay / Google Pay / cards) + Connect Express for recipient payouts
 - **EAS Build** — App Store + Play submissions from a single codebase
 - Reanimated v4, `react-native-svg`, Expo Haptics, Expo Linear Gradient
 
@@ -60,7 +60,7 @@ npx supabase link --project-ref YOUR_PROJECT_REF
 npx supabase db push
 ```
 
-This creates `users`, `nominations`, `donations`, `categories`, the `nomination_notes` view, triggers, and RLS policies (`supabase/migrations/0001_init.sql`).
+This creates `users`, `pollis`, `donations`, `categories`, the `polli_notes` view, triggers, and RLS policies (`supabase/migrations/0001_init.sql` — see migration 0009 for the pollis rename).
 
 ### 3. Enable social auth providers
 
@@ -78,7 +78,7 @@ Set the redirect URL to `polli://` (matches `scheme` in `app.json`).
 npx supabase functions deploy create-payment-intent
 npx supabase functions deploy stripe-webhook
 npx supabase functions deploy connect-onboard
-npx supabase functions deploy close-nominations
+npx supabase functions deploy close-pollis
 
 # Set server-only secrets (never put these in the app):
 npx supabase secrets set \
@@ -88,8 +88,8 @@ npx supabase secrets set \
   APP_DEEP_LINK=polli://
 
 # Schedule the nightly close/payout sweep
-npx supabase functions schedule create close-nominations-nightly \
-  --function close-nominations --cron "0 3 * * *"
+npx supabase functions schedule create close-pollis-nightly \
+  --function close-pollis --cron "0 3 * * *"
 ```
 
 ### 5. Configure Stripe webhook
@@ -105,7 +105,7 @@ Subscribe to: `payment_intent.succeeded`, `payment_intent.payment_failed`, `acco
 ## Stripe setup
 
 1. Create a Stripe account at [dashboard.stripe.com](https://dashboard.stripe.com).
-2. **Enable Connect** — Settings → Connect settings → select **Express** accounts. This is the platform-account model we use for nominee payouts.
+2. **Enable Connect** — Settings → Connect settings → select **Express** accounts. This is the platform-account model we use for recipient payouts.
 3. Test-mode keys work end-to-end for the whole MVP — card `4242 4242 4242 4242`, any future date, any CVC/ZIP.
 4. Apple Pay merchant ID: once you have an Apple Developer account, register `merchant.com.rev3labs.polli` in the Apple Developer portal, then link it to your Stripe account (Stripe → Settings → Payment Methods → Apple Pay).
 
@@ -178,7 +178,7 @@ npx netlify deploy --prod --dir dist
 #### 6. Verify voice transcription
 
 1. Open the live Netlify URL (HTTPS is required for mic access).
-2. Nominate → story step → **Speak** → record.
+2. Start a Polli → story step → **Speak** → record.
 3. You should see your actual words, not the demo line.
 4. If it fails, check the browser console — common causes:
    - `404` on `transcribe-story` → function not deployed to Supabase
@@ -248,14 +248,14 @@ app/                      # Expo Router routes
   auth.tsx                # social login
   (tabs)/                 # bottom tab group
     feed.tsx · discover.tsx · profile.tsx · _layout.tsx
-  nominee/[id].tsx        # public nominee page (deep-linkable)
+  p/[id].tsx              # public Polli page (deep-linkable)
   checkout.tsx            # PaymentSheet
   pay-complete.tsx        # confetti + bee + "you're in the garden"
-  nominate/               # 5-step nominate flow
+  start/                  # 5-step start-a-Polli flow
   launch-complete.tsx     # "is in bloom."
-  onboard-connect.tsx     # nominee: Stripe Connect Express onboarding
+  onboard-connect.tsx     # recipient: Stripe Connect Express onboarding
 components/               # Logo, Bzz (bee mascot), FeedCard, ShareSheet, NavBar, TabBar, Icon, Button, Confetti, Stepper
-lib/                      # supabase, stripe, tone, session, nomination draft, share, haptics, ordinal, mockData
+lib/                      # supabase, stripe, tone, session, polli draft, share, haptics, ordinal, mockData
 theme/                    # colors, typography, radii, shadows
 supabase/
   migrations/0001_init.sql
@@ -263,13 +263,13 @@ supabase/
     create-payment-intent/
     stripe-webhook/
     connect-onboard/
-    close-nominations/
-    transcribe-story/     # AssemblyAI word-level transcription for voice nominations
+    close-pollis/
+    transcribe-story/     # AssemblyAI word-level transcription for voice notes
 ```
 
 ### Voice story messages
 
-On the nominate **story** step, users can switch between **Type** and **Speak**. Speak mode records a short clip, auto-transcribes via AssemblyAI, analyzes per-word pitch/volume for karaoke styling, and stores the transcript as `story` plus audio metadata on the nomination.
+On the start flow **story** step, users can switch between **Type** and **Speak**. Speak mode records a short clip, auto-transcribes via AssemblyAI, analyzes per-word pitch/volume for karaoke styling, and stores the transcript as `story` plus audio metadata on the Polli.
 
 **Setup:**
 
@@ -290,14 +290,14 @@ In dev, if the function isn't deployed yet, transcription shows an error with de
 
 ## The product model (for anyone joining)
 
-- **Strictly $1 donations.** No amount picker. Optional fee-cover toggle: on → donor pays $1.43, nominee receives $1.00; off → donor pays $1.00, nominee nets ~$0.57. The ~$0.10 platform cut is the polli take.
+- **Strictly $1 donations.** No amount picker. Optional fee-cover toggle: on → donor pays $1.43, recipient receives $1.00; off → donor pays $1.00, recipient nets ~$0.57. The ~$0.10 platform cut is the polli take.
 - **No goals.** Feed leads with **giver count** ("47 friends chipped in — be the 48th"). Progress bars and dollar goals were explicitly removed — they were turning it into a scoreboard.
-- **Silent $600/yr cap per nominee.** Tax-driven; never surfaced in UI. Enforced in `create-payment-intent` before the PaymentIntent is created.
-- **Eligibility loop.** Give $1 in the last 12 months → eligible to be nominated yourself. Surfaced only on success moments as "🌼 You're in the garden."
+- **Silent $600/yr cap per recipient.** Tax-driven; never surfaced in UI. Enforced in `create-payment-intent` before the PaymentIntent is created.
+- **Eligibility loop.** Give $1 in the last 12 months → eligible to receive a Polli yourself. Surfaced only on success moments as "🌼 You're in the garden."
 - **Bee mascot "Bzz"** appears on splash, drifts across the feed, cheers on pay-complete, waves on launch-complete.
-- **Notes ("Notes from the garden")** — optional "say something nice" per donation, shown on the nominee's page. Can sign as "anonymous bee 🐝".
-- **5-step nominate**: who → category → story (type or speak with karaoke playback) → timeline (1w / 2w / 1mo) → review. No goal step.
-- **Payouts** via Stripe Connect Express — nominee links bank/debit through Stripe's hosted KYC flow; funds arrive within 5 business days of the window closing.
+- **Notes ("Notes from the garden")** — optional "say something nice" per donation, shown on the recipient's page. Can sign as "anonymous bee 🐝".
+- **5-step start flow**: who → category → story (type or speak with karaoke playback) → timeline (1w / 2w / 1mo) → review. No goal step.
+- **Payouts** via Stripe Connect Express — recipient links bank/debit through Stripe's hosted KYC flow; funds arrive within 5 business days of the window closing.
 
 ## Design source
 

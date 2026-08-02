@@ -2,7 +2,7 @@
 // Same donation row model as create-payment-intent; webhook completes on
 // checkout.session.completed (and payment_intent.succeeded as a backup).
 //
-// Request: POST { nominationId, note?, anonymous?, voiceKeepsake?, successUrl, cancelUrl }
+// Request: POST { polliId, note?, anonymous?, voiceKeepsake?, intent?, successUrl, cancelUrl }
 // Response: { url, sessionId, donationId }
 
 /// <reference path="../deno.d.ts" />
@@ -22,7 +22,7 @@ function stripeClient() {
 
 const YEAR_CAP_CENTS = 60000;
 const GIFT_CENTS = 100;
-const FEE_CENTS = 43;
+const FEE_CENTS = 50;
 const PLATFORM_FEE_CENTS = 10;
 const KEEPSAKE_CENTS = 100;
 
@@ -30,44 +30,44 @@ function truthyFlag(value: unknown): boolean {
   return value === true || value === 1 || value === "1" || value === "true";
 }
 
-type NominationRow = {
+type PolliRow = {
   id: string;
-  nominee_id: string | null;
-  nominee_first: string;
-  nominator_id: string;
+  recipient_id: string | null;
+  recipient_first: string;
+  starter_id: string;
   status: string;
   closes_at: string;
   voice_keepsake?: boolean | null;
 };
 
-async function loadNomination(
+async function loadPolli(
   admin: ReturnType<typeof adminClient>,
-  nominationId: string,
-): Promise<{ nom: NominationRow | null; error: string | null }> {
+  polliId: string,
+): Promise<{ polli: PolliRow | null; error: string | null }> {
   const withKeepsake = await admin
-    .from("nominations")
-    .select("id, nominee_id, nominee_first, nominator_id, status, closes_at, voice_keepsake")
-    .eq("id", nominationId)
+    .from("pollis")
+    .select("id, recipient_id, recipient_first, starter_id, status, closes_at, voice_keepsake")
+    .eq("id", polliId)
     .single();
 
   if (!withKeepsake.error && withKeepsake.data) {
-    return { nom: withKeepsake.data as NominationRow, error: null };
+    return { polli: withKeepsake.data as PolliRow, error: null };
   }
 
   const msg = withKeepsake.error?.message ?? "";
   if (/voice_keepsake|schema cache/i.test(msg)) {
     const legacy = await admin
-      .from("nominations")
-      .select("id, nominee_id, nominee_first, nominator_id, status, closes_at")
-      .eq("id", nominationId)
+      .from("pollis")
+      .select("id, recipient_id, recipient_first, starter_id, status, closes_at")
+      .eq("id", polliId)
       .single();
     if (!legacy.error && legacy.data) {
-      return { nom: { ...(legacy.data as NominationRow), voice_keepsake: false }, error: null };
+      return { polli: { ...(legacy.data as PolliRow), voice_keepsake: false }, error: null };
     }
-    return { nom: null, error: legacy.error?.message ?? "nomination not found" };
+    return { polli: null, error: legacy.error?.message ?? "Polli not found" };
   }
 
-  return { nom: null, error: withKeepsake.error?.message ?? "nomination not found" };
+  return { polli: null, error: withKeepsake.error?.message ?? "Polli not found" };
 }
 
 Deno.serve(async (req) => {
@@ -104,42 +104,43 @@ Deno.serve(async (req) => {
     }
 
     const {
-      nominationId,
+      polliId,
       note,
       anonymous = false,
       voiceKeepsake = false,
+      intent,
       successUrl,
       cancelUrl,
     } = await req.json();
 
-    if (!nominationId) return jsonError(400, "nominationId required");
+    if (!polliId) return jsonError(400, "polliId required");
     if (!successUrl || !cancelUrl) return jsonError(400, "successUrl and cancelUrl required");
 
-    // Fees are always covered so the nominee receives the full $1.
+    // Fees are always covered so the recipient receives the full $1.
     const coverFees = true;
 
-    const { nom, error: nomLoadErr } = await loadNomination(admin, nominationId);
-    if (!nom) return jsonError(404, nomLoadErr ?? "nomination not found");
-    if (nom.status !== "live") return jsonError(400, "nomination not accepting donations");
-    if (new Date(nom.closes_at).getTime() < Date.now()) {
-      return jsonError(400, "nomination closed");
+    const { polli, error: polliLoadErr } = await loadPolli(admin, polliId);
+    if (!polli) return jsonError(404, polliLoadErr ?? "Polli not found");
+    if (polli.status !== "live") return jsonError(400, "this Polli is not accepting gifts right now");
+    if (new Date(polli.closes_at).getTime() < Date.now()) {
+      return jsonError(400, "this Polli has closed");
     }
-    // Nominee can't pile on their own campaign. Nominator kickoff is allowed
-    // (nominee_id is usually null until they claim the Polli).
-    if (nom.nominee_id && nom.nominee_id === user.id) {
-      return jsonError(400, "you can't donate to your own nomination");
+    // Recipient can't chip in on their own Polli. Kickoff by the starter is allowed
+    // (recipient_id is usually null until they claim the Polli).
+    if (polli.recipient_id && polli.recipient_id === user.id) {
+      return jsonError(400, "you can't give to your own Polli");
     }
 
     const { data: existing } = await admin
       .from("donations")
       .select("id, status")
-      .eq("nomination_id", nominationId)
+      .eq("polli_id", polliId)
       .eq("donor_id", user.id)
       .in("status", ["pending", "succeeded"])
       .maybeSingle();
 
     if (existing?.status === "succeeded") {
-      return jsonError(409, "you've already donated to this nomination");
+      return jsonError(409, "you've already given to this Polli");
     }
     if (existing?.status === "pending") {
       await admin
@@ -149,30 +150,30 @@ Deno.serve(async (req) => {
         .eq("status", "pending");
     }
 
-    // Voice keepsake is a nominator kickoff add-on (+$1). Prefer the persisted
-    // nomination flag so launch can't accidentally omit it from Stripe.
-    const isNominatorKickoff = nom.nominator_id === user.id;
+    // Kickoff = starting a Polli; gift = chipping in. Client intent wins when set.
+    const isKickoff =
+      intent === "kickoff" || (intent !== "gift" && polli.starter_id === user.id);
     const chargeKeepsake =
-      truthyFlag(voiceKeepsake) || (isNominatorKickoff && Boolean(nom.voice_keepsake));
+      truthyFlag(voiceKeepsake) || (isKickoff && Boolean(polli.voice_keepsake));
     const keepsakeCents = chargeKeepsake ? KEEPSAKE_CENTS : 0;
     const netCents = GIFT_CENTS;
     const feeCents = FEE_CENTS;
     const totalCents = GIFT_CENTS + feeCents + keepsakeCents;
     const platformFeeCents = PLATFORM_FEE_CENTS;
 
-    if (nom.nominee_id) {
+    if (polli.recipient_id) {
       const curYear = new Date().getFullYear();
       const { data: annual } = await admin
         .from("recipient_annual_totals")
         .select("total_received_cents")
-        .eq("recipient_id", nom.nominee_id)
+        .eq("recipient_id", polli.recipient_id)
         .eq("calendar_year", curYear)
         .maybeSingle();
       const ytd = annual?.total_received_cents ?? 0;
       if (ytd + netCents > YEAR_CAP_CENTS) {
         return jsonError(
           409,
-          `${nom.nominee_first} has already fully bloomed this year — pick another nominee.`,
+          `${polli.recipient_first} has already fully bloomed this year — pick another recipient.`,
         );
       }
     }
@@ -193,17 +194,17 @@ Deno.serve(async (req) => {
       await admin.from("users").update({ stripe_customer_id: customerId }).eq("id", user.id);
     }
 
-    const idempotencyKey = `donation_checkout:${user.id}:${nominationId}:${crypto.randomUUID()}`;
+    const idempotencyKey = `donation_checkout:${user.id}:${polliId}:${crypto.randomUUID()}`;
 
     const { data: donation, error: insertErr } = await admin
       .from("donations")
       .insert({
-        nomination_id: nominationId,
+        polli_id: polliId,
         donor_id: user.id,
-        recipient_id: nom.nominee_id,
+        recipient_id: polli.recipient_id,
         fee_covered: coverFees,
         total_charged_cents: totalCents,
-        net_to_nominee_cents: netCents,
+        net_to_recipient_cents: netCents,
         platform_fee_cents: platformFeeCents,
         stripe_payment_intent_id: null,
         status: "pending",
@@ -216,12 +217,13 @@ Deno.serve(async (req) => {
 
     if (insertErr || !donation) {
       if (insertErr?.code === "23505") {
-        return jsonError(409, "you've already donated to this nomination");
+        return jsonError(409, "you've already given to this Polli");
       }
       return jsonError(500, insertErr?.message ?? "failed to create donation");
     }
 
     const giftUnitAmount = GIFT_CENTS + feeCents;
+    const recipientFirst = String(polli.recipient_first || "them").trim() || "them";
     const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [
       {
         quantity: 1,
@@ -229,8 +231,10 @@ Deno.serve(async (req) => {
           currency: "usd",
           unit_amount: giftUnitAmount,
           product_data: {
-            name: `polli gift for ${nom.nominee_first}`,
-            description: "$1 to nominee (fees covered)",
+            name: isKickoff
+              ? `You're Starting a Polli for ${recipientFirst}`
+              : `A Polli gift for ${recipientFirst}`,
+            description: `$1 will go to ${recipientFirst} (fees covered)`,
           },
         },
       },
@@ -243,7 +247,7 @@ Deno.serve(async (req) => {
           unit_amount: keepsakeCents,
           product_data: {
             name: "Voice keepsake",
-            description: "Private voice note keepsake for the nominee",
+            description: "Private voice note keepsake for your recipient",
           },
         },
       });
@@ -252,6 +256,13 @@ Deno.serve(async (req) => {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       customer: customerId,
+      // Collect billing address when Stripe needs it (tax/compliance); card ZIP
+      // for AVS is usually present either way and read from the PaymentMethod.
+      billing_address_collection: "auto",
+      customer_update: {
+        address: "auto",
+        name: "auto",
+      },
       client_reference_id: donation.id,
       success_url: successUrl.includes("{CHECKOUT_SESSION_ID}")
         ? successUrl
@@ -260,21 +271,21 @@ Deno.serve(async (req) => {
       line_items: lineItems,
       payment_intent_data: {
         description: chargeKeepsake
-          ? `polli donation + voice keepsake for ${nom.nominee_first}`
-          : `polli donation to ${nom.nominee_first}`,
+          ? `Polli donation + voice keepsake for ${recipientFirst}`
+          : `Polli donation to ${recipientFirst}`,
         metadata: {
-          nomination_id: nominationId,
+          polli_id: polliId,
           donor_id: user.id,
           donation_id: donation.id,
           cover_fees: coverFees ? "1" : "0",
-          net_to_nominee_cents: String(netCents),
+          net_to_recipient_cents: String(netCents),
           voice_keepsake: chargeKeepsake ? "1" : "0",
           note: note ?? "",
           anonymous: anonymous ? "1" : "0",
         },
       },
       metadata: {
-        nomination_id: nominationId,
+        polli_id: polliId,
         donor_id: user.id,
         donation_id: donation.id,
         voice_keepsake: chargeKeepsake ? "1" : "0",

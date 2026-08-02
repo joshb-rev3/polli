@@ -10,7 +10,7 @@ import {
 } from "../_shared/assemblyai.ts";
 import { corsHeaders, handleCors } from "../_shared/cors.ts";
 
-const MAX_FILE_BYTES = 25 * 1024 * 1024; // 25MB — nomination clips should be short
+const MAX_FILE_BYTES = 25 * 1024 * 1024; // 25MB — voice clips should be short
 
 const ALLOWED_MIME_PREFIXES = ["audio/"];
 const ALLOWED_MIME_EXACT = new Set(["video/webm"]);

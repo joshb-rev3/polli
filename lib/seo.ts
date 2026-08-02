@@ -1,9 +1,9 @@
 /** Site-wide SEO / Open Graph constants for web shares and crawlers. */
 
-export const SITE_NAME = "polli";
-export const SITE_TAGLINE = "Share $1 and endless good…";
+export const SITE_NAME = "Polli";
+export const SITE_TAGLINE = "Share Just $1 and Spread Endless Good";
 export const SITE_DESCRIPTION =
-  "Share $1 and endless good with everyone. Nominate someone, kick it off with a dollar, and watch friends pile on.";
+  "Share Just $1 and Spread Endless Good. Start a Polli for someone you appreciate, kick it off with a dollar, and watch friends spread the love.";
 export const SITE_HOST = "polli-app.com";
 export const SITE_URL = (
   process.env.EXPO_PUBLIC_SITE_URL || `https://${SITE_HOST}`

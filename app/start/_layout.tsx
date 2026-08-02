@@ -1,7 +1,7 @@
 import { Stack } from "expo-router";
 import React from "react";
 
-export default function NominateLayout() {
+export default function StartLayout() {
   return (
     <Stack
       screenOptions={{

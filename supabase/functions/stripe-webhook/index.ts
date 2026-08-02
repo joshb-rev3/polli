@@ -74,6 +74,13 @@ async function onCheckoutCompleted(
       .is("stripe_payment_intent_id", null);
   }
 
+  // Soft-fill home area from Stripe billing ZIP / address when the user skipped signup prompt.
+  await maybeSaveDonorHomeFromStripe(admin, {
+    donorId: session.metadata?.donor_id ?? null,
+    customerDetails: session.customer_details,
+    paymentIntentId: pi ?? null,
+  });
+
   const { data: donation } = await admin
     .from("donations")
     .select("id, status")
@@ -101,6 +108,79 @@ async function onCheckoutCompleted(
     }
     throw new Error(`complete_donation rejected: ${result.error}`);
   }
+}
+
+function normalizeZip(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const cleaned = raw.trim().toUpperCase().replace(/\s+/g, " ");
+  if (!cleaned) return null;
+  // US ZIP or ZIP+4 → 5-digit; keep Canadian-style otherwise truncated lightly
+  const us = cleaned.match(/^(\d{5})(?:-\d{4})?$/);
+  if (us) return us[1];
+  return cleaned.slice(0, 12);
+}
+
+function normalizeRegion(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const cleaned = raw.trim().toUpperCase().replace(/[^A-Z]/g, "");
+  return cleaned.length === 2 ? cleaned : null;
+}
+
+async function maybeSaveDonorHomeFromStripe(
+  admin: ReturnType<typeof adminClient>,
+  opts: {
+    donorId: string | null;
+    customerDetails?: Stripe.Checkout.Session.CustomerDetails | null;
+    paymentIntentId?: string | null;
+    paymentMethodId?: string | null;
+  },
+) {
+  const donorId = opts.donorId;
+  if (!donorId) return;
+
+  let postal = normalizeZip(opts.customerDetails?.address?.postal_code);
+  let city = opts.customerDetails?.address?.city?.trim() || null;
+  let region = normalizeRegion(opts.customerDetails?.address?.state);
+
+  if (!postal || !city || !region) {
+    try {
+      let pm: Stripe.PaymentMethod | null = null;
+      if (opts.paymentMethodId) {
+        pm = await stripe.paymentMethods.retrieve(opts.paymentMethodId);
+      } else if (opts.paymentIntentId) {
+        const pi = await stripe.paymentIntents.retrieve(opts.paymentIntentId, {
+          expand: ["payment_method"],
+        });
+        if (pi.payment_method && typeof pi.payment_method !== "string") {
+          pm = pi.payment_method;
+        }
+      }
+      const addr = pm?.billing_details?.address;
+      postal = postal || normalizeZip(addr?.postal_code);
+      city = city || addr?.city?.trim() || null;
+      region = region || normalizeRegion(addr?.state);
+    } catch (e) {
+      console.warn("maybeSaveDonorHomeFromStripe PM lookup failed:", e);
+    }
+  }
+
+  if (!postal && !city && !region) return;
+
+  const { data: user } = await admin
+    .from("users")
+    .select("home_zip, home_city, home_region")
+    .eq("id", donorId)
+    .maybeSingle();
+  if (!user) return;
+
+  const patch: Record<string, string> = {};
+  if (postal && !user.home_zip) patch.home_zip = postal;
+  if (city && !user.home_city) patch.home_city = city.slice(0, 80);
+  if (region && !user.home_region) patch.home_region = region;
+  if (Object.keys(patch).length === 0) return;
+
+  const { error } = await admin.from("users").update(patch).eq("id", donorId);
+  if (error) console.warn("maybeSaveDonorHomeFromStripe update failed:", error.message);
 }
 
 async function onPaymentSucceeded(
@@ -138,6 +218,13 @@ async function onPaymentSucceeded(
     return;
   }
   if (donation.status === "succeeded") return;
+
+  await maybeSaveDonorHomeFromStripe(admin, {
+    donorId: pi.metadata?.donor_id ?? null,
+    paymentIntentId: pi.id,
+    paymentMethodId:
+      typeof pi.payment_method === "string" ? pi.payment_method : pi.payment_method?.id ?? null,
+  });
 
   const { data: result, error } = await admin.rpc("complete_donation", {
     p_donation_id: donation.id,

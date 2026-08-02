@@ -25,7 +25,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { SiteHead } from "../components/SiteHead";
 import { StripeProviderShim } from "../components/StripeProviderShim";
 import { DemoWalletProvider } from "../lib/demoWallet";
-import { NominationProvider } from "../lib/nomination";
+import { PolliDraftProvider } from "../lib/polliDraft";
 import { SessionProvider } from "../lib/session";
 import { ShareProvider } from "../lib/share";
 import { ToneProvider } from "../lib/tone";
@@ -65,7 +65,7 @@ export default function RootLayout() {
           <SessionProvider>
             <DemoWalletProvider>
               <ToneProvider>
-                <NominationProvider>
+                <PolliDraftProvider>
                   <ShareProvider>
                     <Stack
                       screenOptions={{
@@ -75,7 +75,7 @@ export default function RootLayout() {
                       }}
                     />
                   </ShareProvider>
-                </NominationProvider>
+                </PolliDraftProvider>
               </ToneProvider>
             </DemoWalletProvider>
           </SessionProvider>

@@ -6,7 +6,7 @@ export type LaunchCompletePayload = {
   first: string;
   last: string;
   slug?: string;
-  nominationId?: string;
+  polliId?: string;
   keepsake?: boolean;
   email?: string;
   phone?: string;
@@ -35,7 +35,7 @@ export async function readLaunchComplete(): Promise<LaunchCompletePayload | null
       first: String(parsed.first ?? "").trim(),
       last: String(parsed.last ?? "").trim(),
       slug: parsed.slug ? String(parsed.slug) : undefined,
-      nominationId: parsed.nominationId ? String(parsed.nominationId) : undefined,
+      polliId: parsed.polliId ? String(parsed.polliId) : undefined,
       keepsake: Boolean(parsed.keepsake),
       email: parsed.email ? String(parsed.email).trim() : undefined,
       phone: parsed.phone ? String(parsed.phone).trim() : undefined,
@@ -50,8 +50,8 @@ export async function clearLaunchComplete(): Promise<void> {
   await Promise.resolve(authStorage.removeItem(KEY));
 }
 
-/** Heads-up message so the nominee watches for Polli's claim notice. */
-export function nomineeTipMessage(firstName: string) {
+/** Heads-up message so the recipient watches for Polli's claim notice. */
+export function recipientTipMessage(firstName: string) {
   const name = firstName.trim() || "friend";
   return (
     `Hey ${name} — I started something special for you on Polli. ` +
@@ -60,7 +60,7 @@ export function nomineeTipMessage(firstName: string) {
   );
 }
 
-export function nomineeTipSubject(firstName: string) {
+export function recipientTipSubject(firstName: string) {
   const name = firstName.trim() || "you";
   return `Something special is coming your way, ${name}`;
 }

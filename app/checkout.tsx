@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Alert,
   Platform,
@@ -20,7 +20,7 @@ import { success } from "../lib/haptics";
 import { FEED, QUICK_NOTES } from "../lib/mockData";
 import { savePayComplete } from "../lib/payComplete";
 import { payWithStripe } from "../lib/paymentSheet";
-import { ensureSandboxNomination } from "../lib/sandboxNomination";
+import { ensureSandboxPolli } from "../lib/sandboxPolli";
 import { useSession } from "../lib/session";
 import { stripeConfigured, supabaseConfigured } from "../lib/supabase";
 import { VoiceClip } from "../lib/voice";
@@ -31,7 +31,7 @@ type NoteMode = "type" | "speak";
 export default function Checkout() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { userId } = useSession();
+  const { userId, loading: sessionLoading } = useSession();
   const n = FEED.find((f) => f.id === id);
 
   const [mode, setMode] = useState<NoteMode>("type");
@@ -46,6 +46,16 @@ export default function Checkout() {
   const MAX = 140;
   const firstName = n?.name?.split(" ")[0] || "them";
 
+  useEffect(() => {
+    if (sessionLoading) return;
+    if (!supabaseConfigured) return;
+    if (userId) return;
+    router.replace({
+      pathname: "/auth",
+      params: { next: "checkout", ...(id ? { id: String(id) } : {}) },
+    });
+  }, [sessionLoading, userId, id, router]);
+
   const switchMode = (next: NoteMode) => {
     setMode(next);
     if (next === "type") {
@@ -55,14 +65,14 @@ export default function Checkout() {
     }
   };
 
-  const finish = async (opts?: { nominationId?: string }) => {
+  const finish = async (opts?: { polliId?: string }) => {
     await savePayComplete({
       id: n?.id || "",
       name: n?.name,
       note: note.trim() || undefined,
       anon,
       keepsake,
-      nominationId: opts?.nominationId,
+      polliId: opts?.polliId,
     });
     success();
     router.replace({
@@ -102,34 +112,35 @@ export default function Checkout() {
 
       if (!userId || userId.startsWith("local-demo")) {
         setLoading(false);
-        Alert.alert(
-          "Sign in required",
-          "Use Continue with Google so you have a real Supabase session, then try again.",
-        );
+        router.replace({
+          pathname: "/auth",
+          params: { next: "checkout", ...(id ? { id: String(id) } : {}) },
+        });
         return;
       }
 
       if (!n) {
         setLoading(false);
-        Alert.alert("Missing nomination", "Go back and pick someone to give to.");
+        Alert.alert("Missing Polli", "Go back and pick someone to give to.");
         return;
       }
 
-      const nominationId = await ensureSandboxNomination(n);
+      const polliId = await ensureSandboxPolli(n);
       await savePayComplete({
         id: n.id,
         name: n.name,
         note: note.trim() || undefined,
         anon,
         keepsake,
-        nominationId,
+        polliId,
       });
 
       const result = await payWithStripe({
-        nominationId,
+        polliId,
         note: note.trim() || undefined,
         anonymous: anon,
         voiceKeepsake: keepsake,
+        intent: "gift",
         returnId: n.id,
         successPath: "pay-complete",
         cancelPath: "checkout",
@@ -143,7 +154,7 @@ export default function Checkout() {
       setLoading(false);
       // On web, payWithStripe redirects to Stripe — finish() happens on return via pay-complete
       if (result === "succeeded" && Platform.OS !== "web") {
-        await finish({ nominationId });
+        await finish({ polliId });
       }
     } catch (e: any) {
       setLoading(false);
@@ -292,7 +303,7 @@ export default function Checkout() {
           <View style={styles.summary}>
             <Row label="Your $1 gift" value="$1.00" />
             {keepsake ? <Row label="Voice keepsake" value="$1.00" /> : null}
-            <Row label="Processing & platform" value={formatDollars(FEE_COVER_CENTS)} />
+            <Row label="Processing fees & platform operations" value={formatDollars(FEE_COVER_CENTS)} />
             <View style={styles.summaryDivider} />
             <Row label="Total charged to you" value={formatDollars(totals.totalCents)} bold />
             <Row label={`${firstName} receives`} value={formatDollars(totals.netCents)} green />

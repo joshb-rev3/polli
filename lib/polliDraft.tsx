@@ -4,7 +4,7 @@ import { TranscriptWord, WordSignature } from "./voice";
 
 export type NoteMode = "type" | "speak";
 
-export interface NominationDraft {
+export interface PolliDraft {
   first: string;
   last: string;
   notify: "email" | "phone" | "both";
@@ -13,7 +13,7 @@ export interface NominationDraft {
   catId: string;
   /** Public campaign overview — why people should donate. Visible on feed & share page. */
   overview: string;
-  /** Private note for the nominee only. */
+  /** Private note for the recipient only. */
   note: string;
   noteMode: NoteMode;
   noteAudioUri: string | null;
@@ -23,7 +23,7 @@ export interface NominationDraft {
   timeline: "7" | "14" | "30";
 }
 
-const empty: NominationDraft = {
+const empty: PolliDraft = {
   first: "",
   last: "",
   notify: "email",
@@ -41,21 +41,21 @@ const empty: NominationDraft = {
 };
 
 interface Ctx {
-  draft: NominationDraft;
-  set: (patch: Partial<NominationDraft>) => void;
+  draft: PolliDraft;
+  set: (patch: Partial<PolliDraft>) => void;
   reset: () => void;
 }
 
-const NominationContext = createContext<Ctx>({
+const PolliDraftContext = createContext<Ctx>({
   draft: empty,
   set: () => {},
   reset: () => {},
 });
 
-export function NominationProvider({ children }: { children: React.ReactNode }) {
-  const [draft, setDraft] = useState<NominationDraft>(empty);
+export function PolliDraftProvider({ children }: { children: React.ReactNode }) {
+  const [draft, setDraft] = useState<PolliDraft>(empty);
   return (
-    <NominationContext.Provider
+    <PolliDraftContext.Provider
       value={{
         draft,
         set: (p) => setDraft((d) => ({ ...d, ...p })),
@@ -63,38 +63,38 @@ export function NominationProvider({ children }: { children: React.ReactNode }) 
       }}
     >
       {children}
-    </NominationContext.Provider>
+    </PolliDraftContext.Provider>
   );
 }
 
-export function useNomination() {
-  return useContext(NominationContext);
+export function usePolliDraft() {
+  return useContext(PolliDraftContext);
 }
 
 /** True when the draft includes a paid voice keepsake (+$1). */
 export function hasVoiceKeepsake(
-  draft: Pick<NominationDraft, "noteMode" | "noteAudioUri">,
+  draft: Pick<PolliDraft, "noteMode" | "noteAudioUri">,
 ) {
   return draft.noteMode === "speak" && Boolean(draft.noteAudioUri);
 }
 
 /** Product dollars before fees: $1 kickoff + optional $1 Speak keepsake. */
 export function launchProductDollars(
-  draft: Pick<NominationDraft, "noteMode" | "noteAudioUri">,
+  draft: Pick<PolliDraft, "noteMode" | "noteAudioUri">,
 ) {
   return hasVoiceKeepsake(draft) ? 2 : 1;
 }
 
 /** Alias for launchProductDollars (product total before fees). */
 export function launchTotalDollars(
-  draft: Pick<NominationDraft, "noteMode" | "noteAudioUri">,
+  draft: Pick<PolliDraft, "noteMode" | "noteAudioUri">,
 ) {
   return launchProductDollars(draft);
 }
 
-/** What the nominator is charged, including fees + optional keepsake. */
+/** What the starter is charged, including fees + optional keepsake. */
 export function launchChargeDollars(
-  draft: Pick<NominationDraft, "noteMode" | "noteAudioUri">,
+  draft: Pick<PolliDraft, "noteMode" | "noteAudioUri">,
 ) {
   return dollars(giftTotals({ keepsake: hasVoiceKeepsake(draft) }).totalCents);
 }

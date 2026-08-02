@@ -60,7 +60,7 @@ export async function transcribeAudio(
   } catch (err) {
     if ((err as Error).name === "AbortError") throw err;
     throw new Error(
-      "Could not reach the transcription service. Check your network and EXPO_PUBLIC_SUPABASE_URL, then restart Expo."
+      "We couldn't reach transcription right now. Check your connection and try again.",
     );
   }
 
@@ -72,7 +72,9 @@ export async function transcribeAudio(
   }
 
   if (!response.ok) {
-    throw new Error(data.error || transcribeErrorMessage(response.status));
+    throw new Error(
+      friendlyClientTranscriptionError(data.error || transcribeErrorMessage(response.status)),
+    );
   }
 
   return {
@@ -84,18 +86,38 @@ export async function transcribeAudio(
 
 function transcribeErrorMessage(status: number): string {
   if (status === 404) {
-    return (
-      "The transcribe-story function is not deployed yet. Run: " +
-      "supabase secrets set ASSEMBLYAI_API_KEY=your_key && supabase functions deploy transcribe-story"
-    );
+    return "Voice transcription isn't available right now. Please try again later.";
   }
   if (status === 401 || status === 403) {
-    return "Supabase rejected the request. Check EXPO_PUBLIC_SUPABASE_ANON_KEY in .env and restart Expo.";
+    return "Voice transcription isn't available right now. Please try again later.";
+  }
+  if (status === 413) {
+    return "That recording is a bit too long. Try a shorter clip.";
+  }
+  if (status === 422) {
+    return "We couldn't hear any speech in that recording. Try again a little closer to the mic, or speak a bit louder.";
   }
   if (status === 500) {
-    return "Transcription server error. Confirm ASSEMBLYAI_API_KEY is set in Supabase secrets.";
+    return "Something went wrong while transcribing. Please try again.";
   }
-  return `Transcription failed (status ${status}).`;
+  return "We couldn't transcribe that recording. Please try again.";
+}
+
+/** Soften any leftover provider jargon before showing it in the UI. */
+export function friendlyClientTranscriptionError(message: string): string {
+  const lower = message.toLowerCase();
+  if (
+    lower.includes("assemblyai") ||
+    lower.includes("language_detection") ||
+    lower.includes("no spoken audio") ||
+    lower.includes("no speech")
+  ) {
+    return "We couldn't hear any speech in that recording. Try again a little closer to the mic, or speak a bit louder.";
+  }
+  if (lower.includes("network") || lower.includes("reach the transcription")) {
+    return "We couldn't reach transcription right now. Check your connection and try again.";
+  }
+  return message;
 }
 
 /** Demo fallback — only when Supabase is unconfigured or EXPO_PUBLIC_MOCK_TRANSCRIBE=1. */

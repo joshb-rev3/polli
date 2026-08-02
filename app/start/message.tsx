@@ -10,11 +10,11 @@ import {
 } from "react-native";
 import { NavBar } from "../../components/NavBar";
 import { Content } from "../../components/Content";
-import { NominateFooter } from "../../components/NominateFooter";
+import { StartFooter } from "../../components/StartFooter";
 import { Stepper } from "../../components/Stepper";
 import { VoiceMessageComposer } from "../../components/voice/VoiceMessageComposer";
 import { CATEGORIES, INSPO } from "../../lib/mockData";
-import { useNomination } from "../../lib/nomination";
+import { usePolliDraft } from "../../lib/polliDraft";
 import { useTone } from "../../lib/tone";
 import { VoiceClip } from "../../lib/voice";
 import { colors, fonts, shadows } from "../../theme";
@@ -24,7 +24,7 @@ const TOTAL = 6;
 
 export default function Message() {
   const router = useRouter();
-  const { draft, set } = useNomination();
+  const { draft, set } = usePolliDraft();
   const { copy } = useTone();
   const cat = CATEGORIES.find((c) => c.id === draft.catId);
 
@@ -68,7 +68,7 @@ export default function Message() {
         <View style={styles.card}>
           <Text style={styles.title}>A private note for {draft.first || "them"}</Text>
           <Text style={styles.sub}>
-            This is just for {draft.first || "your nominee"} — friends won't see it on the campaign.
+            This is just for {draft.first || "your recipient"} — friends won't see it on the campaign.
           </Text>
           <Text style={styles.privatePill}>Private · only they will see this</Text>
 
@@ -166,10 +166,10 @@ export default function Message() {
         </View>
         </Content>
       </ScrollView>
-      <NominateFooter
+      <StartFooter
         label="Continue"
         disabled={!canContinue}
-        onPress={() => router.push("/nominate/timeline")}
+        onPress={() => router.push("/start/timeline")}
       />
     </View>
   );

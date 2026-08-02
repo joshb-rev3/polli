@@ -1,4 +1,4 @@
-import { hasVoiceKeepsake, type NominationDraft } from "./nomination";
+import { hasVoiceKeepsake, type PolliDraft } from "./polliDraft";
 import { supabase, supabaseConfigured } from "./supabase";
 
 function slugify(input: string) {
@@ -9,10 +9,10 @@ function slugify(input: string) {
 }
 
 /**
- * Persists a live nomination from the nominate draft so Stripe can charge the kickoff gift.
+ * Persists a live Polli from the start draft so Stripe can charge the kickoff gift.
  */
-export async function createLiveNomination(draft: NominationDraft): Promise<{
-  nominationId: string;
+export async function createLivePolli(draft: PolliDraft): Promise<{
+  polliId: string;
   slug: string;
 }> {
   if (!supabaseConfigured) {
@@ -32,11 +32,11 @@ export async function createLiveNomination(draft: NominationDraft): Promise<{
   const voiceKeepsake = hasVoiceKeepsake(draft);
   const baseRow = {
     slug,
-    nominator_id: user.id,
-    nominee_first: draft.first.trim(),
-    nominee_last: draft.last.trim() || "Friend",
-    nominee_email: draft.email.trim() || null,
-    nominee_phone: draft.phone.trim() || null,
+    starter_id: user.id,
+    recipient_first: draft.first.trim(),
+    recipient_last: draft.last.trim() || "Friend",
+    recipient_email: draft.email.trim() || null,
+    recipient_phone: draft.phone.trim() || null,
     cat_id: draft.catId || "just-because",
     story: draft.overview.trim(),
     timeline_days: timelineDays,
@@ -45,7 +45,7 @@ export async function createLiveNomination(draft: NominationDraft): Promise<{
   };
 
   let { data, error } = await supabase
-    .from("nominations")
+    .from("pollis")
     .insert({
       ...baseRow,
       private_note: draft.note.trim() || null,
@@ -57,15 +57,15 @@ export async function createLiveNomination(draft: NominationDraft): Promise<{
   // Older DBs without migration 0008 still launch; Stripe uses the client voiceKeepsake flag.
   if (error && /private_note|voice_keepsake|schema cache/i.test(error.message)) {
     ({ data, error } = await supabase
-      .from("nominations")
+      .from("pollis")
       .insert(baseRow)
       .select("id, slug")
       .single());
   }
 
   if (error || !data) {
-    throw new Error(error?.message ?? "Failed to create nomination");
+    throw new Error(error?.message ?? "Failed to create Polli");
   }
 
-  return { nominationId: data.id as string, slug: data.slug as string };
+  return { polliId: data.id as string, slug: data.slug as string };
 }

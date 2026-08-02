@@ -69,7 +69,7 @@ export function ShareSheet({ open, onClose, url, name }: Props) {
   const handleShare = async () => {
     try {
       await Share.share({
-        message: `Chip in $1 for ${name || "someone kind"} on Polli — every dollar piles on: ${url}`,
+        message: `Chip in $1 for ${name || "someone kind"} on Polli — every dollar and share helps spread the love: ${url}`,
         url,
         title: name ? `Help ${name}` : "Share on Polli",
       });

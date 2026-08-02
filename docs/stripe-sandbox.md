@@ -27,7 +27,7 @@ npx supabase secrets set \
 
 npx supabase functions deploy create-payment-intent
 npx supabase functions deploy stripe-webhook
-npx supabase functions deploy sandbox-ensure-nomination
+npx supabase functions deploy sandbox-ensure-polli
 npx supabase functions deploy connect-onboard
 npx supabase functions deploy request-cashout
 ```

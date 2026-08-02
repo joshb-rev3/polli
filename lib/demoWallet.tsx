@@ -1,9 +1,9 @@
 import React, { createContext, useContext, useMemo, useState } from "react";
 
-/** Simulated nomination that closed — Apple demo users land with this balance. */
+/** Simulated Polli that closed — Apple demo users land with this balance. */
 export const DEMO_PAYOUT_CENTS = 4700; // $47.00
-export const DEMO_NOMINATION_FROM = "Miranda Bauer";
-export const DEMO_NOMINATION_REASON = "Amazing Teacher";
+export const DEMO_POLLI_FROM = "Miranda Bauer";
+export const DEMO_POLLI_REASON = "Amazing Teacher";
 
 export type GiftCardBrand = {
   id: string;

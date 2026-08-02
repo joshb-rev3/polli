@@ -43,12 +43,12 @@ async function invokeEdge<T extends Record<string, unknown>>(
 }
 
 export async function createPaymentIntent(opts: {
-  nominationId: string;
+  polliId: string;
   note?: string;
   anonymous?: boolean;
   voiceKeepsake?: boolean;
 }): Promise<IntentResult> {
-  return invokeEdge<IntentResult>("create-payment-intent", { ...opts });
+  return invokeEdge("create-payment-intent", { ...opts }) as unknown as Promise<IntentResult>;
 }
 
 export async function getConnectOnboardingUrl(): Promise<string> {
@@ -57,10 +57,12 @@ export async function getConnectOnboardingUrl(): Promise<string> {
 }
 
 export async function createCheckoutSession(opts: {
-  nominationId: string;
+  polliId: string;
   note?: string;
   anonymous?: boolean;
   voiceKeepsake?: boolean;
+  /** kickoff = starting a Polli; gift = chipping in on someone's Polli */
+  intent?: "kickoff" | "gift";
   successUrl: string;
   cancelUrl: string;
 }): Promise<{ url: string; sessionId: string; donationId: string }> {

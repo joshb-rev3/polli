@@ -8,9 +8,9 @@ import type { PropsWithChildren } from "react";
 export default function Root({ children }: PropsWithChildren) {
   const siteUrl = process.env.EXPO_PUBLIC_SITE_URL || "https://polli-app.com";
   const ogImage = `${siteUrl.replace(/\/$/, "")}/og-image.png`;
-  const title = "polli — Share $1 and endless good…";
+  const title = "Polli — Share Just $1 and Spread Endless Good";
   const description =
-    "Share $1 and endless good with everyone. Nominate someone, kick it off with a dollar, and watch friends pile on.";
+    "Share Just $1 and Spread Endless Good. Start a Polli for someone you appreciate, kick it off with a dollar, and watch friends spread the love.";
 
   return (
     <html lang="en">
@@ -25,7 +25,7 @@ export default function Root({ children }: PropsWithChildren) {
 
         <title>{title}</title>
         <meta name="description" content={description} />
-        <meta name="application-name" content="polli" />
+        <meta name="application-name" content="Polli" />
         <meta name="theme-color" content="#1B4D3E" />
         <meta name="color-scheme" content="light" />
 
@@ -35,7 +35,7 @@ export default function Root({ children }: PropsWithChildren) {
         <link rel="manifest" href="/site.webmanifest" />
         <link rel="canonical" href={siteUrl} />
 
-        <meta property="og:site_name" content="polli" />
+        <meta property="og:site_name" content="Polli" />
         <meta property="og:title" content={title} />
         <meta property="og:description" content={description} />
         <meta property="og:type" content="website" />
@@ -46,7 +46,7 @@ export default function Root({ children }: PropsWithChildren) {
         <meta property="og:image:type" content="image/png" />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
-        <meta property="og:image:alt" content="polli — Share $1 and endless good…" />
+        <meta property="og:image:alt" content="Polli — Share Just $1 and Spread Endless Good" />
 
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={title} />
@@ -54,7 +54,7 @@ export default function Root({ children }: PropsWithChildren) {
         <meta name="twitter:image" content={ogImage} />
 
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-title" content="polli" />
+        <meta name="apple-mobile-web-app-title" content="Polli" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="msapplication-TileColor" content="#1B4D3E" />

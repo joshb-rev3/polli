@@ -1,6 +1,7 @@
 import { useRouter } from "expo-router";
 import React from "react";
 import {
+  ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -10,14 +11,17 @@ import {
 } from "react-native";
 import { NavBar } from "../../components/NavBar";
 import { Content } from "../../components/Content";
-import { NominateFooter } from "../../components/NominateFooter";
+import { StartFooter } from "../../components/StartFooter";
 import { Stepper } from "../../components/Stepper";
-import { useNomination } from "../../lib/nomination";
+import { usePolliDraft } from "../../lib/polliDraft";
+import { formatPhoneInput } from "../../lib/phone";
+import { useRequireAuth } from "../../lib/useRequireAuth";
 import { colors, fonts, shadows } from "../../theme";
 
 export default function Who() {
   const router = useRouter();
-  const { draft, set } = useNomination();
+  const { ready, loading } = useRequireAuth("start");
+  const { draft, set } = usePolliDraft();
   const ok = draft.first.trim() && draft.last.trim();
 
   const NOTIFY = [
@@ -29,12 +33,20 @@ export default function Who() {
   const showEmail = draft.notify === "email" || draft.notify === "both";
   const showPhone = draft.notify === "phone" || draft.notify === "both";
 
+  if (loading || !ready) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.paper, alignItems: "center", justifyContent: "center" }}>
+        <ActivityIndicator color={colors.green} />
+      </View>
+    );
+  }
   return (
     <View style={{ flex: 1, backgroundColor: colors.paper }}>
       <NavBar back title="Back" variant="paper" onBack={() => router.back()} />
       <ScrollView
         contentContainerStyle={{ paddingBottom: 24 }}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
       >
         <Content padTop={20}>
         <Stepper step={0} total={6} />
@@ -46,18 +58,20 @@ export default function Who() {
               <TextInput
                 value={draft.first}
                 onChangeText={(t) => set({ first: t })}
-                placeholder="Josh"
                 placeholderTextColor={colors.inkMuted}
                 style={styles.input}
+                autoComplete="given-name"
+                textContentType="givenName"
               />
             </Field>
             <Field label="Last name">
               <TextInput
                 value={draft.last}
                 onChangeText={(t) => set({ last: t })}
-                placeholder="Bauer"
                 placeholderTextColor={colors.inkMuted}
                 style={styles.input}
+                autoComplete="family-name"
+                textContentType="familyName"
               />
             </Field>
             <View>
@@ -85,6 +99,8 @@ export default function Who() {
                       keyboardType="email-address"
                       autoCapitalize="none"
                       autoCorrect={false}
+                      autoComplete="email"
+                      textContentType="emailAddress"
                       style={styles.input}
                     />
                   </Field>
@@ -93,10 +109,16 @@ export default function Who() {
                   <Field label="Mobile number">
                     <TextInput
                       value={draft.phone}
-                      onChangeText={(t) => set({ phone: t })}
-                      placeholder="(555) 123-4567"
+                      onChangeText={(t) => set({ phone: formatPhoneInput(t) })}
+                      placeholder="555-123-4567"
                       placeholderTextColor={colors.inkMuted}
+                      // Digits only — dashes are inserted by formatPhoneInput.
+                      // phone-pad has no dash key (that was trapping people on mobile web).
                       keyboardType="phone-pad"
+                      autoComplete="tel"
+                      textContentType="telephoneNumber"
+                      dataDetectorTypes="none"
+                      maxLength={12}
                       style={styles.input}
                     />
                   </Field>
@@ -107,10 +129,10 @@ export default function Who() {
         </View>
         </Content>
       </ScrollView>
-      <NominateFooter
+      <StartFooter
         label="Continue"
         disabled={!ok}
-        onPress={() => router.push("/nominate/category")}
+        onPress={() => router.push("/start/category")}
       />
     </View>
   );

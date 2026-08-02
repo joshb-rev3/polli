@@ -3,15 +3,15 @@ import React from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { NavBar } from "../../components/NavBar";
 import { Content } from "../../components/Content";
-import { NominateFooter } from "../../components/NominateFooter";
+import { StartFooter } from "../../components/StartFooter";
 import { Stepper } from "../../components/Stepper";
 import { TIMELINES } from "../../lib/mockData";
-import { useNomination } from "../../lib/nomination";
+import { usePolliDraft } from "../../lib/polliDraft";
 import { colors, fonts, shadows } from "../../theme";
 
 export default function Timeline() {
   const router = useRouter();
-  const { draft, set } = useNomination();
+  const { draft, set } = usePolliDraft();
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.paper }}>
@@ -22,7 +22,8 @@ export default function Timeline() {
         <View style={styles.card}>
           <Text style={styles.title}>How long should it run?</Text>
           <Text style={styles.sub}>
-            Every $1 matters. No goals, no pressure — just a window for friends to pile on.
+            Every $1 matters. No goals, no pressure — just a window for friends to pile on the love
+            and gratitude.
           </Text>
           <Text style={styles.fieldLabel}>TIMELINE</Text>
           <View style={{ gap: 8, marginTop: 6 }}>
@@ -42,13 +43,13 @@ export default function Timeline() {
           </View>
           <View style={styles.sage}>
             <Text style={styles.sageText}>
-              💚 Each giver contributes exactly $1 — that's the whole thing. After the window closes, funds pay out within 5 business days.
+              💚 Each giver contributes $1 — that's the whole thing. After the window closes, funds pay out within 5 business days.
             </Text>
           </View>
         </View>
         </Content>
       </ScrollView>
-      <NominateFooter label="Continue" onPress={() => router.push("/nominate/review")} />
+      <StartFooter label="Continue" onPress={() => router.push("/start/review")} />
     </View>
   );
 }

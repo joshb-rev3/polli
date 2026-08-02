@@ -110,7 +110,7 @@ Deno.serve(async (req) => {
           amount: amountCents,
           currency: "usd",
           destination: profile.stripe_connect_id,
-          description: "polli cashout",
+          description: "Polli cashout",
           metadata: {
             polli_payout_id: payoutId,
             supabase_user_id: user.id,

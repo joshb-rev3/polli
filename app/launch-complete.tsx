@@ -19,13 +19,13 @@ import { IconClose, IconHeart, IconLink, IconMail, IconMsg, IconShare } from "..
 import { NavBar } from "../components/NavBar";
 import {
   clearLaunchComplete,
-  nomineeTipMessage,
-  nomineeTipSubject,
+  recipientTipMessage,
+  recipientTipSubject,
   readLaunchComplete,
   type LaunchCompletePayload,
 } from "../lib/launchComplete";
 import { tap } from "../lib/haptics";
-import { hasVoiceKeepsake, useNomination } from "../lib/nomination";
+import { hasVoiceKeepsake, usePolliDraft } from "../lib/polliDraft";
 import { SITE_HOST } from "../lib/seo";
 import { useShare } from "../lib/share";
 import { supabase, supabaseConfigured } from "../lib/supabase";
@@ -63,10 +63,10 @@ export default function LaunchComplete() {
     first?: string;
     last?: string;
     slug?: string;
-    nominationId?: string;
+    polliId?: string;
     keepsake?: string;
   }>();
-  const { draft, reset } = useNomination();
+  const { draft, reset } = usePolliDraft();
   const { copy } = useTone();
   const { openShare } = useShare();
   const [copied, setCopied] = useState(false);
@@ -85,14 +85,14 @@ export default function LaunchComplete() {
       const paramFirst = paramOne(params.first).trim();
       const paramLast = paramOne(params.last).trim();
       const paramSlug = paramOne(params.slug).trim();
-      const paramNomId = paramOne(params.nominationId).trim();
+      const paramPolliId = paramOne(params.polliId).trim();
 
-      if (paramFirst || paramSlug || paramNomId) {
+      if (paramFirst || paramSlug || paramPolliId) {
         resolved = {
           first: paramFirst || fromStore?.first || "",
           last: paramLast || fromStore?.last || "",
           slug: paramSlug || fromStore?.slug,
-          nominationId: paramNomId || fromStore?.nominationId,
+          polliId: paramPolliId || fromStore?.polliId,
           keepsake: paramOne(params.keepsake) === "1" || Boolean(fromStore?.keepsake),
           email: fromStore?.email,
           phone: fromStore?.phone,
@@ -100,20 +100,20 @@ export default function LaunchComplete() {
         };
       }
 
-      if (resolved && !resolved.first && resolved.nominationId && supabaseConfigured) {
+      if (resolved && !resolved.first && resolved.polliId && supabaseConfigured) {
         const { data } = await supabase
-          .from("nominations")
-          .select("nominee_first, nominee_last, slug, nominee_email, nominee_phone")
-          .eq("id", resolved.nominationId)
+          .from("pollis")
+          .select("recipient_first, recipient_last, slug, recipient_email, recipient_phone")
+          .eq("id", resolved.polliId)
           .maybeSingle();
         if (data && alive) {
           resolved = {
             ...resolved,
-            first: String(data.nominee_first ?? "").trim(),
-            last: String(data.nominee_last ?? "").trim(),
+            first: String(data.recipient_first ?? "").trim(),
+            last: String(data.recipient_last ?? "").trim(),
             slug: resolved.slug || String(data.slug ?? ""),
-            email: resolved.email || String(data.nominee_email ?? "").trim() || undefined,
-            phone: resolved.phone || String(data.nominee_phone ?? "").trim() || undefined,
+            email: resolved.email || String(data.recipient_email ?? "").trim() || undefined,
+            phone: resolved.phone || String(data.recipient_phone ?? "").trim() || undefined,
           };
         }
       }
@@ -123,7 +123,7 @@ export default function LaunchComplete() {
     return () => {
       alive = false;
     };
-  }, [params.first, params.last, params.slug, params.nominationId, params.keepsake]);
+  }, [params.first, params.last, params.slug, params.polliId, params.keepsake]);
 
   const firstName =
     paramOne(params.first).trim() || stored?.first || draft.first.trim();
@@ -142,8 +142,8 @@ export default function LaunchComplete() {
   const shareUrl = `https://${SITE_HOST}/${slug}`;
   const total = keepsake ? 2 : 1;
 
-  const tipBody = useMemo(() => nomineeTipMessage(firstName), [firstName]);
-  const tipSubject = useMemo(() => nomineeTipSubject(firstName), [firstName]);
+  const tipBody = useMemo(() => recipientTipMessage(firstName), [firstName]);
+  const tipSubject = useMemo(() => recipientTipSubject(firstName), [firstName]);
 
   const home = async () => {
     await clearLaunchComplete();
@@ -222,17 +222,17 @@ export default function LaunchComplete() {
             {total > 1
               ? `You kicked it off with $${total} (including your voice keepsake).`
               : "You gave the first dollar."}{" "}
-            Now share it — every share helps friends pile on.
+            Now share it — every share helps spread the love.
           </Text>
         </View>
 
         <View style={styles.panel}>
           <View style={styles.primaryCard}>
             <Text style={styles.stepEyebrow}>STEP 1 · MOST IMPORTANT</Text>
-            <Text style={styles.cardTitle}>Share so people pile on</Text>
+            <Text style={styles.cardTitle}>Share so people spread the love</Text>
             <Text style={styles.cardBody}>
-              Post the link to your stories, group chats, and feeds. The more people who see it,
-              the more dollars {displayName} gets.
+              Post the link to your stories, group chats, personal text threads, and feeds. The more
+              people who see it, the more dollars (and love) {displayName} gets.
             </Text>
 
             <Pressable style={styles.linkChip} onPress={copyLink} accessibilityRole="button">

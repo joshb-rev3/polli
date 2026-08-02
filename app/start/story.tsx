@@ -10,10 +10,10 @@ import {
 } from "react-native";
 import { NavBar } from "../../components/NavBar";
 import { Content } from "../../components/Content";
-import { NominateFooter } from "../../components/NominateFooter";
+import { StartFooter } from "../../components/StartFooter";
 import { Stepper } from "../../components/Stepper";
 import { CATEGORIES, OVERVIEW_INSPO } from "../../lib/mockData";
-import { useNomination } from "../../lib/nomination";
+import { usePolliDraft } from "../../lib/polliDraft";
 import { colors, fonts, shadows } from "../../theme";
 
 const MAX = 480;
@@ -21,7 +21,7 @@ const TOTAL = 6;
 
 export default function Story() {
   const router = useRouter();
-  const { draft, set } = useNomination();
+  const { draft, set } = usePolliDraft();
   const cat = CATEGORIES.find((c) => c.id === draft.catId);
   const canContinue = Boolean(draft.overview.trim());
 
@@ -87,10 +87,10 @@ export default function Story() {
         </View>
         </Content>
       </ScrollView>
-      <NominateFooter
+      <StartFooter
         label="Continue"
         disabled={!canContinue}
-        onPress={() => router.push("/nominate/message")}
+        onPress={() => router.push("/start/message")}
       />
     </View>
   );

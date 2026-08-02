@@ -1,7 +1,7 @@
 {
-  "name": "polli",
-  "short_name": "polli",
-  "description": "Share $1 and endless good with everyone.",
+  "name": "Polli",
+  "short_name": "Polli",
+  "description": "Share Just $1 and Spread Endless Good",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#FFFBF5",

@@ -12,8 +12,8 @@ export interface FeedItem {
   name: string;
   role: string;
   cat: Category;
-  nominator: string;
-  nominatorAv: string;
+  starter: string;
+  starterAv: string;
   story: string;
   storyAudioUri?: string;
   storyAudioDurationMs?: number;
@@ -71,8 +71,8 @@ export const FEED: FeedItem[] = [
     name: "Ms. Eileen Ortega",
     role: "Amazing Teacher",
     cat: CATEGORIES[3],
-    nominator: "Miranda Bauer",
-    nominatorAv: "M",
+    starter: "Miranda Bauer",
+    starterAv: "M",
     story:
       "Ms. Ortega stayed after school three times this week to help my 3rd grader work through his reading. She asked nothing for herself — just packed an extra lunch and handed over a stack of library books. She is an A+ in everything.",
     photo: ["#FFC56E", "#FF8A6A"],
@@ -86,8 +86,8 @@ export const FEED: FeedItem[] = [
     name: "Marcus Reyes",
     role: "Night-shift Nurse",
     cat: CATEGORIES[4],
-    nominator: "Dana S.",
-    nominatorAv: "D",
+    starter: "Dana S.",
+    starterAv: "D",
     story:
       "Marcus worked a 14-hour shift and still drove my mom home when her ride fell through. He's the quietest kind of hero and he deserves a lunch that isn't a vending machine granola bar.",
     photo: ["#9AD8F0", "#7BA3F0"],
@@ -101,8 +101,8 @@ export const FEED: FeedItem[] = [
     name: "Priya Mehta",
     role: "First-Time Mom",
     cat: CATEGORIES[5],
-    nominator: "Aunt Judy",
-    nominatorAv: "J",
+    starter: "Aunt Judy",
+    starterAv: "J",
     story:
       "Baby Kiran arrived two weeks early and Priya is running on vibes and oat milk. Her mom group is spreading the word so she can pick up dinner without math. Just because.",
     photo: ["#F8B4CC", "#FF8F72"],
@@ -116,8 +116,8 @@ export const FEED: FeedItem[] = [
     name: "Coach Bo Williams",
     role: "Just Because",
     cat: CATEGORIES[0],
-    nominator: "The 2018 Team",
-    nominatorAv: "B",
+    starter: "The 2018 Team",
+    starterAv: "B",
     story:
       "Coach Bo never missed a Saturday. Not one. Twenty-two of us got together to say thank you — and to buy him the pair of running shoes he absolutely will not buy himself.",
     photo: ["#B5E08A", "#6DC9A0"],
@@ -133,14 +133,14 @@ export const ME = {
   handle: "@you",
   given: 7,
   received: 0,
-  nominated: 2,
+  started: 2,
   eligible: true,
 };
 
 /** Gifts the signed-in user has already made. Counts stay hidden on feed/share until then. */
 export const MY_GIVES: Array<{
   id: string;
-  nominationId: string;
+  polliId: string;
   name: string;
   when: string;
   amount: number;
@@ -150,7 +150,7 @@ export const MY_GIVES: Array<{
 }> = [
   {
     id: "g1",
-    nominationId: "n1",
+    polliId: "n1",
     name: "Ms. Eileen Ortega",
     when: "today",
     amount: 1.5,
@@ -159,7 +159,7 @@ export const MY_GIVES: Array<{
   },
   {
     id: "g2",
-    nominationId: "n2",
+    polliId: "n2",
     name: "Marcus Reyes",
     when: "last week",
     amount: 1.5,
@@ -167,19 +167,19 @@ export const MY_GIVES: Array<{
   },
 ];
 
-/** True once the viewer has piled on — unlocks giver counts on feed & shared pages. */
-export function hasDonatedTo(nominationId: string): boolean {
-  return MY_GIVES.some((g) => g.nominationId === nominationId);
+/** True once the viewer has contributed — unlocks giver counts on feed & shared pages. */
+export function hasDonatedTo(polliId: string): boolean {
+  return MY_GIVES.some((g) => g.polliId === polliId);
 }
 
-/** Viewer's private note for a nomination, if they donated and left one. */
-export function myNoteFor(nominationId: string): string | null {
-  const gift = MY_GIVES.find((g) => g.nominationId === nominationId);
+/** Viewer's private note for a Polli, if they donated and left one. */
+export function myNoteFor(polliId: string): string | null {
+  const gift = MY_GIVES.find((g) => g.polliId === polliId);
   const note = gift?.note?.trim();
   return note ? note : null;
 }
 
-export const MY_NOMINATIONS = [
+export const MY_POLLIS = [
   {
     id: "m1",
     name: "Uncle Dev",
@@ -214,7 +214,7 @@ export const NOTES: Record<string, Note[]> = {
   n2: [
     { from: "Maya", av: "M", text: "Nurses are angels and you are THE angel.", when: "3h" },
     { from: "anonymous bee", av: "🐝", text: "Buy yourself a real lunch please 🥪", when: "6h", anon: true },
-    { from: "Jordan", av: "J", text: "Proud to pile on for you, Marcus.", when: "1d" },
+    { from: "Jordan", av: "J", text: "Proud to help spread the love, Marcus.", when: "1d" },
   ],
   n3: [
     { from: "Aunt Judy", av: "J", text: "Sleep when he sleeps. We got dinner. 🤍", when: "4h" },
@@ -232,7 +232,7 @@ export const NOTES: Record<string, Note[]> = {
 
 export const QUICK_NOTES = [
   "You make the world sweeter 🌼",
-  "Proud to pile on for you",
+  "Proud to help spread the love",
   "Pass it along — we got you",
   "This is the tiniest, loudest thank-you",
   "One petal, with love",

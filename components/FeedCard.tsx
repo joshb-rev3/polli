@@ -19,7 +19,7 @@ interface Props {
   onShare: (n: FeedItem) => void;
 }
 
-/** Feed item — matches nominee detail: cream header, quiet meta, why-first body. */
+/** Feed item — matches Polli detail: cream header, quiet meta, why-first body. */
 export function FeedCard({ n, viewerHasDonated = false, onGive, onOpen, onShare }: Props) {
   const [bursts, setBursts] = useState<{ id: number; x: number }[]>([]);
   const first = n.name.split(" ")[0];
@@ -72,12 +72,12 @@ export function FeedCard({ n, viewerHasDonated = false, onGive, onOpen, onShare 
 
       <Pressable onPress={() => onOpen(n)} style={styles.whyBlock}>
         <Text style={styles.eyebrow}>WHY CHIP IN</Text>
-        <View style={styles.nominator}>
-          <View style={styles.nomAv}>
-            <Text style={styles.nomAvText}>{n.nominatorAv}</Text>
+        <View style={styles.starter}>
+          <View style={styles.starterAv}>
+            <Text style={styles.starterAvText}>{n.starterAv}</Text>
           </View>
-          <Text style={styles.nomText}>
-            <Text style={{ fontFamily: fonts.bodyBold }}>{n.nominator}</Text> shared this overview:
+          <Text style={styles.starterText}>
+            <Text style={{ fontFamily: fonts.bodyBold }}>{n.starter}</Text> shared this overview:
           </Text>
         </View>
         <Text style={styles.story}>"{n.story}"</Text>
@@ -211,12 +211,12 @@ const styles = StyleSheet.create({
     color: colors.ink2,
     letterSpacing: 0.88,
   },
-  nominator: {
+  starter: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
   },
-  nomAv: {
+  starterAv: {
     width: 32,
     height: 32,
     borderRadius: 16,
@@ -224,12 +224,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  nomAvText: {
+  starterAvText: {
     color: "#fff",
     fontFamily: fonts.bodyBold,
     fontSize: 13,
   },
-  nomText: {
+  starterText: {
     flex: 1,
     fontFamily: fonts.body,
     fontSize: 13,

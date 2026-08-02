@@ -8,7 +8,7 @@ export type PayCompletePayload = {
   note?: string;
   anon?: boolean;
   keepsake?: boolean;
-  nominationId?: string;
+  polliId?: string;
 };
 
 async function readRaw(): Promise<string | null> {
@@ -31,7 +31,7 @@ export async function readPayComplete(): Promise<PayCompletePayload | null> {
       note: parsed.note ? String(parsed.note) : undefined,
       anon: Boolean(parsed.anon),
       keepsake: Boolean(parsed.keepsake),
-      nominationId: parsed.nominationId ? String(parsed.nominationId) : undefined,
+      polliId: parsed.polliId ? String(parsed.polliId) : undefined,
     };
   } catch {
     return null;

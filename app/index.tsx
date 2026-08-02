@@ -21,7 +21,18 @@ import { Button } from "../components/Button";
 import { IconArrow } from "../components/Icon";
 import { Logo } from "../components/Logo";
 import { SiteHead } from "../components/SiteHead";
+import { usePolliDraft } from "../lib/polliDraft";
+import { useSession } from "../lib/session";
 import { colors, fonts, DESKTOP_BP, SPLASH_MAX } from "../theme";
+
+const HOME_USE_CASES = [
+  { emoji: "🎂", label: "A birthday", catId: "birthday" },
+  { emoji: "🤍", label: "A little lift", catId: "hard-time" },
+  { emoji: "🍎", label: "A teacher or coach", catId: "teacher" },
+  { emoji: "🩺", label: "A healthcare hero", catId: "nurse" },
+  { emoji: "🍼", label: "A new parent", catId: "new-parent" },
+  { emoji: "🌼", label: "Just because", catId: "just-because" },
+] as const;
 
 const HERO_FLOWERS = [
   {
@@ -48,6 +59,8 @@ function randomFlowerCount() {
 
 export default function Splash() {
   const router = useRouter();
+  const { userId } = useSession();
+  const { set: setPolliDraft } = usePolliDraft();
   const { width, height } = useWindowDimensions();
   const [introProgress, setIntroProgress] = useState(0);
   const [beesArrived, setBeesArrived] = useState(0);
@@ -66,6 +79,15 @@ export default function Splash() {
   const compact = !isWide && (height < 720 || width < 380);
   const headlineSize = isWide ? 56 : width < 360 ? 34 : width < 400 ? 40 : 48;
   const ledeSize = isWide ? 18 : compact ? 15 : 17;
+
+  const startPolli = (catId?: string) => {
+    if (catId) setPolliDraft({ catId });
+    if (userId) {
+      router.push("/start/who");
+      return;
+    }
+    router.push({ pathname: "/auth", params: { next: "start" } });
+  };
 
   useEffect(() => {
     const startedAt = Date.now();
@@ -255,15 +277,13 @@ export default function Splash() {
           { fontSize: headlineSize, lineHeight: headlineSize + (isWide ? 4 : 2) },
         ]}
       >
-        Share $1 and{"\n"}
-        <Text style={styles.headlineItalic}>endless good…</Text>
-        {"\n"}
-        with everyone.
+        Share Just $1 and{"\n"}
+        <Text style={styles.headlineItalic}>Spread Endless Good</Text>
       </Text>
       <Text style={[styles.lede, { fontSize: ledeSize, lineHeight: ledeSize + 8 }]}>
-        Nominate a friend, teacher, neighbor, or anyone who deserves a little extra kindness.
-        Everyone chips in just $1 — small contributions pollinate into a meaningful gift and
-        message of support.
+        Start a Polli for a friend, teacher, neighbor, or anyone who deserves a little extra
+        kindness. Everyone chips in just $1 — small contributions pollinate into a meaningful gift
+        and message of support.
       </Text>
     </View>
   );
@@ -274,14 +294,14 @@ export default function Splash() {
         label="Start a Polli"
         full={!isWide}
         iconRight={<IconArrow size={20} color={colors.green} />}
-        onPress={() => router.push("/auth")}
+        onPress={() => startPolli()}
         style={isWide ? styles.ctaButtonWide : undefined}
       />
       <View style={[styles.signInWrap, isWide && styles.signInWrapWide]}>
         <Text style={styles.signInLine}>
-          Already here?{" "}
-          <Pressable onPress={() => router.push("/auth")}>
-            <Text style={styles.signInLink}>Sign in</Text>
+          Want to browse first?{" "}
+          <Pressable onPress={() => router.push({ pathname: "/auth", params: { next: "feed" } })}>
+            <Text style={styles.signInLink}>Sign in to see the feed</Text>
           </Pressable>
         </Text>
       </View>
@@ -291,9 +311,9 @@ export default function Splash() {
   const stepsBlock = (
     <View style={[styles.steps, isWide && styles.stepsWide]}>
       {[
-        "Nominate someone special",
+        "Start a Polli for someone you appreciate",
         "Share with friends, family, and your community — ask everyone to send only $1",
-        "Your nominee receives a meaningful gift and message",
+        "Your recipient receives a meaningful gift and messages once all Pollis have been collected. He or she can deposit the money into their bank account or select a digital gift card of their choice.",
       ].map((txt, i) => (
         <View key={i} style={[styles.step, isWide && styles.stepWide]}>
           <View style={styles.stepNum}>
@@ -312,18 +332,17 @@ export default function Splash() {
         Start a Polli for
       </Text>
       <View style={styles.useCaseGrid}>
-        {[
-          { emoji: "🎂", label: "A birthday" },
-          { emoji: "🤍", label: "A little lift" },
-          { emoji: "🍎", label: "A teacher or coach" },
-          { emoji: "🩺", label: "A healthcare hero" },
-          { emoji: "🍼", label: "A new parent" },
-          { emoji: "🌼", label: "Just because" },
-        ].map((item) => (
-          <View key={item.label} style={styles.useCaseChip}>
+        {HOME_USE_CASES.map((item) => (
+          <Pressable
+            key={item.label}
+            style={({ pressed }) => [styles.useCaseChip, pressed && styles.useCaseChipPressed]}
+            onPress={() => startPolli(item.catId)}
+            accessibilityRole="button"
+            accessibilityLabel={`Start a Polli for ${item.label}`}
+          >
             <Text style={styles.useCaseEmoji}>{item.emoji}</Text>
             <Text style={styles.useCaseLabel}>{item.label}</Text>
-          </View>
+          </Pressable>
         ))}
       </View>
     </View>
@@ -892,6 +911,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.cream,
     borderWidth: 1,
     borderColor: "rgba(27,77,62,0.08)",
+  },
+  useCaseChipPressed: {
+    backgroundColor: colors.sageSoft,
+    borderColor: "rgba(27,77,62,0.18)",
   },
   useCaseEmoji: {
     fontSize: 16,

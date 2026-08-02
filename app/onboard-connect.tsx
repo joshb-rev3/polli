@@ -1,5 +1,5 @@
-// Nominee-facing: opens Stripe Connect onboarding in a WebBrowser session.
-// Linked from the email/SMS the nominee receives when someone nominates them.
+// Recipient-facing: opens Stripe Connect onboarding in a WebBrowser session.
+// Linked from the email/SMS the recipient receives when someone starts a Polli for them.
 
 import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";

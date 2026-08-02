@@ -14,7 +14,7 @@ export function generateStaticParams(): { id: string }[] {
   return FEED.map((f) => ({ id: f.id }));
 }
 
-export default function Nominee() {
+export default function PolliPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { openShare } = useShare();
@@ -23,10 +23,10 @@ export default function Nominee() {
   if (!n) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.paper }}>
-        <SiteHead title="Not found" path={`/nominee/${id || ""}`} noIndex />
+        <SiteHead title="Not found" path={`/p/${id || ""}`} noIndex />
         <NavBar back title="Back" variant="paper" onBack={() => router.back()} />
         <View style={{ padding: 24 }}>
-          <Text style={{ fontFamily: fonts.body, color: colors.ink2 }}>Nominee not found.</Text>
+          <Text style={{ fontFamily: fonts.body, color: colors.ink2 }}>Polli not found.</Text>
         </View>
       </View>
     );
@@ -37,14 +37,14 @@ export default function Nominee() {
   const first = n.name.split(" ")[0];
   const shareDescription = n.story?.trim()
     ? n.story.trim().slice(0, 160)
-    : `Share $1 with ${first} on polli — endless good.`;
+    : `Share $1 with ${first} on Polli — endless good.`;
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.paper }}>
       <SiteHead
         title={`${n.name}'s Polli`}
         description={shareDescription}
-        path={`/nominee/${n.id}`}
+        path={`/p/${n.id}`}
         type="profile"
       />
       <NavBar
@@ -94,12 +94,12 @@ export default function Nominee() {
 
         <View style={styles.section}>
           <Text style={styles.eyebrow}>WHY CHIP IN</Text>
-          <View style={styles.nominator}>
-            <View style={styles.nomAv}>
-              <Text style={styles.nomAvText}>{n.nominatorAv}</Text>
+          <View style={styles.starter}>
+            <View style={styles.starterAv}>
+              <Text style={styles.starterAvText}>{n.starterAv}</Text>
             </View>
-            <Text style={styles.nomText}>
-              <Text style={{ fontFamily: fonts.bodyBold }}>{n.nominator}</Text> shared this overview:
+            <Text style={styles.starterText}>
+              <Text style={{ fontFamily: fonts.bodyBold }}>{n.starter}</Text> shared this overview:
             </Text>
           </View>
           <Text style={styles.story}>"{n.story}"</Text>
@@ -150,7 +150,7 @@ export default function Nominee() {
           <Text style={styles.sageSub}>Paid out via Stripe within 5 business days of close.</Text>
         </View>
         <Text style={styles.eligibleLine}>
-          Give once and you'll be eligible to be nominated for 12 months.
+          Give once and you'll be eligible to receive a Polli for 12 months.
         </Text>
         <View style={{ height: 100 }} />
         </Content>
@@ -262,12 +262,12 @@ const styles = StyleSheet.create({
     letterSpacing: 0.88,
     marginBottom: 6,
   },
-  nominator: {
+  starter: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
   },
-  nomAv: {
+  starterAv: {
     width: 36,
     height: 36,
     borderRadius: 18,
@@ -275,12 +275,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  nomAvText: {
+  starterAvText: {
     color: "#fff",
     fontFamily: fonts.bodyBold,
     fontSize: 15,
   },
-  nomText: {
+  starterText: {
     fontFamily: fonts.body,
     fontSize: 14,
     color: colors.ink,

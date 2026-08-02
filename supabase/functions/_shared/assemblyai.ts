@@ -15,14 +15,60 @@ function apiKey(): string {
   const key = Deno.env.get("ASSEMBLYAI_API_KEY");
   if (!key) {
     throw new AssemblyAIError(
-      "ASSEMBLYAI_API_KEY is not set. Add it to your Supabase project secrets.",
-      500
+      "Voice transcription isn't set up yet. Please try again later.",
+      500,
     );
   }
   return key;
 }
 
-async function translateError(res: Response, context: string): Promise<AssemblyAIError> {
+/** Map provider/technical errors into copy people can act on. */
+export function friendlyTranscriptionError(detail: string, fallbackStatus = 502): AssemblyAIError {
+  const lower = detail.toLowerCase();
+
+  if (
+    lower.includes("no spoken audio") ||
+    lower.includes("language_detection") ||
+    lower.includes("no speech") ||
+    lower.includes("silence")
+  ) {
+    return new AssemblyAIError(
+      "We couldn't hear any speech in that recording. Try again a little closer to the mic, or speak a bit louder.",
+      422,
+    );
+  }
+  if (lower.includes("too large") || lower.includes("file size") || lower.includes("413")) {
+    return new AssemblyAIError("That recording is a bit too long. Try a shorter clip.", 413);
+  }
+  if (lower.includes("unsupported") || lower.includes("format") || lower.includes("codec")) {
+    return new AssemblyAIError(
+      "We couldn't read that recording format. Please try recording again.",
+      415,
+    );
+  }
+  if (lower.includes("timed out") || lower.includes("timeout")) {
+    return new AssemblyAIError(
+      "Transcription is taking too long. Please try a shorter recording.",
+      504,
+    );
+  }
+  if (lower.includes("cancelled") || lower.includes("canceled") || lower.includes("aborted")) {
+    return new AssemblyAIError("Transcription was cancelled.", 499);
+  }
+  if (lower.includes("api key") || lower.includes("unauthorized") || lower.includes("forbidden")) {
+    return new AssemblyAIError(
+      "Voice transcription isn't available right now. Please try again later.",
+      401,
+    );
+  }
+
+  return new AssemblyAIError(
+    "We couldn't transcribe that recording. Please try again.",
+    fallbackStatus,
+  );
+}
+
+async function translateError(res: Response, _context: string): Promise<AssemblyAIError> {
   let detail = res.statusText;
   try {
     const body = await res.json();
@@ -31,12 +77,12 @@ async function translateError(res: Response, context: string): Promise<AssemblyA
     /* ignore */
   }
   if (res.status === 401 || res.status === 403) {
-    return new AssemblyAIError("AssemblyAI rejected the API key.", 401);
+    return friendlyTranscriptionError("api key", 401);
   }
   if (res.status === 413) {
-    return new AssemblyAIError("The audio file is too large for AssemblyAI.", 413);
+    return friendlyTranscriptionError("too large", 413);
   }
-  return new AssemblyAIError(`AssemblyAI ${context} failed: ${detail}`, res.status || 502);
+  return friendlyTranscriptionError(String(detail || "unknown"), res.status || 502);
 }
 
 export async function uploadAudio(buffer: ArrayBuffer): Promise<string> {
@@ -51,7 +97,7 @@ export async function uploadAudio(buffer: ArrayBuffer): Promise<string> {
   if (!res.ok) throw await translateError(res, "upload");
   const data = await res.json();
   if (!data.upload_url) {
-    throw new AssemblyAIError("AssemblyAI upload did not return an upload_url.", 502);
+    throw new AssemblyAIError("We couldn't upload that recording. Please try again.", 502);
   }
   return data.upload_url;
 }
@@ -71,7 +117,7 @@ export async function submitTranscription(audioUrl: string): Promise<string> {
   if (!res.ok) throw await translateError(res, "transcript submission");
   const data = await res.json();
   if (!data.id) {
-    throw new AssemblyAIError("AssemblyAI did not return a transcript id.", 502);
+    throw new AssemblyAIError("We couldn't start transcription. Please try again.", 502);
   }
   return data.id;
 }
@@ -85,13 +131,13 @@ function sleep(ms: number) {
 
 export async function pollTranscription(
   transcriptId: string,
-  { signal }: { signal?: AbortSignal } = {}
+  { signal }: { signal?: AbortSignal } = {},
 ) {
   const deadline = Date.now() + MAX_POLL_MS;
 
   while (Date.now() < deadline) {
     if (signal?.aborted) {
-      throw new AssemblyAIError("Transcription request was cancelled.", 499);
+      throw friendlyTranscriptionError("cancelled", 499);
     }
     const res = await fetch(`${BASE_URL}/transcript/${transcriptId}`, {
       headers: { authorization: apiKey() },
@@ -102,13 +148,10 @@ export async function pollTranscription(
 
     if (data.status === "completed") return data;
     if (data.status === "error") {
-      throw new AssemblyAIError(
-        `AssemblyAI transcription failed: ${data.error || "unknown error"}`,
-        422
-      );
+      throw friendlyTranscriptionError(String(data.error || "unknown error"), 422);
     }
     await sleep(POLL_INTERVAL_MS);
   }
 
-  throw new AssemblyAIError("Transcription timed out after 5 minutes.", 504);
+  throw friendlyTranscriptionError("timed out", 504);
 }

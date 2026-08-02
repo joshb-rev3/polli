@@ -1,23 +1,35 @@
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
 import { NavBar } from "../components/NavBar";
 import { Content } from "../components/Content";
 import { useDemoWallet } from "../lib/demoWallet";
+import { needsHomeAreaPrompt } from "../lib/homeArea";
 import { useSession } from "../lib/session";
 import { supabase, supabaseConfigured } from "../lib/supabase";
 import { colors, fonts, shadows } from "../theme";
 
+function paramOne(v: string | string[] | undefined) {
+  if (Array.isArray(v)) return v[0] ?? "";
+  return v ?? "";
+}
+
 export default function Auth() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ next?: string; id?: string }>();
   const { signInDemo, signInWithApple, signInWithGoogle, signInWithFacebook } = useSession();
   const demoWallet = useDemoWallet();
   const [busy, setBusy] = useState<string | null>(null);
 
+  const next = paramOne(params.next);
+  const feedId = paramOne(params.id);
+
   const continueAs = (provider: "apple" | "google" | "facebook", name: string) => async () => {
     setBusy(provider);
     try {
+      let signedInUserId: string | null = null;
+
       if (supabaseConfigured) {
         if (provider === "apple") await signInWithApple();
         else if (provider === "google") await signInWithGoogle();
@@ -29,20 +41,48 @@ export default function Auth() {
         }
         if (!data.session && provider === "apple") {
           signInDemo(name, "apple");
+          signedInUserId = "local-demo-apple";
+        } else {
+          signedInUserId = data.session?.user.id ?? null;
         }
       } else {
         await new Promise((r) => setTimeout(r, 400));
         signInDemo(name, provider);
+        signedInUserId = provider === "apple" ? "local-demo-apple" : "local-demo";
       }
 
+      const destNext = provider === "apple" ? "payout" : next || "feed";
       if (provider === "apple") {
         demoWallet.seedForAppleDemo();
-        router.replace("/payout");
+      } else {
+        demoWallet.reset();
+      }
+
+      if (await needsHomeAreaPrompt(signedInUserId)) {
+        router.replace({
+          pathname: "/onboard-area",
+          params: {
+            next: destNext,
+            ...(feedId ? { id: feedId } : {}),
+          },
+        });
         return;
       }
 
-      demoWallet.reset();
-      router.replace("/(tabs)/feed");
+      if (destNext === "start") {
+        router.replace("/start/who");
+      } else if (destNext === "checkout") {
+        router.replace({
+          pathname: "/checkout",
+          params: feedId ? { id: feedId } : undefined,
+        });
+      } else if (destNext === "payout") {
+        router.replace("/payout");
+      } else if (destNext === "profile") {
+        router.replace("/(tabs)/profile");
+      } else {
+        router.replace("/(tabs)/feed");
+      }
     } catch (e: any) {
       console.warn("Auth failed:", e?.message);
       alert(e?.message ?? "Sign-in failed");
@@ -57,11 +97,19 @@ export default function Auth() {
       <ScrollView contentContainerStyle={styles.scroll}>
         <Content pad={24}>
         <View style={styles.card}>
-          <Text style={styles.title}>Give kindness today.</Text>
+          <Text style={styles.title}>
+            {next === "feed"
+              ? "Browse your garden."
+              : next === "start"
+                ? "Start spreading good."
+                : "Give kindness today."}
+          </Text>
           <Text style={styles.sub}>
-            {supabaseConfigured
-              ? "Sign in to give — Stripe test mode is ready when keys are set."
-              : "Create your Polli account"}
+            {next === "feed"
+              ? "Sign in so we can show Pollis near you — it only takes a moment."
+              : supabaseConfigured
+                ? "Sign in to give — Stripe test mode is ready when keys are set."
+                : "Create your Polli account"}
           </Text>
           <View style={styles.authBtns}>
             <Pressable
