@@ -7,6 +7,7 @@ import { IconHeart, IconShare } from "../../components/Icon";
 import { NavBar } from "../../components/NavBar";
 import { SiteHead } from "../../components/SiteHead";
 import { FEED, NOTES, hasDonatedTo, hasStartedPolli, myNoteFor } from "../../lib/mockData";
+import { firstName } from "../../lib/names";
 import { useShare } from "../../lib/share";
 import { colors, fonts, CONTENT_MAX, CONTENT_PAD } from "../../theme";
 
@@ -37,7 +38,7 @@ export default function PolliPage() {
   const canSeeMessages = viewerHasDonated || viewerStarted;
   const notes = NOTES[n.id] ?? [];
   const myNote = myNoteFor(n.id);
-  const first = n.name.split(" ")[0];
+  const first = firstName(n.name);
   const shareDescription = n.story?.trim()
     ? n.story.trim().slice(0, 160)
     : `Share $1 with ${first} on Polli — endless good.`;

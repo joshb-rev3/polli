@@ -1,5 +1,6 @@
 import { FunctionsHttpError } from "@supabase/supabase-js";
 import type { FeedItem } from "./mockData";
+import { nameParts } from "./names";
 import { supabase, supabaseConfigured } from "./supabase";
 
 async function edgeErrorMessage(error: unknown, data: unknown): Promise<string> {
@@ -32,11 +33,12 @@ export async function ensureSandboxPolli(n: FeedItem): Promise<string> {
   // Already a UUID from a live row
   if (/^[0-9a-f-]{36}$/i.test(n.id)) return n.id;
 
+  const { first, last } = nameParts(n.name);
   const { data, error } = await supabase.functions.invoke("sandbox-ensure-polli", {
     body: {
       feedKey: n.id,
-      recipientFirst: n.name.split(" ")[0] || n.name,
-      recipientLast: n.name.split(" ").slice(1).join(" ") || "Friend",
+      recipientFirst: first || n.name,
+      recipientLast: last || "Friend",
       catId: n.cat.id,
       story: n.story,
       timelineDays: Math.max(7, n.daysLeft || 7),

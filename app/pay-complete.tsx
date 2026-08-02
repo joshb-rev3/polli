@@ -15,6 +15,7 @@ import { Content } from "../components/Content";
 import { IconCheck, IconClose, IconShare } from "../components/Icon";
 import { NavBar } from "../components/NavBar";
 import { FEED } from "../lib/mockData";
+import { firstName as givenName } from "../lib/names";
 import {
   clearPayComplete,
   readPayComplete,
@@ -74,7 +75,7 @@ export default function PayComplete() {
   const note = paramOne(params.note) || stored?.note || "";
   const anon = paramOne(params.anon) === "1" || Boolean(stored?.anon);
   const hasKeepsake = paramOne(params.keepsake) === "1" || Boolean(stored?.keepsake);
-  const firstName = name.split(" ")[0] || name;
+  const firstName = givenName(name, name);
 
   const home = async () => {
     await clearPayComplete();

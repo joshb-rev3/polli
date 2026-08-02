@@ -17,7 +17,8 @@ import { TextInput } from "../components/TextInput";
 import { VoiceMessageComposer } from "../components/voice/VoiceMessageComposer";
 import { FEE_COVER_CENTS, formatDollars, giftTotals } from "../lib/fees";
 import { success } from "../lib/haptics";
-import { FEED, QUICK_NOTES } from "../lib/mockData";
+import { FEED, INSPO } from "../lib/mockData";
+import { firstName as givenName } from "../lib/names";
 import { savePayComplete } from "../lib/payComplete";
 import { payWithStripe } from "../lib/paymentSheet";
 import { ensureSandboxPolli } from "../lib/sandboxPolli";
@@ -44,7 +45,7 @@ export default function Checkout() {
   const keepsake = mode === "speak" && Boolean(voiceClip?.uri);
   const totals = giftTotals({ keepsake });
   const MAX = 140;
-  const firstName = n?.name?.split(" ")[0] || "them";
+  const firstName = givenName(n?.name, "them");
 
   useEffect(() => {
     if (sessionLoading) return;
@@ -199,11 +200,9 @@ export default function Checkout() {
                 <Text style={styles.noteCardTitle}>Add a note for {firstName}</Text>
                 <Text style={styles.noteCardSub}>
                   Only {firstName} will see what you share here
-                  {mode === "type" && note.length
-                    ? ` · ${note.length}/${MAX}`
-                    : mode === "speak" && note.length
-                      ? ` · ${note.length}/${MAX} transcribed`
-                      : " · optional"}
+                  {mode === "speak" && note.length
+                    ? ` · ${note.length}/${MAX} transcribed`
+                    : " · optional"}
                 </Text>
               </View>
             </View>
@@ -236,33 +235,38 @@ export default function Checkout() {
 
             {mode === "type" ? (
               <>
-                <TextInput
-                  value={note}
-                  onChangeText={(t) => setNote(t.slice(0, MAX))}
-                  onFocus={() => setNoteOpen(true)}
-                  placeholder={`Say something nice to ${firstName}…`}
-                  placeholderTextColor={colors.inkMuted}
-                  multiline
-                  spellCheck
-                  autoCorrect
-                  style={[
-                    styles.textarea,
-                    { minHeight: noteOpen || note ? 72 : 44 },
-                  ]}
-                />
-                {(noteOpen || note) && (
-                  <View style={styles.chipRow}>
-                    {QUICK_NOTES.map((q, i) => (
-                      <Pressable
-                        key={i}
-                        onPress={() => setNote(q.slice(0, MAX))}
-                        style={styles.chip}
-                      >
-                        <Text style={styles.chipText}>{q}</Text>
-                      </Pressable>
-                    ))}
-                  </View>
-                )}
+                <View style={styles.textareaBox}>
+                  <TextInput
+                    value={note}
+                    onChangeText={(t) => setNote(t.slice(0, MAX))}
+                    onFocus={() => setNoteOpen(true)}
+                    placeholder={`Say something nice to ${firstName}…`}
+                    placeholderTextColor={colors.inkMuted}
+                    multiline
+                    spellCheck
+                    autoCorrect
+                    style={styles.textarea}
+                  />
+                </View>
+                <Text style={styles.counter}>
+                  {note.length}/{MAX}
+                </Text>
+
+                <Text style={styles.inspoLabel}>Inspiration — tap to use</Text>
+                <View style={{ gap: 8 }}>
+                  {INSPO.slice(0, 3).map((t, i) => (
+                    <Pressable
+                      key={i}
+                      style={styles.inspoRow}
+                      onPress={() => {
+                        setNote(t.replace(/\{name\}/g, firstName).slice(0, MAX));
+                        setNoteOpen(true);
+                      }}
+                    >
+                      <Text style={styles.inspoText}>{t}</Text>
+                    </Pressable>
+                  ))}
+                </View>
               </>
             ) : (
               <View style={styles.speakBox}>
@@ -543,37 +547,48 @@ const styles = StyleSheet.create({
     color: colors.ink2,
     lineHeight: 18,
   },
+  textareaBox: {
+    borderWidth: 1,
+    borderColor: colors.green3,
+    borderRadius: 12,
+    backgroundColor: "#fff",
+    padding: 14,
+  },
   textarea: {
     width: "100%",
-    padding: 12,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: colors.line2,
-    backgroundColor: "#fff",
-    fontFamily: fonts.serif,
-    fontSize: 15,
+    fontFamily: fonts.body,
+    fontSize: 16,
     color: colors.ink,
-    lineHeight: 22,
+    minHeight: 100,
     textAlignVertical: "top",
+    padding: 0,
   },
-  chipRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 6,
-    marginTop: 10,
-  },
-  chip: {
-    paddingHorizontal: 11,
-    paddingVertical: 7,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: colors.line2,
-    backgroundColor: "#fff",
-  },
-  chipText: {
-    fontFamily: fonts.serifItalic,
+  counter: {
+    textAlign: "right",
+    marginTop: 4,
+    fontFamily: fonts.body,
     fontSize: 12,
     color: colors.ink2,
+  },
+  inspoLabel: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 13,
+    color: colors.ink,
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  inspoRow: {
+    padding: 14,
+    borderRadius: 12,
+    backgroundColor: colors.paper,
+    borderWidth: 1,
+    borderColor: colors.line2,
+  },
+  inspoText: {
+    fontFamily: fonts.serif,
+    fontSize: 14,
+    color: colors.ink,
+    lineHeight: 20,
   },
   anonRow: {
     marginTop: 12,

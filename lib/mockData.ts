@@ -279,11 +279,3 @@ export const NOTES: Record<string, Note[]> = {
     { from: "anonymous bee", av: "🐝", text: "One petal, with so much love.", when: "3d", anon: true },
   ],
 };
-
-export const QUICK_NOTES = [
-  "You make the world sweeter 🌼",
-  "Proud to help spread the love",
-  "Pass it along — we got you",
-  "This is the tiniest, loudest thank-you",
-  "One petal, with love",
-];

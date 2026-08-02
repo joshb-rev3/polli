@@ -8,6 +8,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { tap } from "../lib/haptics";
 import { FeedItem } from "../lib/mockData";
+import { firstName } from "../lib/names";
 import { colors, fonts } from "../theme";
 import { IconHeart, IconShare } from "./Icon";
 
@@ -22,7 +23,7 @@ interface Props {
 /** Feed item — matches Polli detail: cream header, quiet meta, why-first body. */
 export function FeedCard({ n, viewerHasDonated = false, onGive, onOpen, onShare }: Props) {
   const [bursts, setBursts] = useState<{ id: number; x: number }[]>([]);
-  const first = n.name.split(" ")[0];
+  const first = firstName(n.name);
 
   const spawnBurst = () => {
     const id = Date.now() + Math.random();
